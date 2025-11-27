@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870872111686",
+    "project_id": "fruitsconnector",
+    "storage_bucket": "fruitsconnector.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870872111686:android:814ebd99b8b661f0cd0847",
+        "android_client_info": {
+          "package_name": "com.ishka.fruitsconnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLhmVrpa6Jq0hXAthDdsMfzmvTIMOiJ5Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

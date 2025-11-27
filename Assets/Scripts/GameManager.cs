@@ -10,6 +10,7 @@ using AdsServices;
 public class SaveData
 {
     public int CurrentLevel { get; set; }
+    public int TotalCoins { get; set; }
     public bool IsAdEnabled { get; set; }
 }
 
@@ -27,7 +28,7 @@ public class GameManager : MonoBehaviour
         {
             if (_instance == null)
             {
-                _instance = FindObjectOfType<GameManager>();
+                _instance = FindFirstObjectByType<GameManager>();
                 if (_instance == null)
                 {
                     GameObject go = new GameObject("GameManager");
@@ -223,7 +224,7 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Initialize Save Progress system
     /// </summary>
-    private async Task InitializeSaveProgress()
+    private Task InitializeSaveProgress()
     {
         LogDebug("Initializing Save Progress...");
         OnInitializationProgress?.Invoke(0.4f);
@@ -255,6 +256,8 @@ public class GameManager : MonoBehaviour
             LogError($"Failed to initialize Save Progress: {ex.Message}");
             throw;
         }
+        
+        return Task.CompletedTask;
     }
     
     /// <summary>
@@ -283,11 +286,12 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Initialize Audio Settings
     /// </summary>
-    private async Task InitializeAudioSettings()
+    private Task InitializeAudioSettings()
     {
         LogDebug("Initializing Audio Settings...");
         AudioSettings.Instance.Initialize();
         OnInitializationProgress?.Invoke(0.6f);
+        return Task.CompletedTask;
     }
     
     
@@ -335,6 +339,44 @@ public class GameManager : MonoBehaviour
     private void LogError(string message)
     {
         Debug.LogError($"[GameManager] {message}");
+    }
+    
+    /// <summary>
+    /// Add coins to player's total
+    /// </summary>
+    public void AddCoins(int amount)
+    {
+        if (amount <= 0) return;
+        
+        var progressManager = ProgressSaveManager<SaveData>.Instance;
+        var saveData = progressManager.GetGameData();
+        
+        saveData.TotalCoins += amount;
+        progressManager.SaveGameData();
+        
+        LogDebug($"Added {amount} coins. Total: {saveData.TotalCoins}");
+    }
+    
+    /// <summary>
+    /// Complete current level and move to next
+    /// </summary>
+    public void CompleteLevel()
+    {
+        LevelsManager levelsManager = LevelsManager.Instance;
+        if (levelsManager != null)
+        {
+            levelsManager.CompleteLevel();
+            LogDebug("Level completed!");
+        }
+    }
+    
+    /// <summary>
+    /// Get current coin count
+    /// </summary>
+    public int GetCoins()
+    {
+        var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
+        return saveData.TotalCoins;
     }
     
     private void OnDestroy()

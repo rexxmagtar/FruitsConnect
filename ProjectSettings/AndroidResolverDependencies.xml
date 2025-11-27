@@ -29,7 +29,7 @@
   </files>
   <settings>
     <setting name="androidAbis" value="arm64-v8a" />
-    <setting name="bundleId" value="com.UnityTechnologies.Mobile3DTemplate" />
+    <setting name="bundleId" value="com.ishka.fruitsconnect" />
     <setting name="explodeAars" value="True" />
     <setting name="gradleBuildEnabled" value="True" />
     <setting name="gradlePropertiesTemplateEnabled" value="True" />

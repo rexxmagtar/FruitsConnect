@@ -1,0 +1,226 @@
+╔════════════════════════════════════════════════════════════════════╗
+║        FRUIT CONNECTION PUZZLE GAME - QUICK START GUIDE            ║
+╚════════════════════════════════════════════════════════════════════╝
+
+✅ ALL COMPONENTS IMPLEMENTED SUCCESSFULLY!
+
+═══════════════════════════════════════════════════════════════════════
+1️⃣  INITIAL SETUP (Do This First!)
+═══════════════════════════════════════════════════════════════════════
+
+Step 1: Create ScriptableObjects
+   • Right-click in Project > Create > Fruit Connect > Levels Config
+   • Save as: Assets/ScriptableObjects/LevelsConfig.asset
+
+Step 2: Setup Manager GameObjects in Scene
+   • Create empty GameObject named "LevelsManager"
+   • Add Component: LevelsManager
+   • Assign your LevelsConfig to it
+
+   • GameController and ConnectionManager will auto-create if needed
+   • Or manually create them the same way
+
+Step 3: Verify Existing UI
+   • You should already have:
+     - LoadingScreen (already updated ✅)
+     - MainMenuUI (already updated ✅)
+     - GameplayUI (needs to be created as prefab)
+
+═══════════════════════════════════════════════════════════════════════
+2️⃣  CREATE YOUR FIRST LEVEL
+═══════════════════════════════════════════════════════════════════════
+
+Step 1: Open Level Editor
+   Menu: Tools > Fruit Connect Level Editor
+
+Step 2: Create Level
+   • Click "New Level"
+   • Add at least 1 Producer (red filled)
+   • Add at least 2 Consumers (blue outline)
+   • Add some Neutral nodes (red outline) as pass-through
+
+Step 3: Position Nodes
+   • Drag nodes in Scene view using handles
+   • Space them out nicely
+
+Step 4: Define Connection Mappings
+   • Select a node from the list
+   • Check boxes for nodes it can connect TO
+   • Example: Producer can connect to → Neutral1, Neutral2
+   • Example: Neutral1 can connect to → Consumer1
+
+Step 5: Validate Level
+   • Click "Validate Level"
+   • Fix any errors shown
+   • Must have path from every consumer to a producer!
+
+Step 6: Save Prefab
+   • Click "Save Level Prefab"
+   • Save to: Assets/Prefabs/Levels/Level_01.prefab
+
+═══════════════════════════════════════════════════════════════════════
+3️⃣  CREATE LEVEL CONFIG
+═══════════════════════════════════════════════════════════════════════
+
+Step 1: Create LevelConfig SO
+   • Right-click > Create > Fruit Connect > Level Config
+   • Name it: Level_01_Config
+
+Step 2: Configure
+   • Assign your Level_01.prefab to "Level Prefab" field
+   • Set "Coin Reward" (e.g., 10)
+   • Set "Level Name" (optional, e.g., "Tutorial")
+
+Step 3: Add to LevelsConfig
+   • Open your LevelsConfig asset
+   • Add Level_01_Config to the "Levels" array
+   • This is slot [0] - the first level!
+
+═══════════════════════════════════════════════════════════════════════
+4️⃣  TEST THE GAME
+═══════════════════════════════════════════════════════════════════════
+
+Step 1: Ensure SaveData Starts at Level 0
+   • Your game loads CurrentLevel from SaveData
+   • First time = level 0 (your first level)
+
+Step 2: Press Play
+   • Loading screen shows
+   • Level preloads in background
+   • Main menu appears with level visible behind it
+   • Start button shows "Start Level 1"
+
+Step 3: Click Start
+   • Gameplay begins
+   • Click nodes to create connections
+   • First click = select node
+   • Second click = try to connect
+   • Click connection line = remove it
+
+Step 4: Win Condition
+   • Connect ALL shops (consumers) to producer
+   • When all have path: WIN!
+   • Coins awarded
+   • Next level button appears
+
+═══════════════════════════════════════════════════════════════════════
+5️⃣  CREATE MORE LEVELS
+═══════════════════════════════════════════════════════════════════════
+
+Repeat steps 2-3 for each level:
+   • Level_02.prefab → Level_02_Config → Add to LevelsConfig[1]
+   • Level_03.prefab → Level_03_Config → Add to LevelsConfig[2]
+   • etc...
+
+Difficulty Progression Ideas:
+   • Level 1: 2 shops, simple path
+   • Level 2: 3 shops, multiple solutions
+   • Level 3: 4 shops, tighter connections
+   • Level 4: 5+ shops, specific routing required
+
+═══════════════════════════════════════════════════════════════════════
+📋 KEY CONCEPTS
+═══════════════════════════════════════════════════════════════════════
+
+Outgoing Connections:
+   • LIMITED by maxOutgoingConnections
+   • When node A connects to node B, A uses 1 outgoing slot
+
+Incoming Connections:
+   • UNLIMITED - any number of connections can come INTO a node
+   • Consumers usually only receive (no outgoing needed)
+
+Connection Validation:
+   1. Source node has available outgoing slot? ✓
+   2. Connection allowed by mapping? ✓
+   3. Connection doesn't already exist? ✓
+
+Win Condition:
+   • BFS from each Consumer backwards through incoming connections
+   • Must find at least 1 Producer
+   • ALL consumers must be satisfied
+
+═══════════════════════════════════════════════════════════════════════
+🎨 CUSTOMIZATION
+═══════════════════════════════════════════════════════════════════════
+
+Node Materials:
+   • Create materials in Unity
+   • Assign to node prefabs/instances
+   • Default: Runtime-generated materials
+
+Connection Appearance:
+   • Edit in ConnectionManager component
+   • Color, Width, Material
+
+UI:
+   • GameplayUI prefab/component
+   • Assign buttons, text elements
+   • Customize in Inspector
+
+═══════════════════════════════════════════════════════════════════════
+🐛 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════
+
+"LevelsManager not found" error:
+   → Let Unity compile all scripts first (may take a moment)
+   → Errors will resolve after compilation
+
+Level won't load:
+   → Check LevelsConfig assigned in LevelsManager
+   → Verify LevelConfig references correct prefab
+   → Check prefab has LevelController component
+
+Can't create connections:
+   → Check connection mappings in Level Editor
+   → Verify source node has available outgoing slots
+   → Check console for validation messages
+
+Level always wins immediately:
+   → Check if you accidentally connected all consumers already
+   → Verify win condition logic (shouldn't trigger without connections)
+
+═══════════════════════════════════════════════════════════════════════
+📚 FILES CREATED
+═══════════════════════════════════════════════════════════════════════
+
+Core Systems (10 new scripts):
+   ✅ LevelConfig.cs
+   ✅ LevelsConfig.cs
+   ✅ LevelController.cs
+   ✅ BaseNode.cs
+   ✅ ProducerNode.cs
+   ✅ ConsumerNode.cs
+   ✅ NeutralNode.cs
+   ✅ Connection.cs
+   ✅ ConnectionManager.cs
+   ✅ GameController.cs
+   ✅ GameplayUI.cs
+   ✅ LevelsManager.cs
+   ✅ LevelEditorWindow.cs
+   ✅ GameSetup.cs (helper)
+
+Modified Files (3):
+   ✅ GameManager.cs (added coins, CompleteLevel)
+   ✅ LoadingScreenUI.cs (added level preloading)
+   ✅ MainMenuUI.cs (added game integration)
+
+Documentation:
+   ✅ IMPLEMENTATION_SUMMARY.md (detailed docs)
+   ✅ QUICK_START_GUIDE.txt (this file)
+
+═══════════════════════════════════════════════════════════════════════
+🎯 YOU'RE READY TO GO!
+═══════════════════════════════════════════════════════════════════════
+
+Next Steps:
+   1. Follow steps 1-3 above to setup scene
+   2. Create your first level using the Level Editor
+   3. Test gameplay
+   4. Create more levels
+   5. Polish and customize
+
+Questions? Check IMPLEMENTATION_SUMMARY.md for detailed information.
+
+Good luck with your game! 🎮🍎🍊🍋
+

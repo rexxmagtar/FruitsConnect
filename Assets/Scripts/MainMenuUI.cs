@@ -76,6 +76,8 @@ public class MainMenuUI : MonoBehaviour
 
     private void OnGameInitialized()
     {
+        // Note: Loading screen will handle showing the menu after level preload
+        // Just prepare UI
         UpdateUI();
         
         // Start background music
@@ -91,9 +93,6 @@ public class MainMenuUI : MonoBehaviour
         {
             backgroundEffect.Play();
         }
-        
-        // Show initially
-        Show();
     }
 
     
@@ -176,7 +175,25 @@ public class MainMenuUI : MonoBehaviour
             audioSource.PlayOneShot(buttonClickSound);
         }
         
-        // Invoke event
+        // Hide main menu
+        Hide();
+        
+        // Start the game
+        GameController gameController = GameController.Instance;
+        if (gameController != null)
+        {
+            gameController.StartGame();
+        }
+        
+        // Show gameplay UI
+        GameplayUI gameplayUI = FindObjectOfType<GameplayUI>(true);
+        if (gameplayUI != null)
+        {
+            gameplayUI.gameObject.SetActive(true);
+            gameplayUI.Show();
+        }
+        
+        // Invoke event for any other listeners
         OnStartButtonPressed?.Invoke();
     }
     
@@ -267,20 +284,16 @@ public class MainMenuUI : MonoBehaviour
     /// </summary>
     private void UpdateUI()
     {
-        // // Update start button text
-        // if (startButtonText != null)
-        // {
-        //     // Check if current level is a bonus level
-        //     LevelConfig levelConfig = LevelsManager.Instance?.GetLevelConfig(currentLevel);
-        //     if (levelConfig != null && levelConfig.IsBonus)
-        //     {
-        //         startButtonText.text = "Bonus level";
-        //     }
-        //     else
-        //     {
-        //         startButtonText.text = string.Format(startButtonTextFormat, currentLevel);
-        //     }
-        // }
+        // Update start button text with current level
+        if (startButtonText != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelNumber = levelsManager.GetCurrentLevelNumber();
+                startButtonText.text = string.Format(startButtonTextFormat, levelNumber);
+            }
+        }
     }
     
     
