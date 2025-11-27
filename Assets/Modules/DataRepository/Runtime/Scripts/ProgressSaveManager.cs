@@ -12,6 +12,7 @@ using Firebase.Firestore;
 using Firebase.Extensions;
 using Firebase.Auth;
 
+
 namespace DataRepository
 {
     // Custom contract resolver to ensure properties are always serialized in alphabetical order
