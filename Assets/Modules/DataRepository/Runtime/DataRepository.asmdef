@@ -1,0 +1,16 @@
+{
+    "name": "DataRepository",
+    "rootNamespace": "DataRepository",
+    "references": [
+        "GUID:af4f6914f11737247accc39251aa1c45"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

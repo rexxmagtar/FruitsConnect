@@ -1,0 +1,30 @@
+[submodule "Assets/Modules/AdsServices"]
+	path = Assets/Modules/AdsServices
+	url = https://github.com/rexxmagtar/AdsServices
+[submodule "Assets/Modules/AnalyticsServices"]
+	path = Assets/Modules/AnalyticsServices
+	url = https://github.com/rexxmagtar/AnalyticServices
+[submodule "Assets/Modules/ArtSource"]
+	path = Assets/Modules/ArtSource
+	url = https://github.com/rexxmagtar/ArtSource
+[submodule "Assets/Modules/AuthServices"]
+	path = Assets/Modules/AuthServices
+	url = https://github.com/rexxmagtar/AuthServices
+[submodule "Assets/Modules/ComplianceService"]
+	path = Assets/Modules/ComplianceService
+	url = https://github.com/rexxmagtar/ComplienceService
+[submodule "Assets/Modules/DataRepository"]
+	path = Assets/Modules/DataRepository
+	url = https://github.com/rexxmagtar/ProgressSaver
+[submodule "Assets/Modules/HapticController"]
+	path = Assets/Modules/HapticController
+	url = https://github.com/rexxmagtar/HapticController
+[submodule "Assets/Modules/InputController"]
+	path = Assets/Modules/InputController
+	url = https://github.com/rexxmagtar/InputController
+[submodule "Assets/Modules/StoreServices"]
+	path = Assets/Modules/StoreServices
+	url = https://github.com/rexxmagtar/StoreServices
+[submodule "Assets/Modules/WindowManager"]
+	path = Assets/Modules/WindowManager
+	url = https://github.com/rexxmagtar/WindowManager
