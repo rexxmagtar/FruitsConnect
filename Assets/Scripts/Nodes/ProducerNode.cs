@@ -10,6 +10,9 @@ public class ProducerNode : BaseNode
     {
         base.Awake();
         
+        // Producers have no energy cost/gain
+        weight = 0;
+        
         // Set up visual appearance for producer (red filled sphere)
         SetupProducerVisuals();
     }

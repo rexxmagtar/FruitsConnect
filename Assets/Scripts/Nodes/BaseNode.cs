@@ -7,6 +7,10 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] protected string nodeID;
     [SerializeField] protected int maxOutgoingConnections = 1;
     
+    [Header("Energy System")]
+    [SerializeField] [Range(-3, 3)] protected int weight = 0;
+    [SerializeField] protected bool isEnergyApplied = false;
+    
     [Header("Visual Components")]
     [SerializeField] protected MeshRenderer meshRenderer;
     [SerializeField] protected Material defaultMaterial;
@@ -21,6 +25,9 @@ public abstract class BaseNode : MonoBehaviour
     private bool isSelected = false;
     private bool isHovered = false;
     
+    // Energy display
+    private NodeEnergyDisplay energyDisplay;
+    
     // Properties
     public string NodeID 
     { 
@@ -32,6 +39,22 @@ public abstract class BaseNode : MonoBehaviour
     { 
         get => maxOutgoingConnections;
         set => maxOutgoingConnections = value;
+    }
+    
+    public int Weight 
+    { 
+        get => weight;
+        set
+        {
+            weight = Mathf.Clamp(value, -3, 3);
+            UpdateEnergyDisplay();
+        }
+    }
+    
+    public bool IsEnergyApplied 
+    { 
+        get => isEnergyApplied;
+        set => isEnergyApplied = value;
     }
     
     public List<Connection> OutgoingConnections => outgoingConnections;
@@ -50,6 +73,46 @@ public abstract class BaseNode : MonoBehaviour
         {
             var collider = gameObject.AddComponent<SphereCollider>();
             collider.radius = 0.5f;
+        }
+    }
+    
+    protected virtual void Start()
+    {
+        // Create energy display for nodes with non-zero weight
+        if (weight != 0)
+        {
+            CreateEnergyDisplay();
+        }
+    }
+    
+    /// <summary>
+    /// Create the energy display UI above this node
+    /// </summary>
+    private void CreateEnergyDisplay()
+    {
+        if (energyDisplay == null)
+        {
+            energyDisplay = NodeEnergyDisplay.CreateForNode(this);
+        }
+    }
+    
+    /// <summary>
+    /// Update the energy display when weight changes
+    /// </summary>
+    public void UpdateEnergyDisplay()
+    {
+        if (weight != 0 && energyDisplay == null)
+        {
+            CreateEnergyDisplay();
+        }
+        else if (weight == 0 && energyDisplay != null)
+        {
+            Destroy(energyDisplay.gameObject);
+            energyDisplay = null;
+        }
+        else if (energyDisplay != null)
+        {
+            energyDisplay.UpdateDisplay();
         }
     }
     
@@ -229,6 +292,7 @@ public abstract class BaseNode : MonoBehaviour
     {
         outgoingConnections.Clear();
         incomingConnections.Clear();
+        isEnergyApplied = false;
     }
 }
 

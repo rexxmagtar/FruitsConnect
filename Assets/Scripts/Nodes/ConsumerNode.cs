@@ -14,6 +14,9 @@ public class ConsumerNode : BaseNode
         // Consumers are endpoints - no outgoing connections allowed
         maxOutgoingConnections = 0;
         
+        // Consumers have no energy cost/gain
+        weight = 0;
+        
         // Set up visual appearance for consumer (blue outline sphere)
         SetupConsumerVisuals();
     }

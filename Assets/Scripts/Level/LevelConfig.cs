@@ -12,8 +12,12 @@ public class LevelConfig : ScriptableObject
     [Header("Info")]
     [SerializeField] private string levelName;
     
+    [Header("Energy System")]
+    [SerializeField] private int startingEnergy = 5;
+    
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
     public string LevelName => levelName;
+    public int StartingEnergy => startingEnergy;
 }
 

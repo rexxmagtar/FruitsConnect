@@ -14,6 +14,10 @@ public class GameController : MonoBehaviour
     [Header("Gameplay")]
     [SerializeField] private bool gameplayEnabled = false;
     
+    [Header("Energy System")]
+    [SerializeField] private int currentEnergy = 0;
+    [SerializeField] private int startingEnergy = 5;
+    
     // Singleton
     private static GameController _instance;
     public static GameController Instance => _instance;
@@ -33,6 +37,46 @@ public class GameController : MonoBehaviour
     
     public LevelController CurrentLevel => currentLevel;
     public bool GameplayEnabled => gameplayEnabled;
+    
+    /// <summary>
+    /// Get current player energy
+    /// </summary>
+    public int GetCurrentEnergy() => currentEnergy;
+    
+    /// <summary>
+    /// Check if player can afford connecting to a node (if it has negative weight)
+    /// </summary>
+    public bool CanAffordNode(BaseNode node)
+    {
+        if (node == null) return false;
+        
+        // If node has negative weight (costs energy), check if we have enough
+        if (node.Weight < 0)
+        {
+            return currentEnergy >= Mathf.Abs(node.Weight);
+        }
+        
+        // Positive or zero weight nodes are always affordable
+        return true;
+    }
+    
+    /// <summary>
+    /// Modify player energy and update UI
+    /// </summary>
+    public void ModifyEnergy(int amount)
+    {
+        currentEnergy += amount;
+        
+        // Clamp to prevent negative energy
+        if (currentEnergy < 0)
+        {
+            currentEnergy = 0;
+        }
+        
+        Debug.Log($"Energy modified by {amount}. Current energy: {currentEnergy}");
+        
+        // TODO: Update UI when energy UI is implemented
+    }
     
     private void Awake()
     {
@@ -112,10 +156,14 @@ public class GameController : MonoBehaviour
             connectionManager.CurrentLevel = currentLevel;
         }
         
+        // Initialize energy from level config
+        startingEnergy = config.StartingEnergy;
+        currentEnergy = startingEnergy;
+        
         // Disable input
         gameplayEnabled = false;
         
-        Debug.Log($"Preloaded level: {config.LevelName}");
+        Debug.Log($"Preloaded level: {config.LevelName} with starting energy: {startingEnergy}");
     }
     
     /// <summary>
@@ -358,6 +406,10 @@ public class GameController : MonoBehaviour
         }
         isDragging = false;
         currentHoveredNode = null;
+        
+        // Reset energy to starting value
+        currentEnergy = startingEnergy;
+        Debug.Log($"Energy reset to {currentEnergy}");
         
         OnLevelReset?.Invoke();
         Debug.Log("Level reset");
