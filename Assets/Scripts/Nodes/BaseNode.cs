@@ -157,14 +157,38 @@ public abstract class BaseNode : MonoBehaviour
     }
     
     /// <summary>
-    /// Handle mouse click on node
+    /// Handle mouse down on node - start drag
     /// </summary>
     private void OnMouseDown()
     {
         GameController controller = GameController.Instance;
         if (controller != null)
         {
-            controller.OnNodeClicked(this);
+            controller.OnNodeDragStart(this);
+        }
+    }
+    
+    /// <summary>
+    /// Handle mouse drag - update connection preview
+    /// </summary>
+    private void OnMouseDrag()
+    {
+        GameController controller = GameController.Instance;
+        if (controller != null)
+        {
+            controller.OnNodeDrag(this);
+        }
+    }
+    
+    /// <summary>
+    /// Handle mouse up on node - complete drag
+    /// </summary>
+    private void OnMouseUp()
+    {
+        GameController controller = GameController.Instance;
+        if (controller != null)
+        {
+            controller.OnNodeDragEnd(this);
         }
     }
     
@@ -174,6 +198,13 @@ public abstract class BaseNode : MonoBehaviour
     private void OnMouseEnter()
     {
         OnHover();
+        
+        // Notify controller for drag over detection
+        GameController controller = GameController.Instance;
+        if (controller != null)
+        {
+            controller.OnNodeHoverEnter(this);
+        }
     }
     
     /// <summary>
@@ -182,6 +213,13 @@ public abstract class BaseNode : MonoBehaviour
     private void OnMouseExit()
     {
         OnHoverExit();
+        
+        // Notify controller for drag over detection
+        GameController controller = GameController.Instance;
+        if (controller != null)
+        {
+            controller.OnNodeHoverExit(this);
+        }
     }
     
     /// <summary>

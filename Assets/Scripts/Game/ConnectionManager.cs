@@ -2,6 +2,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// Ghost line state for visual feedback
+/// </summary>
+public enum GhostLineState
+{
+    Neutral,  // Not hovering over any node
+    Valid,    // Hovering over a valid connection target
+    Invalid   // Hovering over an invalid connection target
+}
+
+/// <summary>
 /// Manages all connections in the level
 /// </summary>
 public class ConnectionManager : MonoBehaviour
@@ -16,12 +26,26 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] private Color connectionColor = Color.yellow;
     [SerializeField] private float connectionWidth = 0.1f;
     
+    [Header("Ghost Line Settings")]
+    [SerializeField] private Color ghostLineValidColor = Color.green;
+    [SerializeField] private Color ghostLineInvalidColor = Color.red;
+    [SerializeField] private Color ghostLineNeutralColor = Color.yellow;
+    [SerializeField] private float ghostLineWidth = 0.15f;
+    
+    [Header("Wall Detection")]
+    [SerializeField] private LayerMask wallLayer = -1; // Default to all layers
+    [SerializeField] private string wallTag = "Wall"; // Tag for wall objects
+    
     // Singleton
     private static ConnectionManager _instance;
     public static ConnectionManager Instance => _instance;
     
     // Active connections
     private List<Connection> activeConnections = new List<Connection>();
+    
+    // Ghost line (temporary visual during drag)
+    private GameObject ghostLineObject;
+    private LineRenderer ghostLineRenderer;
     
     public LevelController CurrentLevel 
     { 
@@ -178,7 +202,7 @@ public class ConnectionManager : MonoBehaviour
             return false;
         }
         
-        // Rule 2: Connection mapping allows from→to
+        // Rule 2: Connection mapping allows from→to (this already accounts for walls)
         if (currentLevel != null && !currentLevel.CanConnect(from.NodeID, to.NodeID))
         {
             Debug.LogWarning($"Connection from {from.NodeID} to {to.NodeID} not allowed by level mapping");
@@ -239,11 +263,133 @@ public class ConnectionManager : MonoBehaviour
         return new List<Connection>(activeConnections);
     }
     
+    /// <summary>
+    /// Show ghost line from a start position
+    /// </summary>
+    public void ShowGhostLine(Vector3 startPosition, Vector3 endPosition, GhostLineState state)
+    {
+        // Create ghost line if it doesn't exist
+        if (ghostLineObject == null)
+        {
+            ghostLineObject = new GameObject("GhostLine");
+            ghostLineObject.transform.SetParent(transform);
+            ghostLineRenderer = ghostLineObject.AddComponent<LineRenderer>();
+            
+            // Setup LineRenderer
+            ghostLineRenderer.positionCount = 2;
+            ghostLineRenderer.startWidth = ghostLineWidth;
+            ghostLineRenderer.endWidth = ghostLineWidth;
+            ghostLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+            ghostLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            ghostLineRenderer.receiveShadows = false;
+            
+            // Set sorting order to render on top
+            ghostLineRenderer.sortingOrder = 10;
+        }
+        
+        // Clamp end position to same Y plane as start position
+        endPosition.y = startPosition.y;
+        
+        // Update positions
+        ghostLineRenderer.SetPosition(0, startPosition);
+        ghostLineRenderer.SetPosition(1, endPosition);
+        
+        // Update color based on state
+        ghostLineRenderer.material.color = GetGhostLineColor(state);
+        
+        // Make sure it's visible
+        ghostLineObject.SetActive(true);
+    }
+    
+    /// <summary>
+    /// Update ghost line end position and state color
+    /// </summary>
+    public void UpdateGhostLine(Vector3 endPosition, GhostLineState state)
+    {
+        if (ghostLineRenderer != null && ghostLineObject != null && ghostLineObject.activeSelf)
+        {
+            // Clamp to same Y plane as start position
+            Vector3 startPos = ghostLineRenderer.GetPosition(0);
+            endPosition.y = startPos.y;
+            
+            ghostLineRenderer.SetPosition(1, endPosition);
+            ghostLineRenderer.material.color = GetGhostLineColor(state);
+        }
+    }
+    
+    /// <summary>
+    /// Get the appropriate color for the ghost line state
+    /// </summary>
+    private Color GetGhostLineColor(GhostLineState state)
+    {
+        switch (state)
+        {
+            case GhostLineState.Valid:
+                return ghostLineValidColor;
+            case GhostLineState.Invalid:
+                return ghostLineInvalidColor;
+            case GhostLineState.Neutral:
+            default:
+                return ghostLineNeutralColor;
+        }
+    }
+    
+    /// <summary>
+    /// Check if a line from start to end intersects with any wall
+    /// </summary>
+    public bool CheckWallIntersection(Vector3 startPosition, Vector3 endPosition)
+    {
+        // Clamp both positions to same Y plane
+        endPosition.y = startPosition.y;
+        
+        // Perform a linecast to check for wall collisions
+        RaycastHit[] hits = Physics.RaycastAll(startPosition, (endPosition - startPosition).normalized, 
+                                                Vector3.Distance(startPosition, endPosition), wallLayer);
+        
+        // Check each hit to see if it's a wall
+        foreach (RaycastHit hit in hits)
+        {
+            // Check by tag if wall tag is set
+            if (!string.IsNullOrEmpty(wallTag) && hit.collider.CompareTag(wallTag))
+            {
+                return true;
+            }
+            
+            // Also check if the hit object has a MeshRenderer (as mentioned by user)
+            // and is not a node (nodes also have MeshRenderers)
+            if (hit.collider.GetComponent<MeshRenderer>() != null && 
+                hit.collider.GetComponent<BaseNode>() == null)
+            {
+                // It's likely a wall
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Hide ghost line
+    /// </summary>
+    public void HideGhostLine()
+    {
+        if (ghostLineObject != null)
+        {
+            ghostLineObject.SetActive(false);
+        }
+    }
+    
     private void OnDestroy()
     {
         if (_instance == this)
         {
             _instance = null;
+        }
+        
+        // Clean up ghost line
+        if (ghostLineObject != null)
+        {
+            Destroy(ghostLineObject);
         }
     }
 }

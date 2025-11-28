@@ -22,8 +22,10 @@ public class GameController : MonoBehaviour
     private LevelController currentLevel;
     private GameObject currentLevelInstance;
     
-    // Node selection for creating connections
-    private BaseNode selectedNode;
+    // Drag connection state
+    private BaseNode dragStartNode;
+    private BaseNode currentHoveredNode;
+    private bool isDragging = false;
     
     // Events
     public static event System.Action OnLevelWon;
@@ -133,45 +135,136 @@ public class GameController : MonoBehaviour
     }
     
     /// <summary>
-    /// Handle node click for creating connections
+    /// Handle node drag start - begin connection preview
     /// </summary>
-    public void OnNodeClicked(BaseNode node)
+    public void OnNodeDragStart(BaseNode node)
     {
         if (!gameplayEnabled) return;
         
-        if (selectedNode == null)
+        dragStartNode = node;
+        isDragging = true;
+        
+        // Visual feedback
+        dragStartNode.OnSelect();
+        
+        Debug.Log($"Started dragging from node: {node.NodeID}");
+    }
+    
+    /// <summary>
+    /// Handle node drag - update ghost line
+    /// </summary>
+    public void OnNodeDrag(BaseNode node)
+    {
+        if (!gameplayEnabled || !isDragging || dragStartNode == null) return;
+        
+        // Get mouse position in world space
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        
+        // Determine ghost line state and position
+        GhostLineState state = GhostLineState.Neutral;
+        Vector3 targetPosition = mouseWorldPos;
+        
+        if (currentHoveredNode != null && currentHoveredNode != dragStartNode)
         {
-            // First node selected
-            selectedNode = node;
-            selectedNode.OnSelect();
-            Debug.Log($"Selected node: {node.NodeID}");
+            // Hovering over a node - check if connection is valid
+            bool isValid = connectionManager.ValidateConnection(dragStartNode, currentHoveredNode);
+            state = isValid ? GhostLineState.Valid : GhostLineState.Invalid;
+            targetPosition = currentHoveredNode.transform.position;
+        }
+        
+        // Check for wall intersection - overrides state to Invalid if wall is hit
+        if (connectionManager.CheckWallIntersection(dragStartNode.transform.position, targetPosition))
+        {
+            state = GhostLineState.Invalid;
+        }
+        
+        // Update ghost line
+        connectionManager.ShowGhostLine(dragStartNode.transform.position, targetPosition, state);
+    }
+    
+    /// <summary>
+    /// Handle node drag end - attempt to create connection
+    /// </summary>
+    public void OnNodeDragEnd(BaseNode node)
+    {
+        if (!gameplayEnabled || !isDragging) return;
+        
+        // Hide ghost line
+        connectionManager.HideGhostLine();
+        
+        // Deselect start node
+        if (dragStartNode != null)
+        {
+            dragStartNode.OnDeselect();
+        }
+        
+        // Check if we ended on a valid target node
+        if (currentHoveredNode != null && currentHoveredNode != dragStartNode)
+        {
+            // Try to create connection
+            bool success = connectionManager.CreateConnection(dragStartNode, currentHoveredNode);
+            
+            if (success)
+            {
+                Debug.Log($"Created connection from {dragStartNode.NodeID} to {currentHoveredNode.NodeID}");
+                // Check win condition after creating connection
+                CheckWinCondition();
+            }
         }
         else
         {
-            // Second node clicked - attempt to create connection
-            if (selectedNode == node)
-            {
-                // Clicked same node - deselect
-                selectedNode.OnDeselect();
-                selectedNode = null;
-                Debug.Log("Deselected node");
-            }
-            else
-            {
-                // Try to create connection
-                bool success = connectionManager.CreateConnection(selectedNode, node);
-                
-                // Deselect first node
-                selectedNode.OnDeselect();
-                selectedNode = null;
-                
-                if (success)
-                {
-                    // Check win condition after creating connection
-                    CheckWinCondition();
-                }
-            }
+            Debug.Log("Drag cancelled - no valid target node");
         }
+        
+        // Reset drag state
+        dragStartNode = null;
+        isDragging = false;
+    }
+    
+    /// <summary>
+    /// Handle node hover enter - track potential target
+    /// </summary>
+    public void OnNodeHoverEnter(BaseNode node)
+    {
+        currentHoveredNode = node;
+    }
+    
+    /// <summary>
+    /// Handle node hover exit - clear potential target
+    /// </summary>
+    public void OnNodeHoverExit(BaseNode node)
+    {
+        if (currentHoveredNode == node)
+        {
+            currentHoveredNode = null;
+        }
+    }
+    
+    /// <summary>
+    /// Get mouse position in world space on the node plane
+    /// </summary>
+    private Vector3 GetMouseWorldPosition()
+    {
+        // Get mouse position
+        Vector3 mousePos = Input.mousePosition;
+        
+        // Use the drag start node's Y position as the plane
+        float planeY = dragStartNode != null ? dragStartNode.transform.position.y : 0f;
+        
+        // Create a plane at the node level
+        Plane plane = new Plane(Vector3.up, new Vector3(0, planeY, 0));
+        
+        // Cast ray from camera through mouse position
+        Ray ray = Camera.main.ScreenPointToRay(mousePos);
+        
+        // Find intersection with plane
+        if (plane.Raycast(ray, out float distance))
+        {
+            return ray.GetPoint(distance);
+        }
+        
+        // Fallback: return drag start position
+        return dragStartNode != null ? dragStartNode.transform.position : Vector3.zero;
     }
     
     /// <summary>
@@ -254,14 +347,17 @@ public class GameController : MonoBehaviour
         if (connectionManager != null)
         {
             connectionManager.ClearAllConnections();
+            connectionManager.HideGhostLine();
         }
         
-        // Deselect any selected node
-        if (selectedNode != null)
+        // Clear drag state
+        if (dragStartNode != null)
         {
-            selectedNode.OnDeselect();
-            selectedNode = null;
+            dragStartNode.OnDeselect();
+            dragStartNode = null;
         }
+        isDragging = false;
+        currentHoveredNode = null;
         
         OnLevelReset?.Invoke();
         Debug.Log("Level reset");
@@ -328,8 +424,21 @@ public class GameController : MonoBehaviour
             currentLevelInstance = null;
         }
         
+        // Clean up drag state
+        if (connectionManager != null)
+        {
+            connectionManager.HideGhostLine();
+        }
+        
+        if (dragStartNode != null)
+        {
+            dragStartNode.OnDeselect();
+            dragStartNode = null;
+        }
+        isDragging = false;
+        currentHoveredNode = null;
+        
         currentLevel = null;
-        selectedNode = null;
         gameplayEnabled = false;
     }
     
