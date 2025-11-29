@@ -32,7 +32,8 @@ Transform:
   m_LocalPosition: {x: 3.253653, y: 0, z: 7.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 566642403120826895}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &8954562039047990926
@@ -50,7 +51,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 396088282117886803}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -102,6 +103,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nodeID: Node_fef51cdc
   maxOutgoingConnections: 0
+  weight: 0
+  isEnergyApplied: 0
   meshRenderer: {fileID: 6942326032743715776}
   defaultMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
   selectedMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
@@ -129,3 +132,77 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+--- !u!1001 &24672207939415524
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6390878077455142222}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+      propertyPath: m_Name
+      value: Cartoon_house_low_poly_FBX
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+--- !u!4 &566642403120826895 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
+  m_PrefabInstance: {fileID: 24672207939415524}
+  m_PrefabAsset: {fileID: 0}

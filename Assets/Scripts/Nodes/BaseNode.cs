@@ -17,6 +17,9 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] protected Material selectedMaterial;
     [SerializeField] protected Material hoverMaterial;
     
+    [Header("Display")]
+    [SerializeField] private NodeDisplay nodeDisplay;
+    
     // Connection tracking
     protected List<Connection> outgoingConnections = new List<Connection>();
     protected List<Connection> incomingConnections = new List<Connection>();
@@ -24,9 +27,6 @@ public abstract class BaseNode : MonoBehaviour
     // Visual state
     private bool isSelected = false;
     private bool isHovered = false;
-    
-    // Energy display
-    private NodeEnergyDisplay energyDisplay;
     
     // Properties
     public string NodeID 
@@ -62,6 +62,9 @@ public abstract class BaseNode : MonoBehaviour
     
     protected virtual void Awake()
     {
+        // Clean up old display components early to prevent them from running
+        CleanupOldDisplays();
+        
         // Get mesh renderer if not assigned
         if (meshRenderer == null)
         {
@@ -78,41 +81,89 @@ public abstract class BaseNode : MonoBehaviour
     
     protected virtual void Start()
     {
-        // Create energy display for nodes with non-zero weight
-        if (weight != 0)
+        // Clean up old display components
+        CleanupOldDisplays();
+        
+        // Find node display if not assigned
+        if (nodeDisplay == null)
         {
-            CreateEnergyDisplay();
+            nodeDisplay = GetComponentInChildren<NodeDisplay>();
+        }
+        
+        // Update display if it exists
+        if (nodeDisplay != null)
+        {
+            nodeDisplay.UpdateDisplay();
         }
     }
     
     /// <summary>
-    /// Create the energy display UI above this node
+    /// Remove old display components that are no longer used
     /// </summary>
-    private void CreateEnergyDisplay()
+    private void CleanupOldDisplays()
     {
-        if (energyDisplay == null)
+        // Find and destroy old NodeEnergyDisplay components
+        NodeEnergyDisplay[] oldEnergyDisplays = GetComponentsInChildren<NodeEnergyDisplay>(true);
+        foreach (NodeEnergyDisplay oldDisplay in oldEnergyDisplays)
         {
-            energyDisplay = NodeEnergyDisplay.CreateForNode(this);
+            if (oldDisplay != null)
+            {
+                // Disable immediately to stop LateUpdate from running
+                oldDisplay.enabled = false;
+                if (oldDisplay.gameObject != null)
+                {
+                    Destroy(oldDisplay.gameObject);
+                }
+            }
+        }
+        
+        // Find and destroy old NodeConnectionDisplay components
+        NodeConnectionDisplay[] oldConnectionDisplays = GetComponentsInChildren<NodeConnectionDisplay>(true);
+        foreach (NodeConnectionDisplay oldDisplay in oldConnectionDisplays)
+        {
+            if (oldDisplay != null)
+            {
+                // Disable immediately to stop LateUpdate from running
+                oldDisplay.enabled = false;
+                if (oldDisplay.gameObject != null)
+                {
+                    Destroy(oldDisplay.gameObject);
+                }
+            }
+        }
+        
+        // Also look for GameObjects with "_EnergyDisplay" in the name (old runtime-created displays)
+        Transform[] allChildren = GetComponentsInChildren<Transform>(true);
+        List<GameObject> toDestroy = new List<GameObject>();
+        foreach (Transform child in allChildren)
+        {
+            if (child != null && child.name.Contains("_EnergyDisplay") && child.GetComponent<NodeDisplay>() == null)
+            {
+                toDestroy.Add(child.gameObject);
+            }
+        }
+        foreach (GameObject obj in toDestroy)
+        {
+            if (obj != null)
+            {
+                Destroy(obj);
+            }
         }
     }
     
     /// <summary>
-    /// Update the energy display when weight changes
+    /// Update the node display when weight or connections change
     /// </summary>
     public void UpdateEnergyDisplay()
     {
-        if (weight != 0 && energyDisplay == null)
+        if (nodeDisplay == null)
         {
-            CreateEnergyDisplay();
+            nodeDisplay = GetComponentInChildren<NodeDisplay>();
         }
-        else if (weight == 0 && energyDisplay != null)
+        
+        if (nodeDisplay != null)
         {
-            Destroy(energyDisplay.gameObject);
-            energyDisplay = null;
-        }
-        else if (energyDisplay != null)
-        {
-            energyDisplay.UpdateDisplay();
+            nodeDisplay.UpdateDisplay();
         }
     }
     
@@ -132,6 +183,7 @@ public abstract class BaseNode : MonoBehaviour
         if (!outgoingConnections.Contains(connection))
         {
             outgoingConnections.Add(connection);
+            OnConnectionsChanged();
         }
     }
     
@@ -141,6 +193,18 @@ public abstract class BaseNode : MonoBehaviour
     public void RemoveOutgoingConnection(Connection connection)
     {
         outgoingConnections.Remove(connection);
+        OnConnectionsChanged();
+    }
+    
+    /// <summary>
+    /// Called when connections change - update node display
+    /// </summary>
+    protected virtual void OnConnectionsChanged()
+    {
+        if (nodeDisplay != null)
+        {
+            nodeDisplay.UpdateDisplay();
+        }
     }
     
     /// <summary>
@@ -293,6 +357,7 @@ public abstract class BaseNode : MonoBehaviour
         outgoingConnections.Clear();
         incomingConnections.Clear();
         isEnergyApplied = false;
+        OnConnectionsChanged();
     }
 }
 
