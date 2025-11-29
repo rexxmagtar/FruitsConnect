@@ -25,6 +25,7 @@ public class GameController : MonoBehaviour
     // Current level
     private LevelController currentLevel;
     private GameObject currentLevelInstance;
+    private LevelConfig currentLevelConfig;
     
     // Drag connection state
     private BaseNode dragStartNode;
@@ -37,6 +38,7 @@ public class GameController : MonoBehaviour
     
     public LevelController CurrentLevel => currentLevel;
     public bool GameplayEnabled => gameplayEnabled;
+    public LevelConfig CurrentLevelConfig => currentLevelConfig;
     
     /// <summary>
     /// Get current player energy
@@ -159,6 +161,9 @@ public class GameController : MonoBehaviour
         // Initialize energy from level config
         startingEnergy = config.StartingEnergy;
         currentEnergy = startingEnergy;
+        
+        // Store level config reference
+        currentLevelConfig = config;
         
         // Disable input
         gameplayEnabled = false;

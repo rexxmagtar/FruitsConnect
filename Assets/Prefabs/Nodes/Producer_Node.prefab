@@ -130,6 +130,7 @@ MonoBehaviour:
   defaultMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
   hoverMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
+  nodeDisplay: {fileID: 0}
 --- !u!1001 &2979340654449283057
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -140,15 +141,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 62baa77ba9016fe49a513fe93654c2dc, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 1.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62baa77ba9016fe49a513fe93654c2dc, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 1.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62baa77ba9016fe49a513fe93654c2dc, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 1.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62baa77ba9016fe49a513fe93654c2dc, type: 3}
       propertyPath: m_LocalPosition.x

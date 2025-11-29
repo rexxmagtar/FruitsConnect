@@ -713,7 +713,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &375611664
 RectTransform:
   m_ObjectHideFlags: 0
@@ -968,12 +968,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
-  connectionColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  connectionWidth: 0.1
-  ghostLineValidColor: {r: 0, g: 1, b: 0, a: 1}
-  ghostLineInvalidColor: {r: 1, g: 0, b: 0, a: 1}
-  ghostLineNeutralColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  ghostLineWidth: 0.15
+  connectionColor: {r: 1, g: 1, b: 1, a: 1}
+  connectionWidth: 0.4
+  ghostLineValidColor: {r: 0, g: 1, b: 0, a: 0.69803923}
+  ghostLineInvalidColor: {r: 1, g: 0, b: 0, a: 0.69803923}
+  ghostLineNeutralColor: {r: 0.5773585, g: 0.5773585, b: 0.56101817, a: 0.63529414}
+  ghostLineWidth: 0.4
   wallLayer:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -991,7 +991,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionManager: {fileID: 492060974}
-  gameplayUI: {fileID: 0}
+  gameplayUI: {fileID: 2132006983}
   levelCompleteUI: {fileID: 1859521324}
   gameplayEnabled: 0
   currentEnergy: 0
@@ -2540,7 +2540,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1936849223
 RectTransform:
   m_ObjectHideFlags: 0

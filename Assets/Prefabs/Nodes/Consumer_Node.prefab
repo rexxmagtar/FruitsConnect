@@ -109,6 +109,9 @@ MonoBehaviour:
   defaultMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
   selectedMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
   hoverMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
+  nodeDisplay: {fileID: 0}
+  connectedColor: {r: 1, g: 1, b: 1, a: 1}
+  disconnectedColor: {r: 0.7283019, g: 0.7283019, b: 0.7283019, a: 1}
 --- !u!136 &637753523147984693
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -142,15 +145,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.5
+      value: 1.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.5
+      value: 1.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.5
+      value: 1.7
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 92286767f02451f4aad6bddc73a0bd66, type: 3}
       propertyPath: m_LocalPosition.x

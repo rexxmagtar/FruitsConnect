@@ -20,6 +20,10 @@ public abstract class BaseNode : MonoBehaviour
     [Header("Display")]
     [SerializeField] private NodeDisplay nodeDisplay;
     
+    [Header("Connection Status Animation")]
+    [SerializeField] private Color connectedColor = Color.white;
+    [SerializeField] private Color disconnectedColor = Color.black;
+    
     // Connection tracking
     protected List<Connection> outgoingConnections = new List<Connection>();
     protected List<Connection> incomingConnections = new List<Connection>();
@@ -27,6 +31,11 @@ public abstract class BaseNode : MonoBehaviour
     // Visual state
     private bool isSelected = false;
     private bool isHovered = false;
+    
+    // Store original material colors for restoration
+    private Color[] originalMainMaterialColors;
+    private System.Collections.Generic.Dictionary<Renderer, Color[]> originalChildMaterialColors = new System.Collections.Generic.Dictionary<Renderer, Color[]>();
+    private bool colorsStored = false;
     
     // Properties
     public string NodeID 
@@ -95,6 +104,12 @@ public abstract class BaseNode : MonoBehaviour
         {
             nodeDisplay.UpdateDisplay();
         }
+        
+        // Store original material colors (materials should be assigned by now)
+        StoreOriginalMaterialColors();
+        
+        // Update connection status visual on start
+        UpdateConnectionStatusVisual();
     }
     
     /// <summary>
@@ -205,6 +220,9 @@ public abstract class BaseNode : MonoBehaviour
         {
             nodeDisplay.UpdateDisplay();
         }
+        
+        // Update connection status visual
+        UpdateConnectionStatusVisual();
     }
     
     /// <summary>
@@ -281,6 +299,157 @@ public abstract class BaseNode : MonoBehaviour
         {
             meshRenderer.material = defaultMaterial;
         }
+        
+        // Update connection status visual after material is set
+        UpdateConnectionStatusVisual();
+    }
+    
+    /// <summary>
+    /// Store original material colors for restoration
+    /// Called lazily on first use if not already stored
+    /// </summary>
+    private void StoreOriginalMaterialColors()
+    {
+        if (colorsStored) return;
+        
+        // Store main renderer colors
+        if (meshRenderer != null && meshRenderer.materials != null && meshRenderer.materials.Length > 0)
+        {
+            originalMainMaterialColors = new Color[meshRenderer.materials.Length];
+            for (int i = 0; i < meshRenderer.materials.Length; i++)
+            {
+                if (meshRenderer.materials[i] != null)
+                {
+                    originalMainMaterialColors[i] = meshRenderer.materials[i].color;
+                }
+            }
+        }
+        
+        // Store child renderer colors
+        Renderer[] childRenderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in childRenderers)
+        {
+            // Skip the main renderer
+            if (renderer == meshRenderer) continue;
+            
+            if (renderer.materials != null && renderer.materials.Length > 0)
+            {
+                Color[] colors = new Color[renderer.materials.Length];
+                for (int i = 0; i < renderer.materials.Length; i++)
+                {
+                    if (renderer.materials[i] != null)
+                    {
+                        colors[i] = renderer.materials[i].color;
+                    }
+                }
+                originalChildMaterialColors[renderer] = colors;
+            }
+        }
+        
+        colorsStored = true;
+    }
+    
+    /// <summary>
+    /// Update material colors based on connection status to producer
+    /// </summary>
+    private void UpdateConnectionStatusVisual()
+    {
+        // Ensure original colors are stored
+        if (!colorsStored)
+        {
+            StoreOriginalMaterialColors();
+        }
+        
+        // Check if connected to producer
+        bool isConnectedToProducer = IsConnectedToProducer();
+        
+        // Determine target color
+        Color targetColor = isConnectedToProducer ? connectedColor : disconnectedColor;
+        
+        // Update main renderer
+        if (meshRenderer != null && meshRenderer.materials != null)
+        {
+            for (int i = 0; i < meshRenderer.materials.Length; i++)
+            {
+                if (meshRenderer.materials[i] != null)
+                {
+                    // Get original color if available, otherwise use current
+                    Color baseColor = (originalMainMaterialColors != null && i < originalMainMaterialColors.Length) 
+                        ? originalMainMaterialColors[i] 
+                        : meshRenderer.materials[i].color;
+                    
+                    // Apply color modulation (multiply original color by target color)
+                    meshRenderer.materials[i].color = baseColor * targetColor;
+                }
+            }
+        }
+        
+        // Update child renderers
+        Renderer[] childRenderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in childRenderers)
+        {
+            // Skip the main renderer
+            if (renderer == meshRenderer) continue;
+            
+            if (renderer.materials != null && renderer.materials.Length > 0)
+            {
+                for (int i = 0; i < renderer.materials.Length; i++)
+                {
+                    if (renderer.materials[i] != null)
+                    {
+                        // Get original color if available
+                        Color baseColor = Color.white; // Default to white
+                        if (originalChildMaterialColors.ContainsKey(renderer) && 
+                            i < originalChildMaterialColors[renderer].Length)
+                        {
+                            baseColor = originalChildMaterialColors[renderer][i];
+                        }
+                        else
+                        {
+                            // Store current color if not stored yet
+                            baseColor = renderer.materials[i].color;
+                            if (!originalChildMaterialColors.ContainsKey(renderer))
+                            {
+                                Color[] colors = new Color[renderer.materials.Length];
+                                for (int j = 0; j < renderer.materials.Length; j++)
+                                {
+                                    if (renderer.materials[j] != null)
+                                    {
+                                        colors[j] = renderer.materials[j].color;
+                                    }
+                                }
+                                originalChildMaterialColors[renderer] = colors;
+                            }
+                        }
+                        
+                        // Apply color modulation
+                        renderer.materials[i].color = baseColor * targetColor;
+                    }
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Check if this node is connected to a producer
+    /// </summary>
+    private bool IsConnectedToProducer()
+    {
+        ConnectionManager manager = ConnectionManager.Instance;
+        if (manager != null)
+        {
+            return manager.IsConnectedToProducer(this);
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Public method to refresh connection status visual
+    /// Can be called externally to update visuals after connection changes
+    /// </summary>
+    public void RefreshConnectionStatusVisual()
+    {
+        UpdateConnectionStatusVisual();
     }
     
     /// <summary>

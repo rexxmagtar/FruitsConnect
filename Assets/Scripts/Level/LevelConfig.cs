@@ -15,9 +15,14 @@ public class LevelConfig : ScriptableObject
     [Header("Energy System")]
     [SerializeField] private int startingEnergy = 5;
     
+    [Header("Connection Animation")]
+    [Tooltip("Prefab for objects that animate along connection lines (spawns at node A, moves to node B)")]
+    [SerializeField] private GameObject connectionAnimationPrefab;
+    
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
     public string LevelName => levelName;
     public int StartingEnergy => startingEnergy;
+    public GameObject ConnectionAnimationPrefab => connectionAnimationPrefab;
 }
 

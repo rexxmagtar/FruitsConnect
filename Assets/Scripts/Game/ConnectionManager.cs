@@ -31,7 +31,7 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] private Color ghostLineValidColor = Color.green;
     [SerializeField] private Color ghostLineInvalidColor = Color.red;
     [SerializeField] private Color ghostLineNeutralColor = Color.yellow;
-    [SerializeField] private float ghostLineWidth = 0.15f;
+    [SerializeField] private float ghostLineWidth = 0.1f; // Match connectionWidth
     
     [Header("Wall Detection")]
     [SerializeField] private LayerMask wallLayer = -1; // Default to all layers
@@ -109,8 +109,16 @@ public class ConnectionManager : MonoBehaviour
             connection = connectionObj.AddComponent<Connection>();
         }
         
-        // Initialize connection with manager's visual settings
-        connection.Initialize(from, to, connectionWidth, connectionColor);
+        // Get animation prefab from level config
+        GameObject animationPrefab = null;
+        GameController gameController = GameController.Instance;
+        if (gameController != null && gameController.CurrentLevelConfig != null)
+        {
+            animationPrefab = gameController.CurrentLevelConfig.ConnectionAnimationPrefab;
+        }
+        
+        // Initialize connection with manager's visual settings and animation prefab
+        connection.Initialize(from, to, connectionWidth, connectionColor, animationPrefab);
         
         // Add to nodes
         from.AddOutgoingConnection(connection);
@@ -122,7 +130,6 @@ public class ConnectionManager : MonoBehaviour
         // Apply energy only if this is the first incoming connection to the target node
         if (to.IncomingConnections.Count == 1 && !to.IsEnergyApplied)
         {
-            GameController gameController = GameController.Instance;
             if (gameController != null)
             {
                 // Apply energy (positive weight = gain, negative weight = lose)
@@ -134,6 +141,9 @@ public class ConnectionManager : MonoBehaviour
         }
         
         Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}");
+        
+        // Update visuals for all nodes after connection change
+        RefreshAllNodeVisuals();
         
         return true;
     }
@@ -174,6 +184,9 @@ public class ConnectionManager : MonoBehaviour
         
         // After removal, break any chains that are no longer connected to a producer
         BreakDisconnectedChains();
+        
+        // Update visuals for all nodes after connection change
+        RefreshAllNodeVisuals();
     }
     
     /// <summary>
@@ -254,6 +267,9 @@ public class ConnectionManager : MonoBehaviour
         }
         
         Debug.Log($"Broke {connectionsToBreak.Count} connections from disconnected nodes");
+        
+        // Update visuals for all nodes after breaking connections
+        RefreshAllNodeVisuals();
     }
     
     /// <summary>
@@ -284,6 +300,9 @@ public class ConnectionManager : MonoBehaviour
         }
         
         Debug.Log("Cleared all connections");
+        
+        // Update visuals for all nodes after clearing connections
+        RefreshAllNodeVisuals();
     }
     
     /// <summary>
@@ -489,6 +508,24 @@ public class ConnectionManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Refresh connection status visuals for all nodes in the level
+    /// Called after connections are added or removed
+    /// </summary>
+    private void RefreshAllNodeVisuals()
+    {
+        if (currentLevel == null) return;
+        
+        List<BaseNode> allNodes = currentLevel.GetAllNodes();
+        foreach (BaseNode node in allNodes)
+        {
+            if (node != null)
+            {
+                node.RefreshConnectionStatusVisual();
+            }
+        }
+    }
+    
+    /// <summary>
     /// Check if a connection already exists between two nodes (in either direction)
     /// Connections are bidirectional - A→B is the same as B→A
     /// </summary>
@@ -537,23 +574,45 @@ public class ConnectionManager : MonoBehaviour
     /// </summary>
     public void ShowGhostLine(Vector3 startPosition, Vector3 endPosition, GhostLineState state)
     {
-        // Create ghost line if it doesn't exist
+        // Create ghost line if it doesn't exist - use the same prefab as real connections
         if (ghostLineObject == null)
         {
-            ghostLineObject = new GameObject("GhostLine");
-            ghostLineObject.transform.SetParent(transform);
-            ghostLineRenderer = ghostLineObject.AddComponent<LineRenderer>();
+            // Instantiate the connection prefab to get the same visual setup
+            ghostLineObject = Instantiate(connectionPrefab, transform);
+            ghostLineObject.name = "GhostLine";
             
-            // Setup LineRenderer
+            // Get the LineRenderer from the prefab instance
+            ghostLineRenderer = ghostLineObject.GetComponent<LineRenderer>();
+            if (ghostLineRenderer == null)
+            {
+                ghostLineRenderer = ghostLineObject.AddComponent<LineRenderer>();
+            }
+            
+            // Remove Connection component - ghost shouldn't behave like a real connection
+            Connection connectionComponent = ghostLineObject.GetComponent<Connection>();
+            if (connectionComponent != null)
+            {
+                Destroy(connectionComponent);
+            }
+            
+            // Remove or disable BoxCollider - ghost shouldn't be clickable
+            BoxCollider boxCollider = ghostLineObject.GetComponent<BoxCollider>();
+            if (boxCollider != null)
+            {
+                boxCollider.enabled = false;
+            }
+            
+            // Setup LineRenderer to match connection settings
             ghostLineRenderer.positionCount = 2;
             ghostLineRenderer.startWidth = ghostLineWidth;
             ghostLineRenderer.endWidth = ghostLineWidth;
-            ghostLineRenderer.material = new Material(Shader.Find("Sprites/Default"));
-            ghostLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            ghostLineRenderer.receiveShadows = false;
             
-            // Set sorting order to render on top
-            ghostLineRenderer.sortingOrder = 10;
+            // The prefab's material is already set, we just need to update its color
+            // Create a material instance so we can change color without affecting the prefab
+            if (ghostLineRenderer.material != null)
+            {
+                ghostLineRenderer.material = new Material(ghostLineRenderer.material);
+            }
         }
         
         // Clamp end position to same Y plane as start position
