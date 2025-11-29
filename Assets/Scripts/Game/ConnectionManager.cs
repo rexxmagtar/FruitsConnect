@@ -192,81 +192,103 @@ public class ConnectionManager : MonoBehaviour
     /// <summary>
     /// Break all chains that are no longer connected to a producer
     /// Called after removing a connection
+    /// Iteratively checks ALL connections until no more need to be broken
+    /// Guarantees no infinite loops by tracking checked connections per iteration
     /// </summary>
     private void BreakDisconnectedChains()
     {
         if (currentLevel == null) return;
         
-        List<BaseNode> allNodes = currentLevel.GetAllNodes();
-        List<BaseNode> disconnectedNodes = new List<BaseNode>();
+        // Safety limit: can't iterate more than the number of connections
+        // (worst case: break one connection per iteration)
+        int initialConnectionCount = activeConnections.Count;
+        int maxIterations = initialConnectionCount;
+        int iterationCount = 0;
         
-        // Find all nodes that are not connected to any producer
-        foreach (BaseNode node in allNodes)
+        // Keep iterating until no more disconnected connections are found
+        while (iterationCount < maxIterations)
         {
-            if (node == null) continue;
+            iterationCount++;
             
-            // Skip producers - they're always connected
-            if (node is ProducerNode) continue;
+            // Track connections checked in this iteration to prevent checking same connection twice
+            // (reset each iteration so connections can be re-checked if they become disconnected)
+            HashSet<Connection> checkedThisIteration = new HashSet<Connection>();
             
-            // Check if this node is still connected to a producer
-            if (!IsConnectedToProducer(node))
+            // Check ALL active connections to see if they still lead to a producer
+            List<Connection> connectionsToBreak = new List<Connection>();
+            
+            foreach (Connection conn in activeConnections)
             {
-                disconnectedNodes.Add(node);
-            }
-        }
-        
-        // If no disconnected nodes, we're done
-        if (disconnectedNodes.Count == 0) return;
-        
-        Debug.Log($"Found {disconnectedNodes.Count} disconnected nodes. Breaking their connections...");
-        
-        // Collect all connections involving disconnected nodes
-        List<Connection> connectionsToBreak = new List<Connection>();
-        
-        foreach (Connection conn in activeConnections)
-        {
-            if (conn == null) continue;
-            
-            // If either end is disconnected, mark for removal
-            if (disconnectedNodes.Contains(conn.FromNode) || disconnectedNodes.Contains(conn.ToNode))
-            {
-                connectionsToBreak.Add(conn);
-            }
-        }
-        
-        // Break all collected connections (without calling BreakDisconnectedChains recursively)
-        foreach (Connection conn in connectionsToBreak)
-        {
-            BaseNode toNode = conn.ToNode;
-            
-            // Revert energy if this node will lose all incoming connections and energy was applied
-            if (toNode != null && toNode.IsEnergyApplied)
-            {
-                // Count how many incoming connections this node will still have after breaking
-                int remainingIncoming = toNode.IncomingConnections.Count(c => !connectionsToBreak.Contains(c));
+                if (conn == null || conn.ToNode == null) continue;
                 
-                // If no incoming connections will remain, revert energy
-                if (remainingIncoming == 0)
+                // Skip if already checked in this iteration (prevents duplicate checks within same iteration)
+                if (checkedThisIteration.Contains(conn)) continue;
+                
+                // Mark as checked for this iteration only
+                checkedThisIteration.Add(conn);
+                
+                // A connection should exist only if its ToNode is connected to a producer
+                // Check if the ToNode is still connected to a producer
+                if (!IsConnectedToProducer(conn.ToNode))
                 {
-                    GameController gameController = GameController.Instance;
-                    if (gameController != null)
-                    {
-                        gameController.ModifyEnergy(-toNode.Weight);
-                        toNode.IsEnergyApplied = false;
-                        
-                        Debug.Log($"Reverted energy {-toNode.Weight} from disconnected node {toNode.NodeID}");
-                    }
+                    connectionsToBreak.Add(conn);
                 }
             }
             
-            // Remove from active list
-            activeConnections.Remove(conn);
+            // If no connections to break, we're done
+            if (connectionsToBreak.Count == 0)
+            {
+                break;
+            }
             
-            // Destroy the connection
-            conn.DestroyConnection();
+            Debug.Log($"Iteration {iterationCount}: Found {connectionsToBreak.Count} connections to break");
+            
+            // Break all collected connections
+            foreach (Connection conn in connectionsToBreak)
+            {
+                BaseNode toNode = conn.ToNode;
+                
+                // Revert energy if this node will lose all incoming connections and energy was applied
+                if (toNode != null && toNode.IsEnergyApplied)
+                {
+                    // Count how many incoming connections this node will still have after breaking
+                    int remainingIncoming = toNode.IncomingConnections.Count(c => !connectionsToBreak.Contains(c));
+                    
+                    // If no incoming connections will remain, revert energy
+                    if (remainingIncoming == 0)
+                    {
+                        GameController gameController = GameController.Instance;
+                        if (gameController != null)
+                        {
+                            gameController.ModifyEnergy(-toNode.Weight);
+                            toNode.IsEnergyApplied = false;
+                            
+                            Debug.Log($"Reverted energy {-toNode.Weight} from disconnected node {toNode.NodeID}");
+                        }
+                    }
+                }
+                
+                // Remove from active list
+                activeConnections.Remove(conn);
+                
+                // Destroy the connection
+                conn.DestroyConnection();
+            }
+            
+            // Guarantee: we break at least one connection per iteration (if any exist)
+            // Since we remove connections from activeConnections, the next iteration
+            // will have fewer connections to check, guaranteeing termination
         }
         
-        Debug.Log($"Broke {connectionsToBreak.Count} connections from disconnected nodes");
+        // Safety check: if we hit max iterations, something went wrong
+        if (iterationCount >= maxIterations && activeConnections.Count > 0)
+        {
+            Debug.LogError($"BreakDisconnectedChains reached max iterations ({maxIterations}) with {activeConnections.Count} connections remaining. This should never happen!");
+        }
+        else if (iterationCount > 1)
+        {
+            Debug.Log($"BreakDisconnectedChains completed in {iterationCount} iterations (started with {initialConnectionCount} connections)");
+        }
         
         // Update visuals for all nodes after breaking connections
         RefreshAllNodeVisuals();
@@ -466,10 +488,10 @@ public class ConnectionManager : MonoBehaviour
         // Producers are always connected to themselves
         if (node is ProducerNode) return true;
         
-        // If node has incoming connections, it's already part of a network
-        if (node.IncomingConnections.Count > 0) return true;
+        // If node has no incoming connections, it cannot be connected to a producer
+        if (node.IncomingConnections.Count == 0) return false;
         
-        // Otherwise, check if we can reach a producer through existing connections
+        // Check if we can reach a producer through existing connections using BFS
         HashSet<BaseNode> visited = new HashSet<BaseNode>();
         Queue<BaseNode> queue = new Queue<BaseNode>();
         
