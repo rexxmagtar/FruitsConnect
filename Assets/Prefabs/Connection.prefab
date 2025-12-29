@@ -81,7 +81,7 @@ LineRenderer:
   m_SortingOrder: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
-  - {x: 0, y: 0, z: 1}
+  - {x: 0, y: 0, z: 8.33}
   m_Parameters:
     serializedVersion: 3
     widthMultiplier: 1
@@ -133,7 +133,7 @@ LineRenderer:
     numCornerVertices: 0
     numCapVertices: 0
     alignment: 0
-    textureMode: 0
+    textureMode: 1
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
@@ -153,6 +153,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d54eacba81d24f741a5fe8f51d3cb33a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  animationPrefab: {fileID: 0}
+  animationSpeed: 2
+  spawnInterval: 0.5
+  isAnimating: 0
 --- !u!65 &4112333675474129236
 BoxCollider:
   m_ObjectHideFlags: 0

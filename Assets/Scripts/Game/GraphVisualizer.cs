@@ -187,6 +187,9 @@ public class GraphVisualizer : MonoBehaviour
         lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         lineRenderer.receiveShadows = false;
         
+        // Set texture mode to tile
+        lineRenderer.textureMode = LineTextureMode.Tile;
+        
         // Set positions
         lineRenderer.SetPosition(0, fromNode.transform.position);
         lineRenderer.SetPosition(1, toNode.transform.position);
