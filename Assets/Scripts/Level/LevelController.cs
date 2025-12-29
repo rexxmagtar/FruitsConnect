@@ -10,12 +10,34 @@ public class LevelController : MonoBehaviour
     [Header("Connection Mappings")]
     [SerializeField] private List<ConnectionMapping> connectionMappings = new List<ConnectionMapping>();
     
+    [Header("Visualization")]
+    [SerializeField] private GraphVisualizer graphVisualizer;
+    
     // Dictionary for fast lookup (built at runtime from serialized list)
     private Dictionary<string, List<string>> connectionDict;
     
     private void Awake()
     {
         BuildConnectionDictionary();
+        
+        // Get or create GraphVisualizer
+        if (graphVisualizer == null)
+        {
+            graphVisualizer = GetComponent<GraphVisualizer>();
+            if (graphVisualizer == null)
+            {
+                graphVisualizer = gameObject.AddComponent<GraphVisualizer>();
+            }
+        }
+    }
+    
+    private void Start()
+    {
+        // Update visual lines after level is fully initialized
+        if (graphVisualizer != null)
+        {
+            graphVisualizer.UpdateVisualLines();
+        }
     }
     
     /// <summary>
@@ -35,10 +57,38 @@ public class LevelController : MonoBehaviour
     }
     
     /// <summary>
-    /// Get all nodes in the level
+    /// Get all nodes in the level (removes nulls and duplicates)
     /// </summary>
     public List<BaseNode> GetAllNodes()
     {
+        // Remove null entries
+        allNodes.RemoveAll(n => n == null);
+        
+        // Remove duplicates by NodeID (keep first occurrence)
+        HashSet<string> seenNodeIDs = new HashSet<string>();
+        List<BaseNode> uniqueNodes = new List<BaseNode>();
+        
+        foreach (var node in allNodes)
+        {
+            if (node == null) continue;
+            
+            // If node has no ID or ID is unique, add it
+            if (string.IsNullOrEmpty(node.NodeID) || !seenNodeIDs.Contains(node.NodeID))
+            {
+                if (!string.IsNullOrEmpty(node.NodeID))
+                {
+                    seenNodeIDs.Add(node.NodeID);
+                }
+                uniqueNodes.Add(node);
+            }
+        }
+        
+        // Update the list if duplicates were found
+        if (uniqueNodes.Count != allNodes.Count)
+        {
+            allNodes = uniqueNodes;
+        }
+        
         return allNodes;
     }
     
@@ -86,13 +136,71 @@ public class LevelController : MonoBehaviour
     
     /// <summary>
     /// Add a node to the level (used by editor)
+    /// Prevents duplicates by checking both reference and NodeID
     /// </summary>
     public void AddNode(BaseNode node)
     {
-        if (!allNodes.Contains(node))
+        if (node == null) return;
+        
+        // Check if node already exists by reference
+        if (allNodes.Contains(node))
         {
-            allNodes.Add(node);
+            return; // Already in list
         }
+        
+        // Check if node with same NodeID already exists (prevents duplicates)
+        if (!string.IsNullOrEmpty(node.NodeID))
+        {
+            var existingNode = allNodes.FirstOrDefault(n => n != null && n.NodeID == node.NodeID);
+            if (existingNode != null)
+            {
+                Debug.LogWarning($"Node with ID {node.NodeID} already exists in level. Skipping duplicate.");
+                return; // Node with this ID already exists
+            }
+        }
+        
+        allNodes.Add(node);
+        
+        // Update visual lines when nodes are added
+        if (graphVisualizer != null)
+        {
+            graphVisualizer.UpdateVisualLines();
+        }
+    }
+    
+    /// <summary>
+    /// Remove duplicate nodes from the list (cleanup method)
+    /// </summary>
+    public void RemoveDuplicateNodes()
+    {
+        // Remove null entries first
+        allNodes.RemoveAll(n => n == null);
+        
+        // Remove duplicates by NodeID (keep first occurrence)
+        HashSet<string> seenNodeIDs = new HashSet<string>();
+        List<BaseNode> uniqueNodes = new List<BaseNode>();
+        
+        foreach (var node in allNodes)
+        {
+            if (node == null) continue;
+            
+            // If node has no ID or ID is unique, add it
+            if (string.IsNullOrEmpty(node.NodeID) || !seenNodeIDs.Contains(node.NodeID))
+            {
+                if (!string.IsNullOrEmpty(node.NodeID))
+                {
+                    seenNodeIDs.Add(node.NodeID);
+                }
+                uniqueNodes.Add(node);
+            }
+            else
+            {
+                Debug.LogWarning($"Removing duplicate node with ID: {node.NodeID}");
+            }
+        }
+        
+        allNodes = uniqueNodes;
+        Debug.Log($"Removed duplicates. Node count: {allNodes.Count}");
     }
     
     /// <summary>
@@ -112,6 +220,12 @@ public class LevelController : MonoBehaviour
         }
         
         BuildConnectionDictionary();
+        
+        // Update visual lines when nodes are removed
+        if (graphVisualizer != null)
+        {
+            graphVisualizer.UpdateVisualLines();
+        }
     }
     
     /// <summary>
@@ -135,6 +249,12 @@ public class LevelController : MonoBehaviour
         }
         
         BuildConnectionDictionary();
+        
+        // Update visual lines when mappings change
+        if (graphVisualizer != null)
+        {
+            graphVisualizer.UpdateVisualLines();
+        }
     }
     
     /// <summary>

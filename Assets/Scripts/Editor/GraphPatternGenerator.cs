@@ -19,6 +19,7 @@ public static class GraphPatternGenerator
         LevelCreationConfig config,
         LevelController level)
     {
+        const float gridSize = 2f;
         List<Vector3> positions = pattern switch
         {
             GraphPattern.Triangular => GenerateTriangularPattern(nodeCount, bounds),
@@ -30,17 +31,57 @@ public static class GraphPatternGenerator
             _ => GenerateGridPattern(nodeCount, bounds)
         };
         
+        // Deduplicate positions to ensure no two nodes are at the same grid cell
+        List<Vector3> uniquePositions = new List<Vector3>();
+        HashSet<string> positionKeys = new HashSet<string>();
+        
+        foreach (Vector3 pos in positions)
+        {
+            Vector3 snappedPos = GridSnapper.SnapToGrid(pos, gridSize);
+            string key = $"{snappedPos.x:F2}_{snappedPos.z:F2}";
+            
+            if (!positionKeys.Contains(key))
+            {
+                positionKeys.Add(key);
+                uniquePositions.Add(snappedPos);
+            }
+        }
+        
+        // Get all existing nodes to check for collisions
+        List<BaseNode> existingNodes = level != null ? level.GetAllNodes() : new List<BaseNode>();
+        
         List<BaseNode> nodes = new List<BaseNode>();
         
-        // Create nodes at calculated positions
-        foreach (Vector3 pos in positions)
+        // Create nodes at calculated positions, ensuring no overlap with existing nodes
+        foreach (Vector3 pos in uniquePositions)
         {
             if (nodes.Count >= nodeCount) break;
             
-            BaseNode node = CreateNodeAtPosition(pos, NodeType.Neutral, config, level);
-            if (node != null)
+            // Check if position conflicts with existing nodes
+            bool positionOccupied = GridSnapper.IsGridPositionOccupied(pos, existingNodes, gridSize);
+            
+            if (!positionOccupied)
             {
-                nodes.Add(node);
+                BaseNode node = CreateNodeAtPosition(pos, NodeType.Neutral, config, level);
+                if (node != null)
+                {
+                    nodes.Add(node);
+                    existingNodes.Add(node); // Add to existing list to prevent future overlaps
+                }
+            }
+            else
+            {
+                // Try to find nearby unoccupied position
+                Vector3 alternativePos = GridSnapper.FindNearestUnoccupiedGridPosition(pos, existingNodes, gridSize, 10);
+                if (!GridSnapper.IsGridPositionOccupied(alternativePos, existingNodes, gridSize))
+                {
+                    BaseNode node = CreateNodeAtPosition(alternativePos, NodeType.Neutral, config, level);
+                    if (node != null)
+                    {
+                        nodes.Add(node);
+                        existingNodes.Add(node);
+                    }
+                }
             }
         }
         
@@ -52,6 +93,7 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateTriangularPattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<Vector3> positions = new List<Vector3>();
         
         float width = bounds.size.x * 0.8f;
@@ -72,7 +114,8 @@ public static class GraphPatternGenerator
                 float layerWidth = width * (layer + 1) / layers;
                 float x = center.x - layerWidth / 2 + layerWidth * t;
                 
-                positions.Add(new Vector3(x, 0, layerHeight));
+                Vector3 pos = new Vector3(x, 0, layerHeight);
+                positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
             }
         }
         
@@ -84,6 +127,7 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateGridPattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<Vector3> positions = new List<Vector3>();
         
         int cols = Mathf.CeilToInt(Mathf.Sqrt(nodeCount * 1.5f));
@@ -93,17 +137,23 @@ public static class GraphPatternGenerator
         float height = bounds.size.z * 0.8f;
         Vector3 center = bounds.center;
         
-        float xSpacing = width / (cols + 1);
-        float zSpacing = height / (rows + 1);
+        // Use grid spacing (1 unit)
+        float xSpacing = gridSize;
+        float zSpacing = gridSize;
+        
+        // Calculate starting position to center the grid
+        float startX = center.x - (cols - 1) * xSpacing / 2f;
+        float startZ = center.z - (rows - 1) * zSpacing / 2f;
         
         for (int row = 0; row < rows && positions.Count < nodeCount; row++)
         {
             for (int col = 0; col < cols && positions.Count < nodeCount; col++)
             {
-                float x = center.x - width / 2 + xSpacing * (col + 1);
-                float z = center.z - height / 2 + zSpacing * (row + 1);
+                float x = startX + col * xSpacing;
+                float z = startZ + row * zSpacing;
                 
-                positions.Add(new Vector3(x, 0, z));
+                Vector3 pos = new Vector3(x, 0, z);
+                positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
             }
         }
         
@@ -115,6 +165,7 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateCircularPattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<Vector3> positions = new List<Vector3>();
         
         float maxRadius = Mathf.Min(bounds.size.x, bounds.size.z) * 0.4f;
@@ -134,7 +185,8 @@ public static class GraphPatternGenerator
                 float x = center.x + Mathf.Cos(angle) * radius;
                 float z = center.z + Mathf.Sin(angle) * radius;
                 
-                positions.Add(new Vector3(x, 0, z));
+                Vector3 pos = new Vector3(x, 0, z);
+                positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
             }
         }
         
@@ -146,6 +198,7 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateDiamondPattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<Vector3> positions = new List<Vector3>();
         
         float width = bounds.size.x * 0.8f;
@@ -187,7 +240,8 @@ public static class GraphPatternGenerator
                 float layerWidth = width * nodesInLayer / layers;
                 float x = center.x - layerWidth / 2 + layerWidth * t;
                 
-                positions.Add(new Vector3(x, 0, layerHeight));
+                Vector3 pos = new Vector3(x, 0, layerHeight);
+                positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
             }
         }
         
@@ -199,6 +253,7 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateTreePattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<Vector3> positions = new List<Vector3>();
         
         float width = bounds.size.x * 0.8f;
@@ -217,7 +272,8 @@ public static class GraphPatternGenerator
                 float t = nodesInLevel > 1 ? (float)i / (nodesInLevel - 1) : 0.5f;
                 float x = center.x - width / 2 + width * t;
                 
-                positions.Add(new Vector3(x, 0, levelHeight));
+                Vector3 pos = new Vector3(x, 0, levelHeight);
+                positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
             }
         }
         
@@ -229,17 +285,26 @@ public static class GraphPatternGenerator
     /// </summary>
     private static List<Vector3> GenerateMixedPattern(int nodeCount, Bounds bounds)
     {
+        const float gridSize = 2f; // 2 unit spacing for better separation
         // Use a combination of patterns
         List<Vector3> positions = new List<Vector3>();
         
         // Central circular cluster
         int circularCount = nodeCount / 3;
-        positions.AddRange(GenerateCircularPattern(circularCount, bounds).Take(circularCount));
+        var circularPositions = GenerateCircularPattern(circularCount, bounds);
+        foreach (var pos in circularPositions.Take(circularCount))
+        {
+            positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
+        }
         
         // Grid around edges
         int gridCount = nodeCount - positions.Count;
         var gridBounds = new Bounds(bounds.center, bounds.size * 0.6f);
-        positions.AddRange(GenerateGridPattern(gridCount, gridBounds).Take(gridCount));
+        var gridPositions = GenerateGridPattern(gridCount, gridBounds);
+        foreach (var pos in gridPositions.Take(gridCount))
+        {
+            positions.Add(GridSnapper.SnapToGrid(pos, gridSize));
+        }
         
         return positions;
     }

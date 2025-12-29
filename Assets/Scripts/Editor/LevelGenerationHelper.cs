@@ -12,6 +12,7 @@ public static class LevelGenerationHelper
     /// <summary>
     /// Create a node at a random valid position within bounds
     /// Producers spawn near bottom (Z min), Consumers near top (Z max)
+    /// Uses grid-based placement with 1-unit spacing
     /// </summary>
     public static BaseNode CreateNodeAtRandomPosition(
         NodeType nodeType, 
@@ -21,15 +22,10 @@ public static class LevelGenerationHelper
         LevelController currentLevel,
         DifficultyTier difficulty)
     {
+        const float gridSize = 2f; // 2 unit grid spacing for better node separation
         int maxAttempts = 100;
         Vector3 position = Vector3.zero;
         bool validPositionFound = false;
-        
-        // Special minimum distance rules
-        float minDistanceRequired = config.MinNodeDistance;
-        
-        // Producers and Consumers should be far apart from each other to prevent trivial solutions
-        float minProducerConsumerDistance = config.MinNodeDistance * 3f;
         
         // Define spawn zones based on node type
         float zMin = bounds.min.z;
@@ -60,49 +56,61 @@ public static class LevelGenerationHelper
                 break;
         }
         
-        // Try to find a valid position
+        // Try to find a valid grid position
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            position = new Vector3(
+            // Generate random position within spawn zone
+            Vector3 randomPos = new Vector3(
                 Random.Range(bounds.min.x, bounds.max.x),
                 0f,  // Keep Y at 0 for flat gameplay
                 Random.Range(spawnZMin, spawnZMax)
             );
             
-            // Check distance from existing nodes
-            validPositionFound = true;
-            foreach (BaseNode existingNode in existingNodes)
+            // Snap to grid and find nearest unoccupied position
+            position = GridSnapper.FindNearestUnoccupiedGridPosition(randomPos, existingNodes, gridSize);
+            
+            // Check if position is valid (not occupied)
+            if (!GridSnapper.IsGridPositionOccupied(position, existingNodes, gridSize))
             {
-                if (existingNode == null) continue;
-                
-                float distance = Vector3.Distance(position, existingNode.transform.position);
-                
-                // If we're placing a Producer or Consumer, keep them far from opposite type
-                if ((nodeType == NodeType.Producer && existingNode is ConsumerNode) ||
-                    (nodeType == NodeType.Consumer && existingNode is ProducerNode))
+                // Additional check: Producers and Consumers should be far from opposite type
+                bool tooCloseToOpposite = false;
+                if (nodeType == NodeType.Producer || nodeType == NodeType.Consumer)
                 {
-                    if (distance < minProducerConsumerDistance)
+                    foreach (BaseNode existingNode in existingNodes)
                     {
-                        validPositionFound = false;
-                        break;
+                        if (existingNode == null) continue;
+                        
+                        // Check distance to opposite type
+                        if ((nodeType == NodeType.Producer && existingNode is ConsumerNode) ||
+                            (nodeType == NodeType.Consumer && existingNode is ProducerNode))
+                        {
+                            float distance = Vector3.Distance(position, existingNode.transform.position);
+                            // Require at least 3 grid units between producers and consumers
+                            if (distance < gridSize * 3f)
+                            {
+                                tooCloseToOpposite = true;
+                                break;
+                            }
+                        }
                     }
                 }
-                // Regular minimum distance for all other cases
-                else if (distance < minDistanceRequired)
+                
+                if (!tooCloseToOpposite)
                 {
-                    validPositionFound = false;
+                    validPositionFound = true;
                     break;
                 }
             }
-            
-            if (validPositionFound) break;
         }
         
         if (!validPositionFound)
         {
-            Debug.LogWarning($"Could not find valid position for {nodeType} node after {maxAttempts} attempts");
+            Debug.LogWarning($"Could not find valid grid position for {nodeType} node after {maxAttempts} attempts");
             return null;
         }
+        
+        // Ensure position is snapped to grid
+        position = GridSnapper.SnapToGrid(position, gridSize);
         
         // Create the node
         GameObject nodeObj = null;

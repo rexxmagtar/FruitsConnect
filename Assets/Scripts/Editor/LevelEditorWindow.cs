@@ -140,7 +140,7 @@ public class LevelEditorWindow : EditorWindow
         GUILayout.Label("Node Counts", EditorStyles.boldLabel);
         autoGenProducerCount = EditorGUILayout.IntSlider("Producers", autoGenProducerCount, 1, 10);
         autoGenConsumerCount = EditorGUILayout.IntSlider("Consumers", autoGenConsumerCount, 1, 10);
-        autoGenNeutralCount = EditorGUILayout.IntSlider("Neutral Nodes", autoGenNeutralCount, 5, 30);
+        autoGenNeutralCount = EditorGUILayout.IntSlider("Neutral Nodes", autoGenNeutralCount, 2, 30);
         
         EditorGUILayout.Space();
         
@@ -1203,36 +1203,97 @@ public class LevelEditorWindow : EditorWindow
             neutral.MaxOutgoingConnections = LevelGenerationHelper.GetMaxConnectionsForDifficulty(autoGenDifficulty, false);
         }
         
-        // Step 2: Place producers at the bottom
+        // Step 2: Place producers at the bottom (opposite side from consumers)
+        const float gridSize = 2f; // 2 unit spacing for better separation
         List<BaseNode> producers = new List<BaseNode>();
-        float producerZ = bounds.min.z + (bounds.size.z * 0.2f);
+        
+        // Calculate grid-aligned positions for producers at bottom
+        float producerZ = bounds.min.z;
+        producerZ = GridSnapper.SnapToGrid(new Vector3(0, 0, producerZ), gridSize).z;
+        
+        // Ensure minimum distance from consumers (place at least 3 grid units from top)
+        float minProducerZ = bounds.max.z - (bounds.size.z * 0.3f);
+        if (producerZ > minProducerZ)
+        {
+            producerZ = GridSnapper.SnapToGrid(new Vector3(0, 0, minProducerZ), gridSize).z;
+        }
+        
+        // Track used positions to avoid duplicates
+        HashSet<string> usedPositions = new HashSet<string>();
+        
         for (int i = 0; i < autoGenProducerCount; i++)
         {
             float xSpread = bounds.size.x * 0.6f;
             float x = bounds.center.x - xSpread / 2 + (xSpread * i / Mathf.Max(1, autoGenProducerCount - 1));
+            x = GridSnapper.SnapToGrid(new Vector3(x, 0, 0), gridSize).x;
             
             Vector3 pos = new Vector3(x, 0, producerZ);
-            BaseNode producer = CreateNodeAtPosition(pos, NodeType.Producer);
-            if (producer != null)
+            pos = GridSnapper.SnapToGrid(pos, gridSize);
+            
+            // Check if this position is already used
+            string posKey = $"{pos.x:F2}_{pos.z:F2}";
+            if (usedPositions.Contains(posKey))
             {
-                producer.MaxOutgoingConnections = LevelGenerationHelper.GetMaxConnectionsForDifficulty(autoGenDifficulty, true);
-                producers.Add(producer);
+                // Try to find an alternative position
+                pos = GridSnapper.FindNearestUnoccupiedGridPosition(pos, producers.Cast<BaseNode>().ToList(), gridSize, 10);
+                posKey = $"{pos.x:F2}_{pos.z:F2}";
+            }
+            
+            if (!usedPositions.Contains(posKey))
+            {
+                usedPositions.Add(posKey);
+                BaseNode producer = CreateNodeAtPosition(pos, NodeType.Producer);
+                if (producer != null)
+                {
+                    producer.MaxOutgoingConnections = LevelGenerationHelper.GetMaxConnectionsForDifficulty(autoGenDifficulty, true);
+                    producers.Add(producer);
+                }
             }
         }
         
-        // Step 3: Place consumers at the top
+        // Step 3: Place consumers at the top (opposite side from producers)
         List<BaseNode> consumers = new List<BaseNode>();
-        float consumerZ = bounds.max.z - (bounds.size.z * 0.2f);
+        
+        // Calculate grid-aligned positions for consumers at top
+        float consumerZ = bounds.max.z;
+        consumerZ = GridSnapper.SnapToGrid(new Vector3(0, 0, consumerZ), gridSize).z;
+        
+        // Ensure minimum distance from producers (place at least 3 grid units from bottom)
+        float minConsumerZ = bounds.min.z + (bounds.size.z * 0.3f);
+        if (consumerZ < minConsumerZ)
+        {
+            consumerZ = GridSnapper.SnapToGrid(new Vector3(0, 0, minConsumerZ), gridSize).z;
+        }
+        
         for (int i = 0; i < autoGenConsumerCount; i++)
         {
             float xSpread = bounds.size.x * 0.6f;
             float x = bounds.center.x - xSpread / 2 + (xSpread * i / Mathf.Max(1, autoGenConsumerCount - 1));
+            x = GridSnapper.SnapToGrid(new Vector3(x, 0, 0), gridSize).x;
             
             Vector3 pos = new Vector3(x, 0, consumerZ);
-            BaseNode consumer = CreateNodeAtPosition(pos, NodeType.Consumer);
-            if (consumer != null)
+            pos = GridSnapper.SnapToGrid(pos, gridSize);
+            
+            // Check if this position is already used
+            string posKey = $"{pos.x:F2}_{pos.z:F2}";
+            if (usedPositions.Contains(posKey))
             {
-                consumers.Add(consumer);
+                // Try to find an alternative position
+                List<BaseNode> allExisting = new List<BaseNode>();
+                allExisting.AddRange(producers);
+                allExisting.AddRange(consumers);
+                pos = GridSnapper.FindNearestUnoccupiedGridPosition(pos, allExisting, gridSize, 10);
+                posKey = $"{pos.x:F2}_{pos.z:F2}";
+            }
+            
+            if (!usedPositions.Contains(posKey))
+            {
+                usedPositions.Add(posKey);
+                BaseNode consumer = CreateNodeAtPosition(pos, NodeType.Consumer);
+                if (consumer != null)
+                {
+                    consumers.Add(consumer);
+                }
             }
         }
         
@@ -1243,6 +1304,12 @@ public class LevelEditorWindow : EditorWindow
         
         // Step 4: Generate connections using core+noise strategy
         CoreNoiseGenerator.GenerateLevel(producers, consumers, neutrals, currentLevel, autoGenDifficulty);
+        
+        // Step 5: Clean up any duplicate nodes that may have been created
+        currentLevel.RemoveDuplicateNodes();
+        
+        // Refresh the node list after cleanup
+        allGeneratedNodes = currentLevel.GetAllNodes();
         
         // Validate the level is actually solvable
         bool isSolvable = SolutionValidator.IsLevelSolvable(allGeneratedNodes, currentLevel);

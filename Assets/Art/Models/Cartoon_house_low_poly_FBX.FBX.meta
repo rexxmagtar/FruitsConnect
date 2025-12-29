@@ -3,7 +3,67 @@ guid: 92286767f02451f4aad6bddc73a0bd66
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #163
+    second: {fileID: 2100000, guid: d777507ef537ffc42878f1342f8d63d2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #26
+    second: {fileID: 2100000, guid: 0c80463cbf91b9944b8f57cd496eb078, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #27
+    second: {fileID: 2100000, guid: afa3b5a330d7be84782693ee9c247a0a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #29
+    second: {fileID: 2100000, guid: e323a514b31ac7041897c3eb11a850c3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #93
+    second: {fileID: 2100000, guid: c54b35199a48a674a8f9fafaed18560a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Material #98
+    second: {fileID: 2100000, guid: b2df5159616c76c41b3ae27c38dab34a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: cati
+    second: {fileID: 2100000, guid: 0a6ffb75503092b4c92b240f82d8eecd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: duvar
+    second: {fileID: 2100000, guid: 71d54821ca59594468442d125bb3477d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lamp
+    second: {fileID: 2100000, guid: 53ca0ea3810c76e46930deb517ecc79c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: paslidemir
+    second: {fileID: 2100000, guid: fa46f008cb854b1428f79638aa214d2b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: pencereucgen
+    second: {fileID: 2100000, guid: 07a8147362964a845ba11310eafa554c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: yancamlar
+    second: {fileID: 2100000, guid: 7c8bbd99d8568db45a4cefb94fb79261, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
