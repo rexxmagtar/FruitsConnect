@@ -481,9 +481,10 @@ public class GameController : MonoBehaviour
             currentLevelInstance = null;
         }
         
-        // Clean up drag state
+        // Clean up drag state and clear all connections
         if (connectionManager != null)
         {
+            connectionManager.ClearAllConnections();
             connectionManager.HideGhostLine();
         }
         

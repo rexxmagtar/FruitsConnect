@@ -24,6 +24,14 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] private Color connectedColor = Color.white;
     [SerializeField] private Color disconnectedColor = Color.black;
     
+    [Header("Pulse Animation")]
+    [SerializeField] private float pulseScale = 1.2f;
+    [SerializeField] private float pulseDuration = 0.3f;
+    [SerializeField] private AnimationCurve pulseCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    
+    [Header("Particle Effects")]
+    [SerializeField] private ParticleSystem connectionParticles;
+    
     // Connection tracking
     protected List<Connection> outgoingConnections = new List<Connection>();
     protected List<Connection> incomingConnections = new List<Connection>();
@@ -31,6 +39,10 @@ public abstract class BaseNode : MonoBehaviour
     // Visual state
     private bool isSelected = false;
     private bool isHovered = false;
+    
+    // Animation tracking
+    private Coroutine currentAnimationCoroutine;
+    private Vector3 originalScale;
     
     // Store original material colors for restoration
     private Color[] originalMainMaterialColors;
@@ -107,6 +119,15 @@ public abstract class BaseNode : MonoBehaviour
         
         // Store original material colors (materials should be assigned by now)
         StoreOriginalMaterialColors();
+        
+        // Store original scale for animation restoration
+        originalScale = transform.localScale;
+        
+        // Initialize pulse curve if not set (default ease in-out)
+        if (pulseCurve == null || pulseCurve.keys.Length == 0)
+        {
+            pulseCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        }
         
         // Update connection status visual on start
         UpdateConnectionStatusVisual();
@@ -251,6 +272,9 @@ public abstract class BaseNode : MonoBehaviour
     {
         isSelected = true;
         UpdateVisual();
+        
+        // Play pulse animation when node is selected to start connection
+        PlayPulseAnimation();
     }
     
     /// <summary>
@@ -527,6 +551,69 @@ public abstract class BaseNode : MonoBehaviour
         incomingConnections.Clear();
         isEnergyApplied = false;
         OnConnectionsChanged();
+    }
+    
+    /// <summary>
+    /// Play a pulse animation (scale up then back down)
+    /// </summary>
+    public void PlayPulseAnimation()
+    {
+        // Stop any existing animation
+        if (currentAnimationCoroutine != null)
+        {
+            StopCoroutine(currentAnimationCoroutine);
+            currentAnimationCoroutine = null;
+        }
+        
+        // Start new animation
+        currentAnimationCoroutine = StartCoroutine(PulseAnimationCoroutine());
+    }
+    
+    /// <summary>
+    /// Coroutine that performs the pulse animation
+    /// </summary>
+    private System.Collections.IEnumerator PulseAnimationCoroutine()
+    {
+        float elapsedTime = 0f;
+        float halfDuration = pulseDuration * 0.5f;
+        
+        // First half: scale up from original to pulseScale
+        while (elapsedTime < halfDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / halfDuration;
+            float curveValue = pulseCurve.Evaluate(t);
+            float currentScale = Mathf.Lerp(1f, pulseScale, curveValue);
+            transform.localScale = originalScale * currentScale;
+            yield return null;
+        }
+        
+        // Second half: scale down from pulseScale back to original
+        elapsedTime = 0f;
+        while (elapsedTime < halfDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / halfDuration;
+            float curveValue = pulseCurve.Evaluate(1f - t); // Reverse the curve
+            float currentScale = Mathf.Lerp(1f, pulseScale, curveValue);
+            transform.localScale = originalScale * currentScale;
+            yield return null;
+        }
+        
+        // Ensure we're back to original scale
+        transform.localScale = originalScale;
+        currentAnimationCoroutine = null;
+    }
+    
+    /// <summary>
+    /// Play particle system effect when connection is made to this node
+    /// </summary>
+    public void PlayConnectionParticles()
+    {
+        if (connectionParticles != null)
+        {
+            connectionParticles.Play();
+        }
     }
 }
 

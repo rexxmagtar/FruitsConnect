@@ -16,4 +16,4 @@ MonoBehaviour:
   coinReward: 10
   levelName: Level3
   startingEnergy: 5
-  connectionAnimationPrefab: {fileID: 0}
+  connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}

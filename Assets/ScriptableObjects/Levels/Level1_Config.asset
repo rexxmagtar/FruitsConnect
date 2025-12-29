@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 007da7f034193494ca19714500eded31, type: 3}
   m_Name: Level1_Config
   m_EditorClassIdentifier: 
-  levelPrefab: {fileID: 7758629621863314383, guid: 48f66b4c1bd1f7e4f9256ee321f8aca5, type: 3}
+  levelPrefab: {fileID: 8720094103698944968, guid: 7167e9bed332d334ebb0b73c3e817e00, type: 3}
   coinReward: 10
-  levelName: Level1
+  levelName: Level5
   startingEnergy: 5
-  connectionAnimationPrefab: {fileID: 0}
+  connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}

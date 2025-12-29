@@ -142,6 +142,13 @@ public class ConnectionManager : MonoBehaviour
         
         Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}");
         
+        // Trigger pulse animations on both nodes
+        from.PlayPulseAnimation();
+        to.PlayPulseAnimation();
+        
+        // Trigger particle effect on target node
+        to.PlayConnectionParticles();
+        
         // Update visuals for all nodes after connection change
         RefreshAllNodeVisuals();
         
