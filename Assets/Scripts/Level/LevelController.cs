@@ -126,9 +126,10 @@ public class LevelController : MonoBehaviour
     /// </summary>
     public bool CanConnect(string fromNodeID, string toNodeID)
     {
-        if (connectionDict != null && connectionDict.ContainsKey(fromNodeID))
+        if (connectionDict != null )
         {
-            return connectionDict[fromNodeID].Contains(toNodeID);
+            return (connectionDict.ContainsKey(fromNodeID) && connectionDict[fromNodeID].Contains(toNodeID))
+            || (connectionDict.ContainsKey(toNodeID) && connectionDict[toNodeID].Contains(fromNodeID));
         }
         
         return false;
