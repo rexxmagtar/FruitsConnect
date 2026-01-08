@@ -320,7 +320,6 @@ MonoBehaviour:
   - nodeID: Node_eb9ff6f5
     validTargetIDs:
     - Node_5ff1c4d9
-    - Node_d25ede14
   - nodeID: Node_b902334b
     validTargetIDs: []
   - nodeID: Node_a64b1f01
@@ -1320,7 +1319,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.682287
+      value: -0.84812343
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1538,7 +1537,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.9644933
+      value: 2.1379638
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1875,6 +1874,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: Neutral_Node_8b85cf72
       objectReference: {fileID: 0}
+    - target: {fileID: 7859415214208263752, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7859415214208263752, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 03689cce795776242b343c3933d62880, type: 2}
+    - target: {fileID: 7859415214208263752, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: db1cf7abb5dba8149b5ead861dbbb1cc, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -2217,7 +2228,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 456811763718166796, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name
@@ -2225,7 +2236,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5895336751631629932, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4
+      value: 4.17
       objectReference: {fileID: 0}
     - target: {fileID: 5895336751631629932, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_LocalPosition.y

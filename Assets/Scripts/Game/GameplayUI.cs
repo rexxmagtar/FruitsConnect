@@ -57,9 +57,6 @@ public class GameplayUI : MonoBehaviour
     
     private void Start()
     {
-        // Initialize UI
-        UpdateDisplay();
-        
         // Hide initially
         Hide();
     }

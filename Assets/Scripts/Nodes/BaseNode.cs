@@ -16,13 +16,10 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] protected Material defaultMaterial;
     [SerializeField] protected Material selectedMaterial;
     [SerializeField] protected Material hoverMaterial;
+    [SerializeField] protected Material grayscaleMaterial;
     
     [Header("Display")]
     [SerializeField] private NodeDisplay nodeDisplay;
-    
-    [Header("Connection Status Animation")]
-    [SerializeField] private Color connectedColor = Color.white;
-    [SerializeField] private Color disconnectedColor = Color.black;
     
     [Header("Pulse Animation")]
     [SerializeField] private float pulseScale = 1.2f;
@@ -44,10 +41,14 @@ public abstract class BaseNode : MonoBehaviour
     private Coroutine currentAnimationCoroutine;
     private Vector3 originalScale;
     
-    // Store original material colors for restoration
-    private Color[] originalMainMaterialColors;
-    private System.Collections.Generic.Dictionary<Renderer, Color[]> originalChildMaterialColors = new System.Collections.Generic.Dictionary<Renderer, Color[]>();
-    private bool colorsStored = false;
+    // Store original materials for restoration
+    private Material[] originalMainMaterials;
+    private System.Collections.Generic.Dictionary<Renderer, Material[]> originalChildMaterials = new System.Collections.Generic.Dictionary<Renderer, Material[]>();
+    private bool materialsStored = false;
+    
+    // Cache grayscale material instances to avoid creating new ones each frame
+    private Material[] cachedGrayscaleMainMaterials;
+    private System.Collections.Generic.Dictionary<Renderer, Material[]> cachedGrayscaleChildMaterials = new System.Collections.Generic.Dictionary<Renderer, Material[]>();
     
     // Properties
     public string NodeID 
@@ -117,8 +118,8 @@ public abstract class BaseNode : MonoBehaviour
             nodeDisplay.UpdateDisplay();
         }
         
-        // Store original material colors (materials should be assigned by now)
-        StoreOriginalMaterialColors();
+        // Store original materials (materials should be assigned by now)
+        StoreOriginalMaterials();
         
         // Store original scale for animation restoration
         originalScale = transform.localScale;
@@ -329,83 +330,224 @@ public abstract class BaseNode : MonoBehaviour
     }
     
     /// <summary>
-    /// Store original material colors for restoration
+    /// Store original materials for restoration
     /// Called lazily on first use if not already stored
     /// </summary>
-    private void StoreOriginalMaterialColors()
+    private void StoreOriginalMaterials()
     {
-        if (colorsStored) return;
+        if (materialsStored) return;
         
-        // Store main renderer colors
+        // Store main renderer materials
         if (meshRenderer != null && meshRenderer.materials != null && meshRenderer.materials.Length > 0)
         {
-            originalMainMaterialColors = new Color[meshRenderer.materials.Length];
+            originalMainMaterials = new Material[meshRenderer.materials.Length];
             for (int i = 0; i < meshRenderer.materials.Length; i++)
             {
-                if (meshRenderer.materials[i] != null)
-                {
-                    originalMainMaterialColors[i] = meshRenderer.materials[i].color;
-                }
+                originalMainMaterials[i] = meshRenderer.materials[i];
             }
         }
         
-        // Store child renderer colors
+        // Store child renderer materials
         Renderer[] childRenderers = GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in childRenderers)
         {
             // Skip the main renderer
-            if (renderer == meshRenderer) continue;
+            if (renderer == meshRenderer || renderer is ParticleSystemRenderer) continue;
             
             if (renderer.materials != null && renderer.materials.Length > 0)
             {
-                Color[] colors = new Color[renderer.materials.Length];
+                Material[] materials = new Material[renderer.materials.Length];
                 for (int i = 0; i < renderer.materials.Length; i++)
                 {
-                    if (renderer.materials[i] != null)
-                    {
-                        colors[i] = renderer.materials[i].color;
-                    }
+                    materials[i] = renderer.materials[i];
                 }
-                originalChildMaterialColors[renderer] = colors;
+                originalChildMaterials[renderer] = materials;
             }
         }
         
-        colorsStored = true;
+        materialsStored = true;
     }
     
     /// <summary>
-    /// Update material colors based on connection status to producer
+    /// Create or get cached grayscale material instance for a given original material
+    /// </summary>
+    private Material GetGrayscaleMaterialInstance(Material originalMaterial, int materialIndex, bool isMainRenderer)
+    {
+        if (grayscaleMaterial == null || originalMaterial == null)
+        {
+            return originalMaterial;
+        }
+        
+        // For main renderer, cache materials
+        if (isMainRenderer)
+        {
+            if (cachedGrayscaleMainMaterials == null || cachedGrayscaleMainMaterials.Length <= materialIndex)
+            {
+                if (originalMainMaterials != null)
+                {
+                    cachedGrayscaleMainMaterials = new Material[originalMainMaterials.Length];
+                }
+            }
+            
+            // Create cached instance if it doesn't exist
+            if (cachedGrayscaleMainMaterials != null && 
+                materialIndex < cachedGrayscaleMainMaterials.Length && 
+                cachedGrayscaleMainMaterials[materialIndex] == null)
+            {
+                Material grayscaleInstance = new Material(grayscaleMaterial);
+                
+                // Copy main texture and color from original
+                if (originalMaterial.HasProperty("_MainTex"))
+                {
+                    grayscaleInstance.SetTexture("_MainTex", originalMaterial.GetTexture("_MainTex"));
+                }
+                if (originalMaterial.HasProperty("_Color"))
+                {
+                    grayscaleInstance.SetColor("_Color", originalMaterial.GetColor("_Color"));
+                }
+                // Set grayscale intensity to full
+                grayscaleInstance.SetFloat("_GrayscaleIntensity", 1.0f);
+                
+                cachedGrayscaleMainMaterials[materialIndex] = grayscaleInstance;
+            }
+            
+            return cachedGrayscaleMainMaterials != null && 
+                   materialIndex < cachedGrayscaleMainMaterials.Length ? 
+                   cachedGrayscaleMainMaterials[materialIndex] : originalMaterial;
+        }
+        
+        return originalMaterial;
+    }
+    
+    /// <summary>
+    /// Get cached grayscale material for child renderer
+    /// </summary>
+    private Material GetGrayscaleMaterialInstanceForChild(Renderer renderer, Material originalMaterial, int materialIndex)
+    {
+        if (grayscaleMaterial == null || originalMaterial == null)
+        {
+            return originalMaterial;
+        }
+        
+        // Initialize cache for this renderer if needed
+        if (!cachedGrayscaleChildMaterials.ContainsKey(renderer))
+        {
+            if (originalChildMaterials.ContainsKey(renderer))
+            {
+                Material[] originalMats = originalChildMaterials[renderer];
+                cachedGrayscaleChildMaterials[renderer] = new Material[originalMats.Length];
+            }
+            else
+            {
+                return originalMaterial;
+            }
+        }
+        
+        Material[] cachedMats = cachedGrayscaleChildMaterials[renderer];
+        
+        // Create cached instance if it doesn't exist
+        if (cachedMats != null && 
+            materialIndex < cachedMats.Length && 
+            cachedMats[materialIndex] == null)
+        {
+            Material grayscaleInstance = new Material(grayscaleMaterial);
+            
+            // Copy main texture and color from original
+            if (originalMaterial.HasProperty("_MainTex"))
+            {
+                grayscaleInstance.SetTexture("_MainTex", originalMaterial.GetTexture("_MainTex"));
+            }
+            if (originalMaterial.HasProperty("_Color"))
+            {
+                grayscaleInstance.SetColor("_Color", originalMaterial.GetColor("_Color"));
+            }
+            grayscaleInstance.SetFloat("_GrayscaleIntensity", 1.0f);
+            
+            cachedMats[materialIndex] = grayscaleInstance;
+        }
+        
+        return cachedMats != null && 
+               materialIndex < cachedMats.Length ? 
+               cachedMats[materialIndex] : originalMaterial;
+    }
+    
+    /// <summary>
+    /// Update materials based on connection status to producer
+    /// Applies grayscale material when disconnected, restores original when connected
     /// </summary>
     private void UpdateConnectionStatusVisual()
     {
-        // Ensure original colors are stored
-        if (!colorsStored)
+        // Ensure original materials are stored
+        if (!materialsStored)
         {
-            StoreOriginalMaterialColors();
+            StoreOriginalMaterials();
         }
         
         // Check if connected to producer
         bool isConnectedToProducer = IsConnectedToProducer();
         
-        // Determine target color
-        Color targetColor = isConnectedToProducer ? connectedColor : disconnectedColor;
-        
         // Update main renderer
-        if (meshRenderer != null && meshRenderer.materials != null)
+        if (meshRenderer != null && originalMainMaterials != null && originalMainMaterials.Length > 0)
         {
-            for (int i = 0; i < meshRenderer.materials.Length; i++)
+            Material[] newMaterials;
+            
+            // Get the current base material (could be selected/hover/default from UpdateVisual)
+            Material currentBaseMaterial = null;
+            if (meshRenderer.materials != null && meshRenderer.materials.Length > 0)
             {
-                if (meshRenderer.materials[i] != null)
+                currentBaseMaterial = meshRenderer.materials[0];
+            }
+            
+            // If no current material or it's not one of our state materials, use original
+            if (currentBaseMaterial == null || 
+                (currentBaseMaterial != selectedMaterial && 
+                 currentBaseMaterial != hoverMaterial && 
+                 currentBaseMaterial != defaultMaterial))
+            {
+                currentBaseMaterial = originalMainMaterials[0];
+            }
+            
+            if (isConnectedToProducer)
+            {
+                // Connected: use current base material (or original if no state material)
+                newMaterials = new Material[originalMainMaterials.Length];
+                newMaterials[0] = currentBaseMaterial;
+                // Copy remaining original materials if any
+                for (int i = 1; i < originalMainMaterials.Length; i++)
                 {
-                    // Get original color if available, otherwise use current
-                    Color baseColor = (originalMainMaterialColors != null && i < originalMainMaterialColors.Length) 
-                        ? originalMainMaterialColors[i] 
-                        : meshRenderer.materials[i].color;
-                    
-                    // Apply color modulation (multiply original color by target color)
-                    meshRenderer.materials[i].color = baseColor * targetColor;
+                    newMaterials[i] = originalMainMaterials[i];
                 }
             }
+            else
+            {
+                // Disconnected: add grayscale material as second material
+                if (grayscaleMaterial != null)
+                {
+                    // Create array with current base material + remaining originals + grayscale material
+                    newMaterials = new Material[originalMainMaterials.Length + 1];
+                    // Use current base material as first
+                    newMaterials[0] = currentBaseMaterial;
+                    // Copy remaining original materials if any
+                    for (int i = 1; i < originalMainMaterials.Length; i++)
+                    {
+                        newMaterials[i] = originalMainMaterials[i];
+                    }
+                    // Add grayscale material as last material
+                    newMaterials[originalMainMaterials.Length] = GetGrayscaleMaterialInstance(originalMainMaterials[0], 0, true);
+                }
+                else
+                {
+                    // No grayscale material: use current base material
+                    newMaterials = new Material[originalMainMaterials.Length];
+                    newMaterials[0] = currentBaseMaterial;
+                    for (int i = 1; i < originalMainMaterials.Length; i++)
+                    {
+                        newMaterials[i] = originalMainMaterials[i];
+                    }
+                }
+            }
+            
+            meshRenderer.materials = newMaterials;
         }
         
         // Update child renderers
@@ -413,43 +555,49 @@ public abstract class BaseNode : MonoBehaviour
         foreach (Renderer renderer in childRenderers)
         {
             // Skip the main renderer
-            if (renderer == meshRenderer) continue;
+            if (renderer == meshRenderer || renderer is ParticleSystemRenderer) continue;
             
-            if (renderer.materials != null && renderer.materials.Length > 0)
+            if (originalChildMaterials.ContainsKey(renderer))
             {
-                for (int i = 0; i < renderer.materials.Length; i++)
+                Material[] originalMats = originalChildMaterials[renderer];
+                Material[] newMaterials;
+                
+                if (isConnectedToProducer)
                 {
-                    if (renderer.materials[i] != null)
+                    // Connected: use original materials
+                    newMaterials = new Material[originalMats.Length];
+                    for (int i = 0; i < originalMats.Length; i++)
                     {
-                        // Get original color if available
-                        Color baseColor = Color.white; // Default to white
-                        if (originalChildMaterialColors.ContainsKey(renderer) && 
-                            i < originalChildMaterialColors[renderer].Length)
-                        {
-                            baseColor = originalChildMaterialColors[renderer][i];
-                        }
-                        else
-                        {
-                            // Store current color if not stored yet
-                            baseColor = renderer.materials[i].color;
-                            if (!originalChildMaterialColors.ContainsKey(renderer))
-                            {
-                                Color[] colors = new Color[renderer.materials.Length];
-                                for (int j = 0; j < renderer.materials.Length; j++)
-                                {
-                                    if (renderer.materials[j] != null)
-                                    {
-                                        colors[j] = renderer.materials[j].color;
-                                    }
-                                }
-                                originalChildMaterialColors[renderer] = colors;
-                            }
-                        }
-                        
-                        // Apply color modulation
-                        renderer.materials[i].color = baseColor * targetColor;
+                        newMaterials[i] = originalMats[i];
                     }
                 }
+                else
+                {
+                    // Disconnected: add grayscale material as second material
+                    if (grayscaleMaterial != null)
+                    {
+                        // Create array with original materials + grayscale material
+                        newMaterials = new Material[originalMats.Length + 1];
+                        // Keep all original materials
+                        for (int i = 0; i < originalMats.Length; i++)
+                        {
+                            newMaterials[i] = originalMats[i];
+                        }
+                        // Add grayscale material as second material
+                        newMaterials[originalMats.Length] = GetGrayscaleMaterialInstanceForChild(renderer, originalMats[0], 0);
+                    }
+                    else
+                    {
+                        // No grayscale material: use original materials
+                        newMaterials = new Material[originalMats.Length];
+                        for (int i = 0; i < originalMats.Length; i++)
+                        {
+                            newMaterials[i] = originalMats[i];
+                        }
+                    }
+                }
+                
+                renderer.materials = newMaterials;
             }
         }
     }
@@ -613,6 +761,38 @@ public abstract class BaseNode : MonoBehaviour
         if (connectionParticles != null)
         {
             connectionParticles.Play();
+        }
+    }
+    
+    /// <summary>
+    /// Clean up cached material instances to prevent memory leaks
+    /// </summary>
+    private void OnDestroy()
+    {
+        // Clean up cached grayscale materials
+        if (cachedGrayscaleMainMaterials != null)
+        {
+            foreach (Material mat in cachedGrayscaleMainMaterials)
+            {
+                if (mat != null)
+                {
+                    Destroy(mat);
+                }
+            }
+        }
+        
+        foreach (var kvp in cachedGrayscaleChildMaterials)
+        {
+            if (kvp.Value != null)
+            {
+                foreach (Material mat in kvp.Value)
+                {
+                    if (mat != null)
+                    {
+                        Destroy(mat);
+                    }
+                }
+            }
         }
     }
 }

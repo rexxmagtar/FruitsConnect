@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Unified display for node information using a single world space canvas
-/// Shows energy info (for nodes with weight) and connection slots (for neutral nodes)
+/// Shows energy info (for nodes with weight) and connection slots (for all nodes)
 /// </summary>
 [RequireComponent(typeof(Canvas))]
 public class NodeDisplay : MonoBehaviour
@@ -67,11 +67,8 @@ public class NodeDisplay : MonoBehaviour
             energyText = GetComponentInChildren<TextMeshProUGUI>();
         }
         
-        // Find or create circles (for neutral nodes)
-        if (node is NeutralNode)
-        {
-            FindCircles();
-        }
+        // Find or create circles (for all nodes)
+        FindCircles();
     }
     
     /// <summary>
@@ -90,7 +87,7 @@ public class NodeDisplay : MonoBehaviour
             {
                 circlesContainer = container;
             }
-            else if (node is NeutralNode)
+            else
             {
                 // Create container if we have a prefab to instantiate
                 if (circlePrefab != null)
@@ -108,10 +105,6 @@ public class NodeDisplay : MonoBehaviour
                     return; // No container and no prefab, can't create circles
                 }
             }
-            else
-            {
-                return; // Not a neutral node
-            }
         }
         
         // Clear and refind circles
@@ -128,7 +121,7 @@ public class NodeDisplay : MonoBehaviour
         }
         
         // If no circles found and we have a prefab, create them
-        if (circleImages.Count == 0 && circlePrefab != null && node is NeutralNode)
+        if (circleImages.Count == 0 && circlePrefab != null)
         {
             CreateCirclesFromPrefab();
         }
@@ -204,8 +197,6 @@ public class NodeDisplay : MonoBehaviour
     /// </summary>
     private void UpdateConnectionDisplay()
     {
-        // Only update if this is a neutral node
-        if (!(node is NeutralNode)) return;
         
         // Find circles if we have a container but no circles found yet
         if (circleImages.Count == 0 && circlesContainer != null)
