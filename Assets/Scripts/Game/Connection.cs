@@ -20,6 +20,9 @@ public class Connection : MonoBehaviour
     private float lineWidth = 0.1f;
     private Color lineColor = Color.yellow;
     
+    // Ground level Y coordinate for connections
+    private float groundLevelY => ConnectionManager.Instance != null ? ConnectionManager.Instance.GroundLevelY : -0.48f;
+    
     [Header("Animation Settings")]
     [SerializeField] private GameObject animationPrefab;
     [SerializeField] private float animationSpeed = 2f; // Units per second
@@ -111,8 +114,15 @@ public class Connection : MonoBehaviour
         if (fromNode == null || toNode == null || lineRenderer == null)
             return;
         
-        lineRenderer.SetPosition(0, fromNode.transform.position);
-        lineRenderer.SetPosition(1, toNode.transform.position);
+        Vector3 startPos = fromNode.transform.position;
+        Vector3 endPos = toNode.transform.position;
+        
+        // Ensure both start and end Y coordinates are always at ground level
+        startPos.y = groundLevelY;
+        endPos.y = groundLevelY;
+        
+        lineRenderer.SetPosition(0, startPos);
+        lineRenderer.SetPosition(1, endPos);
     }
     
     /// <summary>
@@ -213,10 +223,12 @@ public class Connection : MonoBehaviour
         if (animationPrefab == null || fromNode == null || toNode == null)
             return;
         
-        // Spawn object at the from node position
+        // Spawn object at the from node position at ground level
         // Don't parent to Connection transform to avoid rotation/position issues
         // Parent to ConnectionManager or scene root instead
-        GameObject animObject = Instantiate(animationPrefab, fromNode.transform.position, Quaternion.identity);
+        Vector3 spawnPos = fromNode.transform.position;
+        spawnPos.y = groundLevelY;
+        GameObject animObject = Instantiate(animationPrefab, spawnPos, Quaternion.identity);
         
         // Parent to ConnectionManager's transform (or null for scene root) to keep world space positioning
         Transform parentTransform = ConnectionManager.Instance != null ? ConnectionManager.Instance.transform : null;

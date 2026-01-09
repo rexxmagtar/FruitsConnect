@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DataRepository;
 using TMPro;
+using System.Collections;
 
 /// <summary>
 /// UI overlay for gameplay - displays level info, energy balance, and controls
@@ -11,11 +12,18 @@ public class GameplayUI : MonoBehaviour
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI energyBalanceText;
+    [SerializeField] private Slider energySlider;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button pauseButton;
     
+    [Header("Animation Settings")]
+    [SerializeField] private float sliderAnimationDuration = 0.3f;
+    
     [Header("Canvas Group")]
     [SerializeField] private CanvasGroup canvasGroup;
+    
+    private Coroutine sliderAnimationCoroutine;
+    private float targetSliderValue;
     
     private void Awake()
     {
@@ -74,6 +82,19 @@ public class GameplayUI : MonoBehaviour
             canvasGroup.blocksRaycasts = true;
         }
         
+        // Initialize slider if available
+        if (energySlider != null)
+        {
+            GameController controller = GameController.Instance;
+            if (controller != null)
+            {
+                int currentEnergy = controller.GetCurrentEnergy();
+                int maxEnergy = controller.GetMaxEnergy();
+                float initialValue = maxEnergy > 0 ? (float)currentEnergy / maxEnergy : 0f;
+                UpdateSliderValue(initialValue);
+            }
+        }
+        
         UpdateDisplay();
     }
     
@@ -115,17 +136,92 @@ public class GameplayUI : MonoBehaviour
     /// </summary>
     private void UpdateEnergyDisplay()
     {
-        if (energyBalanceText == null) return;
-        
         GameController controller = GameController.Instance;
         if (controller == null)
         {
-            energyBalanceText.text = "Energy: 0";
+            if (energyBalanceText != null)
+            {
+                energyBalanceText.text = "0/0";
+            }
+            if (energySlider != null)
+            {
+                UpdateSliderValue(0f);
+            }
             return;
         }
         
         int currentEnergy = controller.GetCurrentEnergy();
-        energyBalanceText.text = $"Energy: {currentEnergy}";
+        int maxEnergy = controller.GetMaxEnergy();
+        
+        // Update text format: {current}/{max}
+        if (energyBalanceText != null)
+        {
+            energyBalanceText.text = $"{currentEnergy}/{maxEnergy}";
+        }
+        
+        // Update slider with animation
+        if (energySlider != null && maxEnergy > 0)
+        {
+            float targetValue = (float)currentEnergy / maxEnergy;
+            AnimateSliderToValue(targetValue);
+        }
+        else if (energySlider != null)
+        {
+            UpdateSliderValue(0f);
+        }
+    }
+    
+    /// <summary>
+    /// Animate slider to target value smoothly
+    /// </summary>
+    private void AnimateSliderToValue(float targetValue)
+    {
+        targetSliderValue = targetValue;
+        
+        // Stop existing animation if running
+        if (sliderAnimationCoroutine != null)
+        {
+            StopCoroutine(sliderAnimationCoroutine);
+        }
+        
+        // Start new animation
+        sliderAnimationCoroutine = StartCoroutine(AnimateSliderCoroutine(targetValue));
+    }
+    
+    /// <summary>
+    /// Coroutine to smoothly animate slider value
+    /// </summary>
+    private IEnumerator AnimateSliderCoroutine(float targetValue)
+    {
+        float startValue = energySlider.value;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < sliderAnimationDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / sliderAnimationDuration);
+            
+            // Use smooth step for easing
+            float smoothT = t * t * (3f - 2f * t);
+            energySlider.value = Mathf.Lerp(startValue, targetValue, smoothT);
+            
+            yield return null;
+        }
+        
+        // Ensure final value is set
+        energySlider.value = targetValue;
+        sliderAnimationCoroutine = null;
+    }
+    
+    /// <summary>
+    /// Update slider value immediately without animation
+    /// </summary>
+    private void UpdateSliderValue(float value)
+    {
+        if (energySlider != null)
+        {
+            energySlider.value = Mathf.Clamp01(value);
+        }
     }
     
     /// <summary>

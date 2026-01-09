@@ -26,6 +26,9 @@ public class ConnectionManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private Color connectionColor = Color.yellow;
     [SerializeField] private float connectionWidth = 0.1f;
+    [SerializeField] private float groundLevelY = -0.48f; // Ground level Y coordinate for connections
+    
+    public float GroundLevelY => groundLevelY;
     
     [Header("Ghost Line Settings")]
     [SerializeField] private Color ghostLineValidColor = Color.green;
@@ -162,25 +165,6 @@ public class ConnectionManager : MonoBehaviour
     {
         if (connection == null) return;
         
-        BaseNode toNode = connection.ToNode;
-        
-        // Check if this will be the last incoming connection to the target node
-        bool willBeDisconnected = toNode != null && toNode.IncomingConnections.Count == 1;
-        
-        // Revert energy if this was the only connection and energy was applied
-        if (willBeDisconnected && toNode.IsEnergyApplied)
-        {
-            GameController gameController = GameController.Instance;
-            if (gameController != null)
-            {
-                // Revert energy (opposite of what was applied)
-                gameController.ModifyEnergy(-toNode.Weight);
-                toNode.IsEnergyApplied = false;
-                
-                Debug.Log($"Reverted energy {-toNode.Weight} from node {toNode.NodeID}. Last connection removed.");
-            }
-        }
-        
         // Remove from list
         activeConnections.Remove(connection);
         
@@ -253,28 +237,6 @@ public class ConnectionManager : MonoBehaviour
             // Break all collected connections
             foreach (Connection conn in connectionsToBreak)
             {
-                BaseNode toNode = conn.ToNode;
-                
-                // Revert energy if this node will lose all incoming connections and energy was applied
-                if (toNode != null && toNode.IsEnergyApplied)
-                {
-                    // Count how many incoming connections this node will still have after breaking
-                    int remainingIncoming = toNode.IncomingConnections.Count(c => !connectionsToBreak.Contains(c));
-                    
-                    // If no incoming connections will remain, revert energy
-                    if (remainingIncoming == 0)
-                    {
-                        GameController gameController = GameController.Instance;
-                        if (gameController != null)
-                        {
-                            gameController.ModifyEnergy(-toNode.Weight);
-                            toNode.IsEnergyApplied = false;
-                            
-                            Debug.Log($"Reverted energy {-toNode.Weight} from disconnected node {toNode.NodeID}");
-                        }
-                    }
-                }
-                
                 // Remove from active list
                 activeConnections.Remove(conn);
                 
@@ -297,8 +259,57 @@ public class ConnectionManager : MonoBehaviour
             Debug.Log($"BreakDisconnectedChains completed in {iterationCount} iterations (started with {initialConnectionCount} connections)");
         }
         
+        // Recalculate total energy from scratch after all destructions are done
+        RecalculateTotalEnergy();
+        
         // Update visuals for all nodes after breaking connections
         RefreshAllNodeVisuals();
+    }
+    
+    /// <summary>
+    /// Recalculate total energy from scratch based on currently connected nodes
+    /// Called after connection destruction sequence is complete
+    /// </summary>
+    private void RecalculateTotalEnergy()
+    {
+        if (currentLevel == null) return;
+        
+        GameController gameController = GameController.Instance;
+        if (gameController == null) return;
+        
+        // Get starting energy
+        int startingEnergy = gameController.GetMaxEnergy();
+        
+        // Reset all energy applied flags
+        List<BaseNode> allNodes = currentLevel.GetAllNodes();
+        foreach (BaseNode node in allNodes)
+        {
+            if (node != null)
+            {
+                node.IsEnergyApplied = false;
+            }
+        }
+        
+        // Calculate total energy: starting energy + sum of weights of all connected nodes
+        int totalEnergy = startingEnergy;
+        
+        foreach (BaseNode node in allNodes)
+        {
+            if (node == null) continue;
+            
+            // Only count nodes that are connected to a producer (have incoming connections)
+            if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node))
+            {
+                totalEnergy += node.Weight;
+                node.IsEnergyApplied = true;
+            }
+        }
+        
+        // Set current energy directly (clamp to prevent negative)
+        int calculatedEnergy = Mathf.Max(0, totalEnergy);
+        gameController.SetEnergy(calculatedEnergy);
+        
+        Debug.Log($"Recalculated energy: {calculatedEnergy} (starting: {startingEnergy}, node weights sum: {totalEnergy - startingEnergy})");
     }
     
     /// <summary>
@@ -571,8 +582,9 @@ public class ConnectionManager : MonoBehaviour
             }
         }
         
-        // Clamp end position to same Y plane as start position
-        endPosition.y = startPosition.y;
+        // Ensure both start and end Y coordinates are always 0
+        startPosition.y = 0f;
+        endPosition.y = 0f;
         
         // Update positions
         ghostLineRenderer.SetPosition(0, startPosition);
@@ -592,10 +604,12 @@ public class ConnectionManager : MonoBehaviour
     {
         if (ghostLineRenderer != null && ghostLineObject != null && ghostLineObject.activeSelf)
         {
-            // Clamp to same Y plane as start position
+            // Ensure both start and end Y coordinates are always at ground level
             Vector3 startPos = ghostLineRenderer.GetPosition(0);
-            endPosition.y = startPos.y;
+            startPos.y = groundLevelY;
+            endPosition.y = groundLevelY;
             
+            ghostLineRenderer.SetPosition(0, startPos);
             ghostLineRenderer.SetPosition(1, endPosition);
             ghostLineRenderer.material.color = GetGhostLineColor(state);
         }

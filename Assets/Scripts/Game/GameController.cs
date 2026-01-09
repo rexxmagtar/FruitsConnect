@@ -46,6 +46,11 @@ public class GameController : MonoBehaviour
     public int GetCurrentEnergy() => currentEnergy;
     
     /// <summary>
+    /// Get maximum player energy (starting energy for the level)
+    /// </summary>
+    public int GetMaxEnergy() => startingEnergy;
+    
+    /// <summary>
     /// Check if player can afford connecting to a node (if it has negative weight)
     /// </summary>
     public bool CanAffordNode(BaseNode node)
@@ -76,6 +81,17 @@ public class GameController : MonoBehaviour
         }
         
         Debug.Log($"Energy modified by {amount}. Current energy: {currentEnergy}");
+        
+        // TODO: Update UI when energy UI is implemented
+    }
+    
+    /// <summary>
+    /// Set energy directly (used for recalculation after connection changes)
+    /// </summary>
+    public void SetEnergy(int energy)
+    {
+        currentEnergy = Mathf.Max(0, energy);
+        Debug.Log($"Energy set to {currentEnergy}");
         
         // TODO: Update UI when energy UI is implemented
     }

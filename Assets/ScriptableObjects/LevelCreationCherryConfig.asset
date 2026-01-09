@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8058e9d82653ee489816af1b8f13cb3, type: 3}
+  m_Name: LevelCreationCherryConfig
+  m_EditorClassIdentifier: 
+  producerNodePrefab: {fileID: 3136780035601444894, guid: 3b386a6d8bf704d48ac2969c2a5b5720, type: 3}
+  consumerNodePrefab: {fileID: 7410220202179923500, guid: d197aca26602bf1499b4b5f75960ae72, type: 3}
+  neutralNodePrefab: {fileID: 2837622666717314074, guid: e76e0e385d023984592102aec1db4b84, type: 3}
+  levelTemplate: {fileID: 7758629621863314383, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
+  connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
+  wallPrefab: {fileID: 6222451527443582071, guid: 254f8e2354c622d4db6ff508a8611b44, type: 3}
+  defaultNodeSpacing: 4
+  defaultGridColumns: 10
+  defaultGridRows: 10
+  minNodeDistance: 1.5
+  boundsPadding: 0.5
+  producerZoneSize: 0.3
+  consumerZoneSize: 0.3
+  neutralZoneMargin: 0.2

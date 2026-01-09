@@ -549,6 +549,7 @@ MonoBehaviour:
   - nodeID: Node_b6a21113
     validTargetIDs:
     - Node_abc59a27
+    - Node_ab8c02e9
   - nodeID: Node_abc59a27
     validTargetIDs:
     - Node_df8cbd0d
@@ -590,6 +591,7 @@ MonoBehaviour:
   placeholderLineColor: {r: 1, g: 1, b: 1, a: 1}
   placeholderLineWidth: 0.4
   showPlaceholders: 1
+  groundLevelY: -0.48
 --- !u!1 &6360236134760955253
 GameObject:
   m_ObjectHideFlags: 0
@@ -861,6 +863,10 @@ PrefabInstance:
     - target: {fileID: 2634313592032313596, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: weight
       value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2634313592032313596, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: maxOutgoingConnections
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1155,7 +1161,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2634313592032313596, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: weight
-      value: -3
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2634313592032313596, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: maxOutgoingConnections
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.x

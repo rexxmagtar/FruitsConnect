@@ -14,6 +14,7 @@ public class GraphVisualizer : MonoBehaviour
     [SerializeField] private Color placeholderLineColor = new Color(0.7f, 0.7f, 0.7f, 0.8f); // Lighter gray, more visible
     [SerializeField] private float placeholderLineWidth = 0.1f; // Increased width for visibility
     [SerializeField] private bool showPlaceholders = true;
+    [SerializeField] private float groundLevelY = -0.48f; // Ground level Y coordinate for placeholder lines
     
     [Header("References")]
     private LevelController levelController;
@@ -22,11 +23,54 @@ public class GraphVisualizer : MonoBehaviour
     private List<GameObject> placeholderLineObjects = new List<GameObject>();
     private GameObject linesParent;
     
+    // Shared material for all placeholder lines (to avoid material leaks)
+    private Material sharedPlaceholderMaterial;
+    
     private void Awake()
     {
-        // Create parent object for placeholder lines
-        linesParent = new GameObject("PlaceholderLines");
-        linesParent.transform.SetParent(transform);
+        EnsureLinesParentInitialized();
+    }
+    
+    /// <summary>
+    /// Ensure linesParent is initialized (can be called from editor or runtime)
+    /// </summary>
+    private void EnsureLinesParentInitialized()
+    {
+        if (linesParent == null)
+        {
+            linesParent = new GameObject("PlaceholderLines");
+            linesParent.transform.SetParent(transform);
+        }
+    }
+    
+    /// <summary>
+    /// Get or create the shared material for placeholder lines
+    /// </summary>
+    private Material GetSharedPlaceholderMaterial()
+    {
+        if (sharedPlaceholderMaterial == null)
+        {
+            if (placeholderLineMaterial != null)
+            {
+                // Create a shared material instance from the assigned material
+                sharedPlaceholderMaterial = new Material(placeholderLineMaterial);
+            }
+            else
+            {
+                // Create default material if none assigned - use Unlit shader for better visibility
+                sharedPlaceholderMaterial = new Material(Shader.Find("Unlit/Color"));
+                if (sharedPlaceholderMaterial.shader.name == "Hidden/InternalErrorShader")
+                {
+                    // Fallback to Sprites/Default if Unlit/Color not found
+                    sharedPlaceholderMaterial = new Material(Shader.Find("Sprites/Default"));
+                }
+            }
+        }
+        
+        // Update color in case it changed
+        sharedPlaceholderMaterial.color = placeholderLineColor;
+        
+        return sharedPlaceholderMaterial;
     }
     
     private void Start()
@@ -64,6 +108,15 @@ public class GraphVisualizer : MonoBehaviour
     /// </summary>
     public void UpdateVisualLines()
     {
+        // Don't create placeholders in edit mode - only at runtime
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+        
+        // Ensure linesParent is initialized (important for editor calls)
+        EnsureLinesParentInitialized();
+        
         if (levelController == null)
         {
             // Try to find LevelController again
@@ -145,6 +198,14 @@ public class GraphVisualizer : MonoBehaviour
     {
         if (fromNode == null || toNode == null) return;
         
+        // Ensure linesParent is initialized (important for editor calls)
+        EnsureLinesParentInitialized();
+        if (linesParent == null)
+        {
+            Debug.LogError("GraphVisualizer: Failed to initialize linesParent!");
+            return;
+        }
+        
         // Create GameObject for this line
         GameObject lineObj = new GameObject($"PlaceholderLine_{fromNode.NodeID}_to_{toNode.NodeID}");
         lineObj.transform.SetParent(linesParent.transform);
@@ -158,29 +219,11 @@ public class GraphVisualizer : MonoBehaviour
         lineRenderer.startWidth = placeholderLineWidth;
         lineRenderer.endWidth = placeholderLineWidth;
         
-        // Set material
-        if (placeholderLineMaterial != null)
+        // Set shared material (use sharedMaterial to avoid material leaks in edit mode)
+        Material sharedMat = GetSharedPlaceholderMaterial();
+        if (sharedMat != null)
         {
-            lineRenderer.material = new Material(placeholderLineMaterial); // Create instance
-            lineRenderer.material.color = placeholderLineColor;
-        }
-        else
-        {
-            // Create default material if none assigned - use Unlit shader for better visibility
-            Material defaultMat = new Material(Shader.Find("Unlit/Color"));
-            if (defaultMat.shader.name == "Hidden/InternalErrorShader")
-            {
-                // Fallback to Sprites/Default if Unlit/Color not found
-                defaultMat = new Material(Shader.Find("Sprites/Default"));
-            }
-            defaultMat.color = placeholderLineColor;
-            lineRenderer.material = defaultMat;
-        }
-        
-        // Ensure color is set
-        if (lineRenderer.material != null)
-        {
-            lineRenderer.material.color = placeholderLineColor;
+            lineRenderer.sharedMaterial = sharedMat;
         }
         
         // Disable shadows
@@ -190,9 +233,14 @@ public class GraphVisualizer : MonoBehaviour
         // Set texture mode to tile
         lineRenderer.textureMode = LineTextureMode.Tile;
         
-        // Set positions
-        lineRenderer.SetPosition(0, fromNode.transform.position);
-        lineRenderer.SetPosition(1, toNode.transform.position);
+        // Set positions - ensure both start and end Y coordinates are always 0
+        Vector3 startPos = fromNode.transform.position;
+        Vector3 endPos = toNode.transform.position;
+        startPos.y = 0f;
+        endPos.y = 0f;
+        
+        lineRenderer.SetPosition(0, startPos);
+        lineRenderer.SetPosition(1, endPos);
         
         // Store reference
         placeholderLineObjects.Add(lineObj);
@@ -260,8 +308,14 @@ public class GraphVisualizer : MonoBehaviour
                             BaseNode targetNode = nodeDict[targetNodeID];
                             if (targetNode != null)
                             {
-                                lineRenderer.SetPosition(0, node.transform.position);
-                                lineRenderer.SetPosition(1, targetNode.transform.position);
+                                // Ensure both start and end Y coordinates are always at ground level
+                                Vector3 startPos = node.transform.position;
+                                Vector3 endPos = targetNode.transform.position;
+                                startPos.y = groundLevelY;
+                                endPos.y = groundLevelY;
+                                
+                                lineRenderer.SetPosition(0, startPos);
+                                lineRenderer.SetPosition(1, endPos);
                             }
                         }
                     }
@@ -274,6 +328,13 @@ public class GraphVisualizer : MonoBehaviour
     private void OnDestroy()
     {
         ClearPlaceholderLines();
+        
+        // Clean up shared material
+        if (sharedPlaceholderMaterial != null)
+        {
+            DestroyImmediate(sharedPlaceholderMaterial);
+            sharedPlaceholderMaterial = null;
+        }
     }
 }
 

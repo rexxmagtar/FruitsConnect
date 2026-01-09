@@ -158,7 +158,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.5000001
+  m_Radius: 0.71
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
@@ -5067,7 +5067,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c910def407642e445b7145991833714a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.526
+      value: 0.55
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c910def407642e445b7145991833714a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -5105,6 +5105,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 27889c4059c0bbc45a8558e7d6e1fa9b, type: 2}
+    - target: {fileID: -5754084199372789682, guid: c910def407642e445b7145991833714a, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 7027636043351174211, guid: e025d68b9268ac24fa4b6eb7a0f7b66e, type: 3}
     - target: {fileID: 919132149155446097, guid: c910def407642e445b7145991833714a, type: 3}
       propertyPath: m_Name
       value: Meshy_AI_Strawberry_Kiosk_1229170917_texture

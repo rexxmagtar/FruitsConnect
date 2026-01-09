@@ -120,9 +120,31 @@ public class NodeDisplay : MonoBehaviour
             }
         }
         
-        // If no circles found and we have a prefab, create them
-        if (circleImages.Count == 0 && circlePrefab != null)
+        // Get the current max connections from the node
+        int maxConnections = node.MaxOutgoingConnections;
+        
+        // Check if we need to recreate circles (if count doesn't match or no circles exist)
+        if (circleImages.Count != maxConnections)
         {
+            // Destroy all existing circles
+            foreach (Image img in circleImages)
+            {
+                if (img != null && img.gameObject != null)
+                {
+                    Destroy(img.gameObject);
+                }
+            }
+            circleImages.Clear();
+            
+            // Create new circles with correct count if we have a prefab
+            if (circlePrefab != null && maxConnections > 0)
+            {
+                CreateCirclesFromPrefab();
+            }
+        }
+        else if (circleImages.Count == 0 && circlePrefab != null && maxConnections > 0)
+        {
+            // No circles found and we have a prefab, create them
             CreateCirclesFromPrefab();
         }
         

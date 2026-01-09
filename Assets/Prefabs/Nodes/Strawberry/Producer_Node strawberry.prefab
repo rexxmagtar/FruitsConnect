@@ -8,9 +8,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4613069987059046273, guid: cb417f6da802f594cb4105076c371345, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 7027636043351174211, guid: b0b3946ae3838fc43860bec89dcf4f47, type: 3}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name
-      value: Producer_Node
+      value: Producer_Node strawberry
       objectReference: {fileID: 0}
     - target: {fileID: 5895336751631629932, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_LocalPosition.x

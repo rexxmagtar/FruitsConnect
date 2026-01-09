@@ -200,8 +200,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Radius: 0.75
+  m_Center: {x: 0, y: 0.46, z: 0}
 --- !u!23 &1185123897848721624
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -595,6 +595,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 369da658c26cece479d276e57dda7a9d, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 876516361d383f347a4a7fd26f811d14, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 7027636043351174211, guid: 8f46a6405a5be8243b83a59461135148, type: 3}
     - target: {fileID: 919132149155446097, guid: 876516361d383f347a4a7fd26f811d14, type: 3}
       propertyPath: m_Name
       value: Meshy_AI_Generate_a_vibrant_ca_1229170849_texture

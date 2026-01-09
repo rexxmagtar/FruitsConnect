@@ -11,6 +11,8 @@ namespace AdsServices
 
         private LevelPlayBannerAd _bannerAd;
 
+        public string profileId = "226de93e5";
+
         public static AdsManager Instance
         {
             get
@@ -65,7 +67,7 @@ namespace AdsServices
 
 
                 Debug.Log("Initializing LevelPlay SDK");
-                LevelPlay.Init("226de93e5", null, legacyAdFormats);
+                LevelPlay.Init(profileId, null, legacyAdFormats);
         }
 
         private void SdkInitializationCompletedEvent(LevelPlayConfiguration config)

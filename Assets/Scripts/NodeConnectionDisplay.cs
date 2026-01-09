@@ -158,10 +158,19 @@ public class NodeConnectionDisplay : MonoBehaviour
     /// </summary>
     public void UpdateDisplay()
     {
-        if (node == null || circleImages.Count == 0) return;
+        if (node == null) return;
+        
+        int maxConnections = node.MaxOutgoingConnections;
+        
+        // Check if circle count matches max connections - recreate if not
+        if (circleImages.Count != maxConnections)
+        {
+            CreateCircles();
+        }
+        
+        if (circleImages.Count == 0) return;
         
         int usedConnections = node.OutgoingConnections.Count;
-        int maxConnections = node.MaxOutgoingConnections;
         
         // Update each circle
         for (int i = 0; i < circleImages.Count && i < maxConnections; i++)
