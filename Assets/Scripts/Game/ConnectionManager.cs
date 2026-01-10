@@ -148,11 +148,7 @@ public class ConnectionManager : MonoBehaviour
             }
         }
         
-        // Trigger pulse animations on both nodes
-        from.PlayPulseAnimation();
-        to.PlayPulseAnimation();
-        
-        // Note: Particle effect will be triggered when node is fully activated (after deliveries)
+        // Note: Pulse animation and particle effect will be triggered when node is fully activated (after deliveries)
         // See BaseNode.ActivateNode()
         
         // Update visuals for all nodes after connection change

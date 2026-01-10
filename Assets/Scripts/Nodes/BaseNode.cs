@@ -882,6 +882,9 @@ public abstract class BaseNode : MonoBehaviour
         // Trigger particle effect when node is fully activated
         PlayConnectionParticles();
         
+        // Trigger pulse animation when node is fully activated
+        PlayPulseAnimation();
+        
         // Update visuals
         RefreshConnectionStatusVisual();
         
