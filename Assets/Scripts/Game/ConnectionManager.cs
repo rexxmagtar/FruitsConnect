@@ -145,6 +145,16 @@ public class ConnectionManager : MonoBehaviour
         
         Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}");
         
+        // Hide placeholder line for this connection
+        if (currentLevel != null)
+        {
+            GraphVisualizer graphVisualizer = currentLevel.GetGraphVisualizer();
+            if (graphVisualizer != null)
+            {
+                graphVisualizer.HidePlaceholderLine(from, to);
+            }
+        }
+        
         // Trigger pulse animations on both nodes
         from.PlayPulseAnimation();
         to.PlayPulseAnimation();
@@ -165,6 +175,10 @@ public class ConnectionManager : MonoBehaviour
     {
         if (connection == null) return;
         
+        // Store node references before destroying connection
+        BaseNode fromNode = connection.FromNode;
+        BaseNode toNode = connection.ToNode;
+        
         // Remove from list
         activeConnections.Remove(connection);
         
@@ -176,8 +190,75 @@ public class ConnectionManager : MonoBehaviour
         // After removal, break any chains that are no longer connected to a producer
         BreakDisconnectedChains();
         
+        // Show placeholder line again for this connection
+        if (currentLevel != null && fromNode != null && toNode != null)
+        {
+            GraphVisualizer graphVisualizer = currentLevel.GetGraphVisualizer();
+            if (graphVisualizer != null)
+            {
+                graphVisualizer.ShowPlaceholderLine(fromNode, toNode);
+            }
+        }
+        
         // Update visuals for all nodes after connection change
         RefreshAllNodeVisuals();
+    }
+    
+    /// <summary>
+    /// Remove all connections from/to a specific node
+    /// Used by monsters to destroy all connections to a node
+    /// </summary>
+    public void RemoveAllConnectionsFromNode(BaseNode node)
+    {
+        if (node == null) return;
+        
+        // Collect all connections to remove
+        List<Connection> connectionsToRemove = new List<Connection>();
+        
+        // Get outgoing connections
+        foreach (Connection conn in node.OutgoingConnections)
+        {
+            if (conn != null && !connectionsToRemove.Contains(conn))
+            {
+                connectionsToRemove.Add(conn);
+            }
+        }
+        
+        // Get incoming connections
+        foreach (Connection conn in node.IncomingConnections)
+        {
+            if (conn != null && !connectionsToRemove.Contains(conn))
+            {
+                connectionsToRemove.Add(conn);
+            }
+        }
+        
+        // Remove all collected connections
+        // RemoveConnection already handles showing placeholder lines
+        foreach (Connection conn in connectionsToRemove)
+        {
+            RemoveConnection(conn);
+        }
+        
+        Debug.Log($"Removed all connections from/to node {node.NodeID}");
+    }
+    
+    /// <summary>
+    /// Check if a connection is captured by a monster
+    /// </summary>
+    public bool IsConnectionCaptured(Connection connection)
+    {
+        if (connection == null) return false;
+        return connection.IsCaptured;
+    }
+    
+    /// <summary>
+    /// Check if a node is captured by a monster
+    /// </summary>
+    public bool IsNodeCaptured(BaseNode node)
+    {
+        if (node == null) return false;
+        return node.IsCaptured;
     }
     
     /// <summary>
@@ -354,6 +435,19 @@ public class ConnectionManager : MonoBehaviour
         if (from == null || to == null)
         {
             Debug.LogWarning("Cannot connect null nodes");
+            return false;
+        }
+        
+        // Check nodes are not captured
+        if (from.IsCaptured)
+        {
+            Debug.LogWarning($"Cannot connect from captured node {from.NodeID}");
+            return false;
+        }
+        
+        if (to.IsCaptured)
+        {
+            Debug.LogWarning($"Cannot connect to captured node {to.NodeID}");
             return false;
         }
         

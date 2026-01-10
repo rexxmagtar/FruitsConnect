@@ -65,6 +65,11 @@ public class AmbienceSound : MonoBehaviour
         audioSource.loop = true;
         audioSource.playOnAwake = playOnAwake;
         audioSource.volume = volume;
+
+        if (playOnAwake)
+        {
+            PlayAmbience();
+        }
     }
     
     /// <summary>

@@ -82,6 +82,14 @@ public abstract class BaseNode : MonoBehaviour
     public List<Connection> OutgoingConnections => outgoingConnections;
     public List<Connection> IncomingConnections => incomingConnections;
     
+    // Capture state (blocks player interaction when captured by monster)
+    private bool isCaptured = false;
+    public bool IsCaptured 
+    { 
+        get => isCaptured;
+        set => isCaptured = value;
+    }
+    
     protected virtual void Awake()
     {
         // Clean up old display components early to prevent them from running
@@ -629,6 +637,9 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
+        // Don't allow interaction if node is captured
+        if (isCaptured) return;
+        
         GameController controller = GameController.Instance;
         if (controller != null)
         {

@@ -201,6 +201,14 @@ public class GameController : MonoBehaviour
         
         gameplayEnabled = true;
         Debug.Log("Game started - input enabled");
+        
+        // Start monster spawning
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.SetLevel(currentLevel);
+            monsterManager.StartSpawning();
+        }
     }
     
     /// <summary>
@@ -419,6 +427,13 @@ public class GameController : MonoBehaviour
             connectionManager.HideGhostLine();
         }
         
+        // Clear all monsters
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.ClearAllMonsters();
+        }
+        
         // Clear drag state
         if (dragStartNode != null)
         {
@@ -491,6 +506,14 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void UnloadLevel()
     {
+        // Stop monster spawning and clear all monsters
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.StopSpawning();
+            monsterManager.ClearAllMonsters();
+        }
+        
         if (currentLevelInstance != null)
         {
             Destroy(currentLevelInstance);

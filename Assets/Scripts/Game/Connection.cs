@@ -36,6 +36,14 @@ public class Connection : MonoBehaviour
     public BaseNode FromNode => fromNode;
     public BaseNode ToNode => toNode;
     
+    // Capture state (blocks player interaction when captured by monster)
+    private bool isCaptured = false;
+    public bool IsCaptured 
+    { 
+        get => isCaptured;
+        set => isCaptured = value;
+    }
+    
     private void Awake()
     {
         // Get LineRenderer if not assigned
@@ -164,6 +172,9 @@ public class Connection : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
+        // Don't allow removal if connection is captured
+        if (isCaptured) return;
+        
         ConnectionManager manager = ConnectionManager.Instance;
         if (manager != null)
         {

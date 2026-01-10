@@ -266,6 +266,14 @@ public class LevelController : MonoBehaviour
         var mapping = connectionMappings.Find(m => m.nodeID == nodeID);
         return mapping != null ? new List<string>(mapping.validTargetIDs) : new List<string>();
     }
+    
+    /// <summary>
+    /// Get the GraphVisualizer instance
+    /// </summary>
+    public GraphVisualizer GetGraphVisualizer()
+    {
+        return graphVisualizer;
+    }
 }
 
 /// <summary>

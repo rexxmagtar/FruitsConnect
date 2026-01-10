@@ -181,8 +181,12 @@ public class GraphVisualizer : MonoBehaviour
                     BaseNode targetNode = nodeDict[targetNodeID];
                     if (targetNode != null && targetNode != node)
                     {
-                        CreatePlaceholderLine(node, targetNode);
-                        linesCreated++;
+                        // Only create placeholder if connection doesn't already exist
+                        if (!ConnectionExists(node, targetNode))
+                        {
+                            CreatePlaceholderLine(node, targetNode);
+                            linesCreated++;
+                        }
                     }
                 }
             }
@@ -268,6 +272,119 @@ public class GraphVisualizer : MonoBehaviour
     {
         showPlaceholders = show;
         UpdateVisualLines();
+    }
+    
+    /// <summary>
+    /// Hide placeholder line for a specific connection (from→to)
+    /// Also hides the reverse direction placeholder if it exists (since connections are bidirectional)
+    /// </summary>
+    public void HidePlaceholderLine(BaseNode fromNode, BaseNode toNode)
+    {
+        if (fromNode == null || toNode == null) return;
+        
+        // Find and hide placeholder for from→to
+        string placeholderName = $"PlaceholderLine_{fromNode.NodeID}_to_{toNode.NodeID}";
+        HidePlaceholderByName(placeholderName);
+        
+        // Also hide reverse direction placeholder (to→from) since connections are bidirectional
+        string reversePlaceholderName = $"PlaceholderLine_{toNode.NodeID}_to_{fromNode.NodeID}";
+        HidePlaceholderByName(reversePlaceholderName);
+    }
+    
+    /// <summary>
+    /// Hide a placeholder line by name
+    /// </summary>
+    private void HidePlaceholderByName(string placeholderName)
+    {
+        for (int i = placeholderLineObjects.Count - 1; i >= 0; i--)
+        {
+            GameObject lineObj = placeholderLineObjects[i];
+            if (lineObj != null && lineObj.name == placeholderName)
+            {
+                // Hide the placeholder by deactivating it
+                lineObj.SetActive(false);
+                // Optionally remove it from the list to keep it clean
+                // placeholderLineObjects.RemoveAt(i);
+                return;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Show placeholder line for a specific connection (from→to)
+    /// Also shows the reverse direction placeholder if it exists (since connections are bidirectional)
+    /// </summary>
+    public void ShowPlaceholderLine(BaseNode fromNode, BaseNode toNode)
+    {
+        if (fromNode == null || toNode == null) return;
+        
+        // Find and show placeholder for from→to
+        string placeholderName = $"PlaceholderLine_{fromNode.NodeID}_to_{toNode.NodeID}";
+        ShowPlaceholderByName(placeholderName);
+        
+        // Also show reverse direction placeholder (to→from) since connections are bidirectional
+        string reversePlaceholderName = $"PlaceholderLine_{toNode.NodeID}_to_{fromNode.NodeID}";
+        ShowPlaceholderByName(reversePlaceholderName);
+    }
+    
+    /// <summary>
+    /// Show a placeholder line by name
+    /// </summary>
+    private void ShowPlaceholderByName(string placeholderName)
+    {
+        for (int i = placeholderLineObjects.Count - 1; i >= 0; i--)
+        {
+            GameObject lineObj = placeholderLineObjects[i];
+            if (lineObj != null && lineObj.name == placeholderName)
+            {
+                // Show the placeholder by activating it
+                lineObj.SetActive(true);
+                return;
+            }
+        }
+        
+        // If placeholder doesn't exist, we need to recreate it
+        // This can happen if UpdateVisualLines was called and cleared all placeholders
+        // In this case, we should call UpdateVisualLines to recreate all placeholders
+        // But to avoid infinite loops, we'll just update the visual lines
+        UpdateVisualLines();
+    }
+    
+    /// <summary>
+    /// Check if a connection already exists between two nodes
+    /// </summary>
+    private bool ConnectionExists(BaseNode fromNode, BaseNode toNode)
+    {
+        if (fromNode == null || toNode == null) return false;
+        
+        // Check if from→to connection exists
+        foreach (Connection conn in fromNode.OutgoingConnections)
+        {
+            if (conn != null && conn.ToNode == toNode)
+            {
+                return true;
+            }
+        }
+        
+        // Check if to→from connection exists (bidirectional)
+        foreach (Connection conn in toNode.OutgoingConnections)
+        {
+            if (conn != null && conn.ToNode == fromNode)
+            {
+                return true;
+            }
+        }
+        
+        // Also check incoming connections
+        foreach (Connection conn in fromNode.IncomingConnections)
+        {
+            if (conn != null && conn.FromNode == toNode)
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     /// <summary>
