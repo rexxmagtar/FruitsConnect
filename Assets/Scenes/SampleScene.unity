@@ -6155,12 +6155,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
   connectionColor: {r: 1, g: 1, b: 1, a: 1}
-  connectionWidth: 0.4
+  connectionWidth: 0.6
   groundLevelY: -0.48
   ghostLineValidColor: {r: 0, g: 1, b: 0, a: 0.69803923}
   ghostLineInvalidColor: {r: 1, g: 0, b: 0, a: 0.69803923}
   ghostLineNeutralColor: {r: 0.5773585, g: 0.5773585, b: 0.56101817, a: 0.63529414}
-  ghostLineWidth: 0.4
+  ghostLineWidth: 0.6
   wallLayer:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -6874,6 +6874,7 @@ GameObject:
   - component: {fileID: 983725532}
   - component: {fileID: 983725531}
   - component: {fileID: 983725534}
+  - component: {fileID: 983725535}
   m_Layer: 0
   m_Name: Essentials
   m_TagString: Untagged
@@ -7044,7 +7045,31 @@ MonoBehaviour:
   minSpawnInterval: 10
   maxSpawnInterval: 30
   maxActiveMonsters: 3
+  maxSpawnAttempts: 20
+  portalPrefab: {fileID: 3625492018946710591, guid: 33d981063df345d4d9549b72857c570f, type: 3}
+  portalAppearDuration: 0.5
+  portalDisappearDuration: 0.5
+  portalStayDuration: 0.3
   currentLevel: {fileID: 0}
+  mapShaderController: {fileID: 983725535}
+--- !u!114 &983725535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983725521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ab6bc4156a31ca4c8e2b0fb30207955, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapMaterial: {fileID: 2100000, guid: 705c49310f08bec4bb8f10eaf539cb75, type: 2}
+  colorRadius: 5
+  smoothFalloff: 0.3
+  minSpawnAreaRadius: 1.5
+  spawnAreaSamplePoints: 8
+  levelController: {fileID: 0}
 --- !u!1 &1067375082
 GameObject:
   m_ObjectHideFlags: 0

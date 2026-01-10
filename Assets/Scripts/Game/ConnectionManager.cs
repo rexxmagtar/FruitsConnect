@@ -47,6 +47,9 @@ public class ConnectionManager : MonoBehaviour
     // Active connections
     private List<Connection> activeConnections = new List<Connection>();
     
+    // Event for when connections change (notifies MapShaderController)
+    public static event System.Action OnConnectionsChanged;
+    
     // Ghost line (temporary visual during drag)
     private GameObject ghostLineObject;
     private LineRenderer ghostLineRenderer;
@@ -130,20 +133,10 @@ public class ConnectionManager : MonoBehaviour
         // Add to active list
         activeConnections.Add(connection);
         
-        // Apply energy only if this is the first incoming connection to the target node
-        if (to.IncomingConnections.Count == 1 && !to.IsEnergyApplied)
-        {
-            if (gameController != null)
-            {
-                // Apply energy (positive weight = gain, negative weight = lose)
-                gameController.ModifyEnergy(to.Weight);
-                to.IsEnergyApplied = true;
-                
-                Debug.Log($"Applied energy {to.Weight} from node {to.NodeID}. First connection established.");
-            }
-        }
+        // Note: Energy is no longer applied immediately when connection is created
+        // Energy will be applied when the node receives enough deliveries (see BaseNode.OnDeliveryReceived)
         
-        Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}");
+        Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}. Node {to.NodeID} needs {to.RequiredDeliveries} deliveries to activate.");
         
         // Hide placeholder line for this connection
         if (currentLevel != null)
@@ -159,11 +152,14 @@ public class ConnectionManager : MonoBehaviour
         from.PlayPulseAnimation();
         to.PlayPulseAnimation();
         
-        // Trigger particle effect on target node
-        to.PlayConnectionParticles();
+        // Note: Particle effect will be triggered when node is fully activated (after deliveries)
+        // See BaseNode.ActivateNode()
         
         // Update visuals for all nodes after connection change
         RefreshAllNodeVisuals();
+        
+        // Notify MapShaderController that connections changed
+        OnConnectionsChanged?.Invoke();
         
         return true;
     }
@@ -202,6 +198,9 @@ public class ConnectionManager : MonoBehaviour
         
         // Update visuals for all nodes after connection change
         RefreshAllNodeVisuals();
+        
+        // Notify MapShaderController that connections changed
+        OnConnectionsChanged?.Invoke();
     }
     
     /// <summary>
@@ -378,11 +377,22 @@ public class ConnectionManager : MonoBehaviour
         {
             if (node == null) continue;
             
-            // Only count nodes that are connected to a producer (have incoming connections)
-            if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node))
+            // Producers are always active (don't need deliveries or incoming connections)
+            if (node is ProducerNode && !node.IsCaptured)
             {
                 totalEnergy += node.Weight;
                 node.IsEnergyApplied = true;
+            }
+            // Only count other nodes that are connected to a producer AND fully delivered
+            else if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node) && node.IsFullyDelivered)
+            {
+                totalEnergy += node.Weight;
+                node.IsEnergyApplied = true;
+            }
+            else
+            {
+                // Reset energy applied flag if node is not fully delivered (or is a producer that's captured)
+                node.IsEnergyApplied = false;
             }
         }
         
@@ -424,6 +434,9 @@ public class ConnectionManager : MonoBehaviour
         
         // Update visuals for all nodes after clearing connections
         RefreshAllNodeVisuals();
+        
+        // Notify MapShaderController that connections changed
+        OnConnectionsChanged?.Invoke();
     }
     
     /// <summary>
@@ -513,6 +526,20 @@ public class ConnectionManager : MonoBehaviour
             return false;
         }
         
+        // Rule 7: Check if any producer is captured - cannot build connections if producer is captured
+        if (currentLevel != null)
+        {
+            List<ProducerNode> producers = currentLevel.GetProducerNodes();
+            foreach (ProducerNode producer in producers)
+            {
+                if (producer != null && producer.IsCaptured)
+                {
+                    Debug.LogWarning($"Cannot create connection: producer {producer.NodeID} is captured by a monster");
+                    return false;
+                }
+            }
+        }
+        
         return true;
     }
     
@@ -524,8 +551,8 @@ public class ConnectionManager : MonoBehaviour
     {
         if (node == null) return false;
         
-        // Producers are always connected to themselves
-        if (node is ProducerNode) return true;
+        // Producers are connected to themselves only if not captured
+        if (node is ProducerNode) return !node.IsCaptured;
         
         // If node has no incoming connections, it cannot be connected to a producer
         if (node.IncomingConnections.Count == 0) return false;
@@ -541,8 +568,8 @@ public class ConnectionManager : MonoBehaviour
         {
             BaseNode current = queue.Dequeue();
             
-            // Check if we reached a producer
-            if (current is ProducerNode)
+            // Check if we reached a producer (only if not captured)
+            if (current is ProducerNode && !current.IsCaptured)
             {
                 return true;
             }
@@ -554,7 +581,7 @@ public class ConnectionManager : MonoBehaviour
                 
                 if (fromNode != null && !visited.Contains(fromNode))
                 {
-                    if (fromNode is ProducerNode)
+                    if (fromNode is ProducerNode && !fromNode.IsCaptured)
                     {
                         return true;
                     }

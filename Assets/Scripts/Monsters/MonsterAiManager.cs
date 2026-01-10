@@ -13,9 +13,17 @@ public class MonsterAiManager : MonoBehaviour
     [SerializeField] private float minSpawnInterval = 10f;
     [SerializeField] private float maxSpawnInterval = 30f;
     [SerializeField] private int maxActiveMonsters = 3;
+    [SerializeField] private int maxSpawnAttempts = 20; // Maximum attempts to find valid spawn position
+    
+    [Header("Portal Animation")]
+    [SerializeField] private GameObject portalPrefab; // Portal sprite prefab
+    [SerializeField] private float portalAppearDuration = 0.5f; // Time for portal to appear
+    [SerializeField] private float portalDisappearDuration = 0.5f; // Time for portal to disappear
+    [SerializeField] private float portalStayDuration = 0.3f; // Time portal stays at full scale
     
     [Header("References")]
     [SerializeField] private LevelController currentLevel;
+    [SerializeField] private MapShaderController mapShaderController;
     
     // Singleton
     private static MonsterAiManager _instance;
@@ -112,21 +120,21 @@ public class MonsterAiManager : MonoBehaviour
             {
                 if (activeMonsters.Count < maxActiveMonsters)
                 {
-                    SpawnMonster();
+                    yield return StartCoroutine(SpawnMonsterCoroutine());
                 }
             }
         }
     }
     
     /// <summary>
-    /// Spawn a new monster with a random goal
+    /// Coroutine to spawn a new monster with portal animation
     /// </summary>
-    private void SpawnMonster()
+    private IEnumerator SpawnMonsterCoroutine()
     {
         if (monsterPrefab == null)
         {
             Debug.LogError("MonsterAiManager: Monster prefab not assigned!");
-            return;
+            yield break;
         }
         
         if (currentLevel == null)
@@ -141,12 +149,85 @@ public class MonsterAiManager : MonoBehaviour
             if (currentLevel == null)
             {
                 Debug.LogError("MonsterAiManager: No level reference available!");
-                return;
+                yield break;
             }
         }
         
-        // Get spawn position
-        Vector3 spawnPos = Monster.GetRandomSpawnPosition(currentLevel);
+        // Get valid spawn position in grayscale zone
+        Vector3 spawnPos = GetValidGrayscaleSpawnPosition();
+        
+        if (spawnPos == Vector3.zero)
+        {
+            Debug.LogWarning("MonsterAiManager: Could not find valid grayscale spawn position!");
+            yield break;
+        }
+        
+        // Show portal animation
+        GameObject portalObj = null;
+        Coroutine portalAnimationCoroutine = null;
+        bool spawnCancelled = false;
+        
+        if (portalPrefab != null)
+        {
+            portalObj = ShowPortalAnimation(spawnPos);
+            portalAnimationCoroutine = StartCoroutine(PortalAnimationCoroutine(portalObj, spawnPos, () => { spawnCancelled = true; }));
+            
+            // Wait for portal animation, but check periodically if spawn was cancelled
+            float totalDuration = portalAppearDuration + portalStayDuration + portalDisappearDuration;
+            float elapsed = 0f;
+            float checkInterval = 0.1f; // Check every 0.1 seconds
+            
+            while (elapsed < totalDuration && !spawnCancelled)
+            {
+                yield return new WaitForSeconds(checkInterval);
+                elapsed += checkInterval;
+                
+                // Check if spawn position is still valid
+                if (mapShaderController != null)
+                {
+                    float minSpawnAreaRadius = mapShaderController.GetMinSpawnAreaRadius();
+                    if (!mapShaderController.HasMinimumGrayscaleArea(spawnPos, minSpawnAreaRadius))
+                    {
+                        // Position is no longer valid, cancel spawn
+                        spawnCancelled = true;
+                        if (portalObj != null)
+                        {
+                            // Stop portal animation and close it
+                            if (portalAnimationCoroutine != null)
+                            {
+                                StopCoroutine(portalAnimationCoroutine);
+                            }
+                            // Wait for portal to close before destroying
+                            yield return StartCoroutine(ClosePortalAnimation(portalObj));
+                            Destroy(portalObj);
+                        }
+                        yield break;
+                    }
+                }
+            }
+            
+            // Wait for any remaining time
+            if (!spawnCancelled && elapsed < totalDuration)
+            {
+                yield return new WaitForSeconds(totalDuration - elapsed);
+            }
+        }
+        
+        // If spawn was cancelled, don't spawn monster
+        if (spawnCancelled)
+        {
+            if (portalObj != null)
+            {
+                Destroy(portalObj);
+            }
+            yield break;
+        }
+        
+        // Clean up portal
+        if (portalObj != null)
+        {
+            Destroy(portalObj);
+        }
         
         // Instantiate monster
         GameObject monsterObj = Instantiate(monsterPrefab, spawnPos, Quaternion.identity);
@@ -156,7 +237,7 @@ public class MonsterAiManager : MonoBehaviour
         {
             Debug.LogError("MonsterAiManager: Monster prefab doesn't have Monster component!");
             Destroy(monsterObj);
-            return;
+            yield break;
         }
         
         // Assign random goal
@@ -171,6 +252,136 @@ public class MonsterAiManager : MonoBehaviour
             // No valid goal available, destroy monster
             Debug.LogWarning("MonsterAiManager: No valid goal available for monster, destroying it.");
             Destroy(monsterObj);
+        }
+    }
+    
+    /// <summary>
+    /// Get a valid spawn position in a grayscale zone with minimum area
+    /// </summary>
+    private Vector3 GetValidGrayscaleSpawnPosition()
+    {
+        if (currentLevel == null)
+        {
+            GameController gameController = GameController.Instance;
+            if (gameController != null)
+            {
+                currentLevel = gameController.CurrentLevel;
+            }
+            
+            if (currentLevel == null)
+            {
+                return Vector3.zero;
+            }
+        }
+        
+        // Get MapShaderController if not assigned
+        if (mapShaderController == null)
+        {
+            mapShaderController = FindFirstObjectByType<MapShaderController>();
+        }
+        
+        if (mapShaderController == null)
+        {
+            // Fallback to old method if MapShaderController not found
+            Debug.LogWarning("MonsterAiManager: MapShaderController not found, using fallback spawn position!");
+            return Monster.GetRandomSpawnPosition(currentLevel);
+        }
+        
+        float minSpawnAreaRadius = mapShaderController.GetMinSpawnAreaRadius();
+        
+        // Try to find valid spawn position
+        for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
+        {
+            // Get random spawn position
+            Vector3 candidatePos = Monster.GetRandomSpawnPosition(currentLevel);
+            
+            // Check if position has minimum grayscale area
+            if (mapShaderController.HasMinimumGrayscaleArea(candidatePos, minSpawnAreaRadius))
+            {
+                return candidatePos;
+            }
+        }
+        
+        // Could not find valid position
+        return Vector3.zero;
+    }
+    
+    /// <summary>
+    /// Show portal animation at spawn position
+    /// Returns the portal GameObject
+    /// Note: Portal prefab should have all properties (rotation, scale, etc.) set in prefab
+    /// </summary>
+    private GameObject ShowPortalAnimation(Vector3 position)
+    {
+        if (portalPrefab == null)
+        {
+            return null;
+        }
+        
+        // Instantiate portal - all properties are set in prefab
+        GameObject portalObj = Instantiate(portalPrefab, position, portalPrefab.transform.rotation);
+        
+        return portalObj;
+    }
+    
+    /// <summary>
+    /// Coroutine for portal animation (just waits, no scaling/rotation)
+    /// Portal animation is handled by shader/material
+    /// </summary>
+    private IEnumerator PortalAnimationCoroutine(GameObject portalObj, Vector3 spawnPos, System.Action onCancelled)
+    {
+        if (portalObj == null) yield break;
+        
+        // Wait for portal appear duration
+        yield return new WaitForSeconds(portalAppearDuration);
+        
+        // Stay at full visibility
+        yield return new WaitForSeconds(portalStayDuration);
+        
+        // Wait for portal disappear duration
+        yield return new WaitForSeconds(portalDisappearDuration);
+    }
+    
+    /// <summary>
+    /// Coroutine to close portal animation (when spawn is cancelled)
+    /// Animates portal closing quickly
+    /// </summary>
+    private IEnumerator ClosePortalAnimation(GameObject portalObj)
+    {
+        if (portalObj == null) yield break;
+        
+        // Close portal quickly with fade out effect
+        // Since portal properties are in prefab, we can use a simple fade or just wait a short time
+        // The portal will be destroyed after this coroutine completes
+        float closeDuration = 0.3f; // Quick close animation
+        float elapsed = 0f;
+        
+        // If portal has a renderer, we can fade it out
+        Renderer portalRenderer = portalObj.GetComponent<Renderer>();
+        if (portalRenderer != null && portalRenderer.material != null)
+        {
+            Material mat = portalRenderer.material;
+            Color originalColor = mat.color;
+            
+            while (elapsed < closeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / closeDuration;
+                Color fadeColor = originalColor;
+                fadeColor.a = Mathf.Lerp(originalColor.a, 0f, t);
+                mat.color = fadeColor;
+                yield return null;
+            }
+            
+            // Ensure fully transparent
+            Color finalColor = originalColor;
+            finalColor.a = 0f;
+            mat.color = finalColor;
+        }
+        else
+        {
+            // If no renderer, just wait for close duration
+            yield return new WaitForSeconds(closeDuration);
         }
     }
     

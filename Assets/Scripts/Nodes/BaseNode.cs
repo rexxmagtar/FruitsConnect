@@ -29,6 +29,10 @@ public abstract class BaseNode : MonoBehaviour
     [Header("Particle Effects")]
     [SerializeField] private ParticleSystem connectionParticles;
     
+    [Header("Delivery System")]
+    [SerializeField] private int requiredDeliveries = 3; // Number of animated objects needed to activate this node
+    private int currentDeliveries = 0; // Current number of deliveries received
+    
     // Connection tracking
     protected List<Connection> outgoingConnections = new List<Connection>();
     protected List<Connection> incomingConnections = new List<Connection>();
@@ -49,6 +53,10 @@ public abstract class BaseNode : MonoBehaviour
     // Cache grayscale material instances to avoid creating new ones each frame
     private Material[] cachedGrayscaleMainMaterials;
     private System.Collections.Generic.Dictionary<Renderer, Material[]> cachedGrayscaleChildMaterials = new System.Collections.Generic.Dictionary<Renderer, Material[]>();
+    
+    // Mesh bounds for shader (cached)
+    private float meshMinY = -0.5f;
+    private float meshMaxY = 0.5f;
     
     // Properties
     public string NodeID 
@@ -89,6 +97,12 @@ public abstract class BaseNode : MonoBehaviour
         get => isCaptured;
         set => isCaptured = value;
     }
+    
+    // Delivery properties
+    public int RequiredDeliveries => requiredDeliveries;
+    public int CurrentDeliveries => currentDeliveries;
+    public float DeliveryProgress => requiredDeliveries > 0 ? (float)currentDeliveries / requiredDeliveries : 0f;
+    public bool IsFullyDelivered => currentDeliveries >= requiredDeliveries;
     
     protected virtual void Awake()
     {
@@ -338,6 +352,41 @@ public abstract class BaseNode : MonoBehaviour
     }
     
     /// <summary>
+    /// Calculate mesh bounds for shader vertical progress (in world space)
+    /// </summary>
+    private void CalculateMeshBounds()
+    {
+        // Try to get mesh bounds from MeshRenderer (world space)
+        if (meshRenderer != null)
+        {
+            Bounds bounds = meshRenderer.bounds;
+            meshMinY = bounds.min.y;
+            meshMaxY = bounds.max.y;
+        }
+        else
+        {
+            // Try to get from MeshFilter and convert to world space
+            MeshFilter meshFilter = GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.sharedMesh != null)
+            {
+                Bounds localBounds = meshFilter.sharedMesh.bounds;
+                // Convert local bounds to world space
+                Vector3 worldMin = transform.TransformPoint(localBounds.min);
+                Vector3 worldMax = transform.TransformPoint(localBounds.max);
+                meshMinY = worldMin.y;
+                meshMaxY = worldMax.y;
+            }
+            else
+            {
+                // Default bounds if no mesh found (use world position as center)
+                float centerY = transform.position.y;
+                meshMinY = centerY - 0.5f;
+                meshMaxY = centerY + 0.5f;
+            }
+        }
+    }
+    
+    /// <summary>
     /// Store original materials for restoration
     /// Called lazily on first use if not already stored
     /// </summary>
@@ -413,15 +462,56 @@ public abstract class BaseNode : MonoBehaviour
                 {
                     grayscaleInstance.SetColor("_Color", originalMaterial.GetColor("_Color"));
                 }
-                // Set grayscale intensity to full
-                grayscaleInstance.SetFloat("_GrayscaleIntensity", 1.0f);
+                // Set shader properties for new grayscale shader
+                if (grayscaleInstance.HasProperty("_Brightness"))
+                {
+                    grayscaleInstance.SetFloat("_Brightness", 1.0f);
+                }
+                if (grayscaleInstance.HasProperty("_Contrast"))
+                {
+                    grayscaleInstance.SetFloat("_Contrast", 1.0f);
+                }
+                // Set effect power (inverted delivery progress: 1.0 = all grayscale, 0.0 = all color)
+                if (grayscaleInstance.HasProperty("_EffectPower"))
+                {
+                    grayscaleInstance.SetFloat("_EffectPower", 1.0f - DeliveryProgress);
+                }
+                // Set mesh bounds for vertical progress (world space)
+                if (grayscaleInstance.HasProperty("_MeshMinY"))
+                {
+                    grayscaleInstance.SetFloat("_MeshMinY", meshMinY);
+                }
+                if (grayscaleInstance.HasProperty("_MeshMaxY"))
+                {
+                    grayscaleInstance.SetFloat("_MeshMaxY", meshMaxY);
+                }
                 
                 cachedGrayscaleMainMaterials[materialIndex] = grayscaleInstance;
             }
             
-            return cachedGrayscaleMainMaterials != null && 
-                   materialIndex < cachedGrayscaleMainMaterials.Length ? 
-                   cachedGrayscaleMainMaterials[materialIndex] : originalMaterial;
+            // Get the material (either newly created or cached)
+            Material resultMat = cachedGrayscaleMainMaterials != null && 
+                                 materialIndex < cachedGrayscaleMainMaterials.Length ? 
+                                 cachedGrayscaleMainMaterials[materialIndex] : originalMaterial;
+            
+            // Always update effect power and mesh bounds on the material
+            if (resultMat != null)
+            {
+                if (resultMat.HasProperty("_EffectPower"))
+                {
+                    resultMat.SetFloat("_EffectPower", 1.0f - DeliveryProgress);
+                }
+                if (resultMat.HasProperty("_MeshMinY"))
+                {
+                    resultMat.SetFloat("_MeshMinY", meshMinY);
+                }
+                if (resultMat.HasProperty("_MeshMaxY"))
+                {
+                    resultMat.SetFloat("_MeshMaxY", meshMaxY);
+                }
+            }
+            
+            return resultMat;
         }
         
         return originalMaterial;
@@ -469,19 +559,119 @@ public abstract class BaseNode : MonoBehaviour
             {
                 grayscaleInstance.SetColor("_Color", originalMaterial.GetColor("_Color"));
             }
-            grayscaleInstance.SetFloat("_GrayscaleIntensity", 1.0f);
+            // Set shader properties for new grayscale shader
+            if (grayscaleInstance.HasProperty("_Brightness"))
+            {
+                grayscaleInstance.SetFloat("_Brightness", 1.0f);
+            }
+            if (grayscaleInstance.HasProperty("_Contrast"))
+            {
+                grayscaleInstance.SetFloat("_Contrast", 1.0f);
+            }
+            // Set effect power (inverted delivery progress: 1.0 = all grayscale, 0.0 = all color)
+            if (grayscaleInstance.HasProperty("_EffectPower"))
+            {
+                grayscaleInstance.SetFloat("_EffectPower", 1.0f - DeliveryProgress);
+            }
+            // Set mesh bounds for vertical progress (world space)
+            if (grayscaleInstance.HasProperty("_MeshMinY"))
+            {
+                grayscaleInstance.SetFloat("_MeshMinY", meshMinY);
+            }
+            if (grayscaleInstance.HasProperty("_MeshMaxY"))
+            {
+                grayscaleInstance.SetFloat("_MeshMaxY", meshMaxY);
+            }
             
             cachedMats[materialIndex] = grayscaleInstance;
         }
         
-        return cachedMats != null && 
-               materialIndex < cachedMats.Length ? 
-               cachedMats[materialIndex] : originalMaterial;
+        // Get the material (either newly created or cached)
+        Material resultMat = cachedMats != null && 
+                             materialIndex < cachedMats.Length ? 
+                             cachedMats[materialIndex] : originalMaterial;
+        
+        // Always update delivery progress and mesh bounds on the material
+        if (resultMat != null)
+        {
+            if (resultMat.HasProperty("_DeliveryProgress"))
+            {
+                resultMat.SetFloat("_DeliveryProgress", DeliveryProgress);
+            }
+            if (resultMat.HasProperty("_MeshMinY"))
+            {
+                resultMat.SetFloat("_MeshMinY", meshMinY);
+            }
+            if (resultMat.HasProperty("_MeshMaxY"))
+            {
+                resultMat.SetFloat("_MeshMaxY", meshMaxY);
+            }
+        }
+        
+        return resultMat;
+    }
+    
+    /// <summary>
+    /// Update delivery progress on all grayscale material instances
+    /// </summary>
+    private void UpdateGrayscaleMaterialProgress()
+    {
+        // Calculate effect power (inverted delivery progress: 1.0 = all grayscale, 0.0 = all color)
+        float effectPower = 1.0f - DeliveryProgress;
+        
+        // Update main renderer grayscale materials
+        if (cachedGrayscaleMainMaterials != null)
+        {
+            foreach (Material mat in cachedGrayscaleMainMaterials)
+            {
+                if (mat != null)
+                {
+                    if (mat.HasProperty("_EffectPower"))
+                    {
+                        mat.SetFloat("_EffectPower", effectPower);
+                    }
+                    if (mat.HasProperty("_MeshMinY"))
+                    {
+                        mat.SetFloat("_MeshMinY", meshMinY);
+                    }
+                    if (mat.HasProperty("_MeshMaxY"))
+                    {
+                        mat.SetFloat("_MeshMaxY", meshMaxY);
+                    }
+                }
+            }
+        }
+        
+        // Update child renderer grayscale materials
+        foreach (var kvp in cachedGrayscaleChildMaterials)
+        {
+            if (kvp.Value != null)
+            {
+                foreach (Material mat in kvp.Value)
+                {
+                    if (mat != null)
+                    {
+                        if (mat.HasProperty("_EffectPower"))
+                        {
+                            mat.SetFloat("_EffectPower", effectPower);
+                        }
+                        if (mat.HasProperty("_MeshMinY"))
+                        {
+                            mat.SetFloat("_MeshMinY", meshMinY);
+                        }
+                        if (mat.HasProperty("_MeshMaxY"))
+                        {
+                            mat.SetFloat("_MeshMaxY", meshMaxY);
+                        }
+                    }
+                }
+            }
+        }
     }
     
     /// <summary>
     /// Update materials based on connection status to producer
-    /// Applies grayscale material when disconnected, restores original when connected
+    /// Applies grayscale material when disconnected or captured, restores original when connected and not captured
     /// </summary>
     private void UpdateConnectionStatusVisual()
     {
@@ -491,8 +681,11 @@ public abstract class BaseNode : MonoBehaviour
             StoreOriginalMaterials();
         }
         
-        // Check if connected to producer
-        bool isConnectedToProducer = IsConnectedToProducer();
+        // Check if connected to producer AND not captured
+        // Producers are always considered connected (don't need deliveries)
+        // Other nodes must be fully delivered to show as connected
+        // If captured, always show grayscale (even producers)
+        bool isConnectedToProducer = !isCaptured && IsConnectedToProducer() && (this is ProducerNode || IsFullyDelivered);
         
         // Update main renderer
         if (meshRenderer != null && originalMainMaterials != null && originalMainMaterials.Length > 0)
@@ -541,6 +734,7 @@ public abstract class BaseNode : MonoBehaviour
                         newMaterials[i] = originalMainMaterials[i];
                     }
                     // Add grayscale material as last material
+                    // GetGrayscaleMaterialInstance already updates delivery progress
                     newMaterials[originalMainMaterials.Length] = GetGrayscaleMaterialInstance(originalMainMaterials[0], 0, true);
                 }
                 else
@@ -592,6 +786,7 @@ public abstract class BaseNode : MonoBehaviour
                             newMaterials[i] = originalMats[i];
                         }
                         // Add grayscale material as second material
+                        // GetGrayscaleMaterialInstanceForChild already updates delivery progress
                         newMaterials[originalMats.Length] = GetGrayscaleMaterialInstanceForChild(renderer, originalMats[0], 0);
                     }
                     else
@@ -608,6 +803,12 @@ public abstract class BaseNode : MonoBehaviour
                 renderer.materials = newMaterials;
             }
         }
+        
+        // Recalculate mesh bounds in case transform changed (shader uses world space)
+        CalculateMeshBounds();
+        
+        // Update delivery progress on all grayscale materials
+        UpdateGrayscaleMaterialProgress();
     }
     
     /// <summary>
@@ -621,6 +822,84 @@ public abstract class BaseNode : MonoBehaviour
             return manager.IsConnectedToProducer(this);
         }
         return false;
+    }
+    
+    /// <summary>
+    /// Called when an animated object is delivered to this node
+    /// Returns true if the node becomes fully activated after this delivery
+    /// </summary>
+    public bool OnDeliveryReceived()
+    {
+        if (IsFullyDelivered)
+        {
+            return false; // Already fully delivered
+        }
+        
+        currentDeliveries++;
+        currentDeliveries = Mathf.Min(currentDeliveries, requiredDeliveries);
+        
+        // Update visuals to show progress
+        RefreshConnectionStatusVisual();
+        
+        // Notify MapShaderController to update shader with new progress
+        MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
+        {
+            mapShaderController.UpdateShaderProperties();
+        }
+        
+        // Check if node should be activated now
+        if (IsFullyDelivered)
+        {
+            // Node is now fully delivered - activate it
+            ActivateNode();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Activate the node (apply energy, etc.)
+    /// Called when node receives enough deliveries
+    /// </summary>
+    private void ActivateNode()
+    {
+        // Apply energy if this is the first incoming connection and energy not yet applied
+        if (incomingConnections.Count > 0 && !isEnergyApplied)
+        {
+            GameController gameController = GameController.Instance;
+            if (gameController != null)
+            {
+                // Apply energy (positive weight = gain, negative weight = lose)
+                gameController.ModifyEnergy(weight);
+                isEnergyApplied = true;
+                
+                Debug.Log($"Node {nodeID} activated! Applied energy {weight} after receiving {currentDeliveries} deliveries.");
+            }
+        }
+        
+        // Trigger particle effect when node is fully activated
+        PlayConnectionParticles();
+        
+        // Update visuals
+        RefreshConnectionStatusVisual();
+        
+        // Notify MapShaderController
+        MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
+        {
+            mapShaderController.UpdateShaderProperties();
+        }
+    }
+    
+    /// <summary>
+    /// Reset delivery count (for level reset)
+    /// </summary>
+    public void ResetDeliveries()
+    {
+        currentDeliveries = 0;
+        RefreshConnectionStatusVisual();
     }
     
     /// <summary>
@@ -709,6 +988,7 @@ public abstract class BaseNode : MonoBehaviour
         outgoingConnections.Clear();
         incomingConnections.Clear();
         isEnergyApplied = false;
+        ResetDeliveries();
         OnConnectionsChanged();
     }
     

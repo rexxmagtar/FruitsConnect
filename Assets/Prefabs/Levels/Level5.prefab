@@ -559,7 +559,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 8a21e879cac8b4a41b48b5f7ccd76406, type: 2}
+  - {fileID: 2100000, guid: 705c49310f08bec4bb8f10eaf539cb75, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -651,7 +651,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontSize
-      value: 0.35
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontColor.b
@@ -845,7 +845,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontSize
-      value: 0.35
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontColor.b
@@ -1112,7 +1112,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontSize
-      value: 0.35
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontColor.b
@@ -1225,7 +1225,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontSize
-      value: 0.35
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
       propertyPath: m_fontColor.b

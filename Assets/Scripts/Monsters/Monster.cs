@@ -34,6 +34,7 @@ public class Monster : MonoBehaviour
     
     [Header("Particle Effects")]
     [SerializeField] private ParticleSystem hitParticleEffect;
+     [SerializeField] private ParticleSystem dieParticleEffect;
     
     [Header("Goal")]
     [SerializeField] private MonsterGoal currentGoal;
@@ -308,6 +309,16 @@ public class Monster : MonoBehaviour
                     // Destroy all connections from/to this node
                     connectionManager.RemoveAllConnectionsFromNode(currentGoal.targetNode);
                     
+                    // Refresh node visuals to show grayscale (especially important for producers)
+                    capturedNode.RefreshConnectionStatusVisual();
+                    
+                    // Update map shader to remove colored zone from captured producer
+                    MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+                    if (mapShaderController != null)
+                    {
+                        mapShaderController.UpdateShaderProperties();
+                    }
+                    
                     // Position monster on top of node
                     Vector3 nodePos = currentGoal.targetNode.transform.position;
                     transform.position = nodePos + Vector3.up * positionOffsetY;
@@ -522,26 +533,20 @@ public class Monster : MonoBehaviour
     /// </summary>
     private IEnumerator DeathSequence()
     {
-        yield return new WaitForSeconds(0.5f);
-        // Wait for dying animation to complete
-        if (aiController != null)
-        {
-            while (aiController.IsDying())
-            {
-                Debug.Log("Monster: Dying");
-                yield return null;
-            }
-        }
-        else
-        {
-            // Fallback: wait a short time if animator check fails
-            yield return new WaitForSeconds(1f);
-        }
         
+        // Wait for dying animation to complete
+        
+        yield return new WaitForSeconds(1f);
+
+        dieParticleEffect.Play();
+        GetComponentInChildren<SkinnedMeshRenderer>().enabled = false;
+        yield return new WaitForSeconds(0.5f);
         // Free captured target
         if (capturedNode != null)
         {
             capturedNode.IsCaptured = false;
+            // Refresh visuals to restore color
+            capturedNode.RefreshConnectionStatusVisual();
             capturedNode = null;
         }
         
@@ -556,6 +561,14 @@ public class Monster : MonoBehaviour
         if (manager != null)
         {
             manager.OnMonsterDied(this);
+        }
+        
+        // Update map shader to reflect that producer is no longer captured
+        // (ConnectionManager.OnConnectionsChanged will be triggered, but we also update here to be safe)
+        MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
+        {
+            mapShaderController.UpdateShaderProperties();
         }
         
         // Destroy monster
@@ -575,6 +588,8 @@ public class Monster : MonoBehaviour
     
     /// <summary>
     /// Get spawn position for monster (random position on map)
+    /// Note: This method only generates a random position. Validation for grayscale zones
+    /// should be performed by the caller (e.g., MonsterAiManager.GetValidGrayscaleSpawnPosition)
     /// </summary>
     public static Vector3 GetRandomSpawnPosition(LevelController level)
     {

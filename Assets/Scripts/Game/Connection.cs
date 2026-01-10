@@ -295,6 +295,9 @@ public class Connection : MonoBehaviour
         if (obj != null && toNode != null)
         {
             obj.transform.position = toNode.transform.position;
+            
+            // Notify the destination node that a delivery has arrived
+            toNode.OnDeliveryReceived();
         }
         
         // Clean up

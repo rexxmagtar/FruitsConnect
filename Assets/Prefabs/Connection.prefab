@@ -155,7 +155,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animationPrefab: {fileID: 0}
   animationSpeed: 2
-  spawnInterval: 0.5
+  spawnInterval: 1
   isAnimating: 0
 --- !u!65 &4112333675474129236
 BoxCollider:

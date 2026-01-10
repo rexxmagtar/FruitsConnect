@@ -126,6 +126,7 @@ public class MonsterAiController : MonoBehaviour
         if (animator == null) return false;
         
         AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        Debug.Log("MonsterAiController: IsDying current state: " + stateInfo.fullPathHash + " / " + stateInfo.shortNameHash + " / " + animator.GetCurrentAnimatorStateInfo(0).IsName("Die") + " / name: " + animator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
         return stateInfo.IsName("Die") || stateInfo.IsName("die") || 
                stateInfo.IsName("Dying") || stateInfo.IsName("dying") ||
                stateInfo.IsName("Death") || stateInfo.IsName("death");

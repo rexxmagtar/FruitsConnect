@@ -183,6 +183,12 @@ public class GameController : MonoBehaviour
         
         // Disable input
         gameplayEnabled = false;
+
+        MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
+        {
+            mapShaderController.SetLevelController(currentLevel);
+        }
         
         Debug.Log($"Preloaded level: {config.LevelName} with starting energy: {startingEnergy}");
     }
