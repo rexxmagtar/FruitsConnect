@@ -136,6 +136,7 @@ MonoBehaviour:
   allNodes: []
   connectionMappings: []
   graphVisualizer: {fileID: 3693330557500459838}
+  TerrainMeshRenderer: {fileID: 1371641919160765594}
 --- !u!114 &3693330557500459838
 MonoBehaviour:
   m_ObjectHideFlags: 0

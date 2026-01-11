@@ -30,6 +30,7 @@ public class BossFightManager : MonoBehaviour
     private List<GameObject> hiddenObjects = new List<GameObject>();
     private Vector3 originalCameraPosition;
     private Quaternion originalCameraRotation;
+    private bool terrainWasVisible = true;
     
     // Properties
     public bool IsBossFightActive => isBossFightActive;
@@ -156,10 +157,16 @@ public class BossFightManager : MonoBehaviour
             cameraController.StoreCurrentPositionAsOriginal();
         }
         
-        // Step 1: Hide map elements (nodes, connections, monsters)
+        // Step 1: Hide map elements (nodes, connections, monsters, terrain)
         HideMapElements();
         
-        // Step 2: Move camera to boss view
+        // Step 2: Show boss alert UI immediately (before camera transition completes)
+        if (bossFightUI != null)
+        {
+            bossFightUI.ShowBossAlert();
+        }
+        
+        // Step 3: Move camera to boss view
         if (cameraController != null)
         {
             if (bossCameraViewTransform != null)
@@ -187,12 +194,6 @@ public class BossFightManager : MonoBehaviour
         
         // Wait for camera transition
         yield return new WaitForSeconds(cameraTransitionDuration);
-        
-        // Step 3: Show boss alert UI
-        if (bossFightUI != null)
-        {
-            bossFightUI.ShowBossAlert();
-        }
         
         // Wait for alert display
         yield return new WaitForSeconds(bossAlertDisplayDuration);
@@ -277,6 +278,13 @@ public class BossFightManager : MonoBehaviour
         {
             gameplayUI.Hide();
         }
+        
+        // Hide terrain renderer from LevelController if available
+        if (currentLevel != null && currentLevel.TerrainMeshRenderer != null)
+        {
+            terrainWasVisible = currentLevel.TerrainMeshRenderer.enabled;
+            currentLevel.TerrainMeshRenderer.enabled = false;
+        }
     }
     
     /// <summary>
@@ -292,6 +300,12 @@ public class BossFightManager : MonoBehaviour
             }
         }
         hiddenObjects.Clear();
+        
+        // Restore terrain renderer visibility from LevelController if available
+        if (currentLevel != null && currentLevel.TerrainMeshRenderer != null)
+        {
+            currentLevel.TerrainMeshRenderer.enabled = terrainWasVisible;
+        }
     }
     
     /// <summary>
@@ -355,7 +369,7 @@ public class BossFightManager : MonoBehaviour
     }
     
     /// <summary>
-    /// End boss fight sequence: restore map, camera, show level complete
+    /// End boss fight sequence: show level complete screen directly (no camera return animation)
     /// </summary>
     private IEnumerator EndBossFightSequence(bool bossDefeated)
     {
@@ -368,23 +382,11 @@ public class BossFightManager : MonoBehaviour
             bossFightUI.HideFightUI();
         }
         
-        // Restore camera
-        if (cameraController != null)
-        {
-            cameraController.RestoreOriginalPosition(cameraTransitionDuration);
-        }
-        
-        // Wait for camera transition
-        yield return new WaitForSeconds(cameraTransitionDuration);
-        
-        // Restore map elements
-        RestoreMapElements();
-        
         // Unsubscribe from boss events
         Boss.OnBossDied -= OnBossDied;
         Boss.OnBossEscaped -= OnBossEscaped;
         
-        // Show level complete screen
+        // Show level complete screen directly (no camera return, no map restoration)
         GameController gameController = GameController.Instance;
         if (gameController != null)
         {

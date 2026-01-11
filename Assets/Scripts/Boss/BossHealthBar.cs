@@ -17,7 +17,7 @@ public class BossHealthBar : MonoBehaviour
     [SerializeField] private Color filledColor = Color.red;
     [SerializeField] private Color emptyColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
     
-    private Boss boss;
+     [SerializeField] private Boss boss;
     private Image[] healthTiles;
     private int maxHealth;
     
@@ -35,11 +35,6 @@ public class BossHealthBar : MonoBehaviour
             canvas.renderMode = RenderMode.WorldSpace;
         }
         
-        // Get boss reference from parent
-        if (boss == null)
-        {
-            boss = GetComponentInParent<Boss>();
-        }
     }
     
     private void Start()

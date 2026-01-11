@@ -153,4 +153,26 @@ public class CameraController : MonoBehaviour
     /// Check if camera is currently transitioning
     /// </summary>
     public bool IsTransitioning => isTransitioning;
+    
+    /// <summary>
+    /// Reset camera force - stop any transitions and reset to original position immediately
+    /// </summary>
+    public void ResetCameraForce()
+    {
+        if (mainCamera == null) return;
+        
+        // Stop any ongoing transitions
+        if (isTransitioning)
+        {
+            StopAllCoroutines();
+            isTransitioning = false;
+        }
+        
+        // Immediately restore to original position
+        if (mainCamera != null)
+        {
+            mainCamera.transform.position = originalPosition;
+            mainCamera.transform.rotation = originalRotation;
+        }
+    }
 }

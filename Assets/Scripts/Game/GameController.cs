@@ -598,6 +598,13 @@ public class GameController : MonoBehaviour
                     // Unload current level
                     UnloadLevel();
                     
+                    // Reset camera force (in case it was moved during boss fight)
+                    CameraController cameraController = CameraController.Instance;
+                    if (cameraController != null)
+                    {
+                        cameraController.ResetCameraForce();
+                    }
+                    
                     // Preload and start next level
                     PreloadLevel(nextLevelConfig);
                     StartGame();

@@ -12,6 +12,8 @@ public class LevelController : MonoBehaviour
     
     [Header("Visualization")]
     [SerializeField] private GraphVisualizer graphVisualizer;
+
+    public MeshRenderer TerrainMeshRenderer;
     
     // Dictionary for fast lookup (built at runtime from serialized list)
     private Dictionary<string, List<string>> connectionDict;
