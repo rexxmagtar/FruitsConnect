@@ -38,7 +38,8 @@ public class Boss : MonoBehaviour
     
     [Header("Perfect Hit Feedback")]
     [SerializeField] private GameObject perfectHitSpritePrefab;
-    [SerializeField] private float perfectHitSpriteDuration = 1f;
+    [SerializeField] private float perfectHitSpriteDuration = 0.3f;
+    [SerializeField] private float perfectHitSpriteMoveDistance = 2f;
     
     // State
     private int currentHealth;
@@ -317,13 +318,59 @@ public class Boss : MonoBehaviour
     }
     
     /// <summary>
-    /// Destroy perfect hit sprite after duration
+    /// Animate perfect hit sprite: move up and fade away
     /// </summary>
     private IEnumerator DestroyPerfectHitSprite(GameObject spriteObj)
     {
-        yield return new WaitForSeconds(perfectHitSpriteDuration);
+        if (spriteObj == null) yield break;
+        
+        // Get components
+        SpriteRenderer spriteRenderer = spriteObj.GetComponent<SpriteRenderer>();
+        Transform spriteTransform = spriteObj.transform;
+        
+        if (spriteRenderer == null || spriteTransform == null)
+        {
+            // Fallback: just wait and destroy
+            yield return new WaitForSeconds(perfectHitSpriteDuration);
+            if (spriteObj != null)
+            {
+                Destroy(spriteObj);
+            }
+            yield break;
+        }
+        
+        // Store initial values
+        Vector3 startPosition = spriteTransform.position;
+        Vector3 endPosition = startPosition + Vector3.up * perfectHitSpriteMoveDistance;
+        Color startColor = spriteRenderer.color;
+        Color endColor = new Color(startColor.r, startColor.g, startColor.b, 0f);
+        
+        // Animate over duration
+        float elapsedTime = 0f;
+        while (elapsedTime < perfectHitSpriteDuration)
+        {
+            if (spriteObj == null) yield break;
+            
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / perfectHitSpriteDuration;
+            
+            // Move up
+            spriteTransform.position = Vector3.Lerp(startPosition, endPosition, t);
+            
+            // Fade out
+            spriteRenderer.color = Color.Lerp(startColor, endColor, t);
+            
+            yield return null;
+        }
+        
+        // Ensure final state
         if (spriteObj != null)
         {
+            spriteTransform.position = endPosition;
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.color = endColor;
+            }
             Destroy(spriteObj);
         }
     }

@@ -19,4 +19,4 @@ MonoBehaviour:
   connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}
   isBossFight: 1
   bossGoldReward: 50
-  bossFightTimeLimit: 30
+  bossFightTimeLimit: 20

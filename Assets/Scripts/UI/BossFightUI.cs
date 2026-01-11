@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using TMPro;
+using DG.Tweening;
 
 /// <summary>
 /// UI overlay for boss fight - alert screen and fight UI
@@ -12,6 +13,8 @@ public class BossFightUI : MonoBehaviour
     [SerializeField] private GameObject bossAlertPanel;
     [SerializeField] private TextMeshProUGUI bossAlertText;
     [SerializeField] private Image bossAlertBackground;
+     [SerializeField] private Image bossAlertIcon;
+     [SerializeField] private TextMeshProUGUI fightStartText;
     [SerializeField] private float alertFadeInDuration = 0.5f;
     [SerializeField] private float alertFadeOutDuration = 0.3f;
     
@@ -52,6 +55,8 @@ public class BossFightUI : MonoBehaviour
         {
             fightUIPanel.SetActive(false);
         }
+
+        fightStartText.transform.localScale = Vector3.zero;
     }
     
     private void Start()
@@ -169,6 +174,7 @@ public class BossFightUI : MonoBehaviour
     private IEnumerator ShowAlertAnimation()
     {
         isAlertVisible = true;
+        bossAlertIcon.transform.DOScale(1.2f, 0.5f).SetLoops(-1, LoopType.Yoyo);
         
         // Setup initial state
         if (bossAlertPanel != null)
@@ -318,6 +324,10 @@ public class BossFightUI : MonoBehaviour
         {
             bossAlertPanel.SetActive(false);
         }
+
+        fightStartText.transform.DOScale(1.2f, 0.5f).OnComplete(() => {
+            fightStartText.transform.DOScale(0.0f, 0.5f);
+        });
         
         isAlertVisible = false;
     }
