@@ -29,9 +29,14 @@ public class Connection : MonoBehaviour
     [SerializeField] private float spawnInterval = 0.5f; // Time between spawning new objects
     [SerializeField] private bool isAnimating = false;
     
+    [Header("Creation Animation Settings")]
+    [SerializeField] private float creationAnimationDuration = 0.3f; // Duration of creation scale animation
+    [SerializeField] private AnimationCurve creationScaleCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    
     // Active animation objects
     private List<GameObject> activeAnimationObjects = new List<GameObject>();
     private Coroutine animationCoroutine;
+    private Coroutine creationAnimationCoroutine;
     
     public BaseNode FromNode => fromNode;
     public BaseNode ToNode => toNode;
@@ -106,6 +111,9 @@ public class Connection : MonoBehaviour
         // Update visual immediately
         UpdateVisual();
         UpdateCollider();
+        
+        // Play creation animation (scale effect)
+        PlayCreationAnimation();
         
         // Start animation if prefab is provided
         if (animationPrefab != null)
@@ -306,6 +314,59 @@ public class Connection : MonoBehaviour
             activeAnimationObjects.Remove(obj);
             Destroy(obj);
         }
+    }
+    
+    /// <summary>
+    /// Play creation animation - scales the connection line from 0 to full width
+    /// </summary>
+    private void PlayCreationAnimation()
+    {
+        if (lineRenderer == null) return;
+        
+        // Stop any existing creation animation
+        if (creationAnimationCoroutine != null)
+        {
+            StopCoroutine(creationAnimationCoroutine);
+        }
+        
+        // Start creation animation coroutine
+        creationAnimationCoroutine = StartCoroutine(CreationAnimationCoroutine());
+    }
+    
+    /// <summary>
+    /// Coroutine that performs the creation scale animation
+    /// </summary>
+    private IEnumerator CreationAnimationCoroutine()
+    {
+        if (lineRenderer == null) yield break;
+        
+        float originalWidth = lineWidth;
+        float elapsedTime = 0f;
+        
+        // Initialize curve if not set
+        if (creationScaleCurve == null || creationScaleCurve.keys.Length == 0)
+        {
+            creationScaleCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        }
+        
+        // Animate from 0 to full width
+        while (elapsedTime < creationAnimationDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / creationAnimationDuration;
+            float curveValue = creationScaleCurve.Evaluate(t);
+            float currentWidth = originalWidth * curveValue;
+            
+            lineRenderer.startWidth = currentWidth;
+            lineRenderer.endWidth = currentWidth;
+            
+            yield return null;
+        }
+        
+        // Ensure we're at full width
+        lineRenderer.startWidth = originalWidth;
+        lineRenderer.endWidth = originalWidth;
+        creationAnimationCoroutine = null;
     }
     
     /// <summary>

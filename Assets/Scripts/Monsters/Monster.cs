@@ -21,6 +21,11 @@ public class Monster : MonoBehaviour
     [Header("Attack Animation Settings")]
     [SerializeField] private float attackAnimationDuration = 1.5f; // Duration of attack animation
     
+    [Header("Pathfinding Settings")]
+    [SerializeField] private float obstacleCheckDistance = 1.0f; // Distance to check for obstacles ahead
+    [SerializeField] private float steeringAngle = 45f; // Angle to steer when avoiding obstacles (degrees)
+    [SerializeField] private float avoidanceRadius = 0.5f; // Radius to check for obstacles
+    
     [Header("Component References")]
     [SerializeField] private MonsterAiController aiController;
     [SerializeField] private MonsterHealthBar healthBar;
@@ -199,7 +204,7 @@ public class Monster : MonoBehaviour
     }
     
     /// <summary>
-    /// Move monster toward its target
+    /// Move monster toward its target with obstacle avoidance
     /// </summary>
     private void MoveTowardTarget()
     {
@@ -213,16 +218,97 @@ public class Monster : MonoBehaviour
             return;
         }
         
-        // Move toward target
-        Vector3 direction = (targetPos - currentPos).normalized;
-        Vector3 newPosition = Vector3.MoveTowards(currentPos, targetPos, movementSpeed * Time.deltaTime);
+        // Calculate desired direction to target
+        Vector3 desiredDirection = (targetPos - currentPos).normalized;
+        
+        // Check for obstacles in the path
+        Vector3 finalDirection = CalculatePathWithObstacleAvoidance(currentPos, desiredDirection, targetPos);
+        
+        // Move in the calculated direction
+        Vector3 newPosition = currentPos + finalDirection * movementSpeed * Time.deltaTime;
         transform.position = newPosition;
         
         // Rotate to face movement direction
-        if (direction != Vector3.zero)
+        if (finalDirection != Vector3.zero)
         {
-            transform.rotation = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.LookRotation(finalDirection);
         }
+    }
+    
+    /// <summary>
+    /// Calculate movement direction with obstacle avoidance
+    /// </summary>
+    private Vector3 CalculatePathWithObstacleAvoidance(Vector3 currentPos, Vector3 desiredDirection, Vector3 targetPos)
+    {
+        ConnectionManager connectionManager = ConnectionManager.Instance;
+        if (connectionManager == null)
+        {
+            // Fallback to direct movement if ConnectionManager not available
+            return desiredDirection;
+        }
+        
+        // Check if direct path to target has obstacles
+        Vector3 checkPosition = currentPos + desiredDirection * obstacleCheckDistance;
+        bool hasObstacle = connectionManager.CheckWallIntersection(currentPos, checkPosition);
+        
+        if (!hasObstacle)
+        {
+            // No obstacle, move directly toward target
+            return desiredDirection;
+        }
+        
+        // Obstacle detected - try to steer around it
+        // Try steering left and right to find a clear path
+        Vector3[] steeringDirections = new Vector3[]
+        {
+            Quaternion.Euler(0, steeringAngle, 0) * desiredDirection,      // Steer right
+            Quaternion.Euler(0, -steeringAngle, 0) * desiredDirection,  // Steer left
+            Quaternion.Euler(0, steeringAngle * 2, 0) * desiredDirection,  // Steer right more
+            Quaternion.Euler(0, -steeringAngle * 2, 0) * desiredDirection, // Steer left more
+        };
+        
+        // Try each steering direction
+        foreach (Vector3 steerDir in steeringDirections)
+        {
+            Vector3 testPosition = currentPos + steerDir * obstacleCheckDistance;
+            if (!connectionManager.CheckWallIntersection(currentPos, testPosition))
+            {
+                // This direction is clear, use it
+                return steerDir.normalized;
+            }
+        }
+        
+        // All steering directions blocked, try perpendicular movement
+        Vector3 perpendicularRight = Vector3.Cross(desiredDirection, Vector3.up).normalized;
+        Vector3 perpendicularLeft = -perpendicularRight;
+        
+        Vector3[] perpendicularDirections = new Vector3[]
+        {
+            perpendicularRight,
+            perpendicularLeft,
+            (perpendicularRight + desiredDirection * 0.5f).normalized,
+            (perpendicularLeft + desiredDirection * 0.5f).normalized,
+        };
+        
+        foreach (Vector3 perpDir in perpendicularDirections)
+        {
+            Vector3 testPosition = currentPos + perpDir * obstacleCheckDistance;
+            if (!connectionManager.CheckWallIntersection(currentPos, testPosition))
+            {
+                return perpDir.normalized;
+            }
+        }
+        
+        // All paths blocked, try to move away from obstacle (backward)
+        Vector3 awayDirection = -desiredDirection;
+        Vector3 testAwayPosition = currentPos + awayDirection * obstacleCheckDistance;
+        if (!connectionManager.CheckWallIntersection(currentPos, testAwayPosition))
+        {
+            return awayDirection.normalized;
+        }
+        
+        // Completely blocked, return original direction (monster will stop when hitting wall)
+        return desiredDirection;
     }
     
     /// <summary>
@@ -291,11 +377,24 @@ public class Monster : MonoBehaviour
                     // Destroy the connection
                     connectionManager.RemoveConnection(targetConn);
                     
-                    // Position monster on top of connection midpoint
-                    Vector3 connectionMidpoint = (fromNode != null && toNode != null) 
-                        ? ((fromNode.transform.position + toNode.transform.position) / 2f)
-                        : currentGoal.GetTargetPosition();
-                    transform.position = connectionMidpoint + Vector3.up * positionOffsetY;
+                    // Position monster on top of connection midpoint and align along connection line
+                    if (fromNode != null && toNode != null)
+                    {
+                        Vector3 connectionMidpoint = (fromNode.transform.position + toNode.transform.position) / 2f;
+                        transform.position = connectionMidpoint + Vector3.up * positionOffsetY;
+                        
+                        // Calculate direction along connection line and align monster
+                        Vector3 connectionDirection = (toNode.transform.position - fromNode.transform.position).normalized;
+                        if (connectionDirection != Vector3.zero)
+                        {
+                            transform.rotation = Quaternion.LookRotation(connectionDirection);
+                        }
+                    }
+                    else
+                    {
+                        // Fallback if nodes are null
+                        transform.position = currentGoal.GetTargetPosition() + Vector3.up * positionOffsetY;
+                    }
                 }
                 break;
             

@@ -40,6 +40,10 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] private LayerMask wallLayer = -1; // Default to all layers
     [SerializeField] private string wallTag = "Wall"; // Tag for wall objects
     
+    [Header("Audio")]
+    [SerializeField] private AudioClip connectionCreatedSound;
+    [SerializeField] private AudioSource audioSource;
+    
     // Singleton
     private static ConnectionManager _instance;
     public static ConnectionManager Instance => _instance;
@@ -77,6 +81,17 @@ public class ConnectionManager : MonoBehaviour
         if (connectionPrefab == null)
         {
             CreateDefaultConnectionPrefab();
+        }
+        
+        // Get or add AudioSource if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+            }
         }
     }
     
@@ -133,8 +148,8 @@ public class ConnectionManager : MonoBehaviour
         // Add to active list
         activeConnections.Add(connection);
         
-        // Note: Energy is no longer applied immediately when connection is created
-        // Energy will be applied when the node receives enough deliveries (see BaseNode.OnDeliveryReceived)
+        // Apply energy immediately when connection is created (if connected to producer)
+        ApplyEnergyForConnection(to);
         
         Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}. Node {to.NodeID} needs {to.RequiredDeliveries} deliveries to activate.");
         
@@ -157,6 +172,9 @@ public class ConnectionManager : MonoBehaviour
         // Notify MapShaderController that connections changed
         OnConnectionsChanged?.Invoke();
         
+        // Play connection creation sound
+        PlayConnectionCreatedSound();
+        
         return true;
     }
     
@@ -178,6 +196,13 @@ public class ConnectionManager : MonoBehaviour
         connection.DestroyConnection();
         
         Debug.Log($"Removed connection");
+        
+        // Reset deliveries for the target node if it's no longer connected to a producer
+        // This ensures immediate reset when connection is broken
+        if (toNode != null && !IsConnectedToProducer(toNode))
+        {
+            toNode.ResetDeliveries();
+        }
         
         // After removal, break any chains that are no longer connected to a producer
         BreakDisconnectedChains();
@@ -343,6 +368,42 @@ public class ConnectionManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Apply energy immediately when a connection is created
+    /// Energy is applied if the target node is connected to a producer
+    /// </summary>
+    private void ApplyEnergyForConnection(BaseNode targetNode)
+    {
+        if (targetNode == null) return;
+        
+        GameController gameController = GameController.Instance;
+        if (gameController == null) return;
+        
+        // Check if node is connected to producer
+        bool isConnectedToProducer = IsConnectedToProducer(targetNode);
+        
+        // Apply energy immediately if:
+        // 1. Target node is a ProducerNode (and not captured)
+        // 2. Target node is connected to a producer (even if not fully delivered yet)
+        if (isConnectedToProducer && !targetNode.IsEnergyApplied)
+        {
+            // For ProducerNode, always apply immediately
+            if (targetNode is ProducerNode && !targetNode.IsCaptured)
+            {
+                gameController.ModifyEnergy(targetNode.Weight);
+                targetNode.IsEnergyApplied = true;
+                Debug.Log($"Applied energy {targetNode.Weight} immediately for ProducerNode {targetNode.NodeID}");
+            }
+            // For other nodes, apply immediately if connected to producer
+            else if (targetNode.IncomingConnections.Count > 0)
+            {
+                gameController.ModifyEnergy(targetNode.Weight);
+                targetNode.IsEnergyApplied = true;
+                Debug.Log($"Applied energy {targetNode.Weight} immediately for node {targetNode.NodeID} (connected to producer)");
+            }
+        }
+    }
+    
+    /// <summary>
     /// Recalculate total energy from scratch based on currently connected nodes
     /// Called after connection destruction sequence is complete
     /// </summary>
@@ -379,16 +440,21 @@ public class ConnectionManager : MonoBehaviour
                 totalEnergy += node.Weight;
                 node.IsEnergyApplied = true;
             }
-            // Only count other nodes that are connected to a producer AND fully delivered
-            else if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node) && node.IsFullyDelivered)
+            // Count nodes that are connected to a producer (energy is applied immediately when connection is made)
+            // Note: Energy is applied when connection is created, not when fully delivered
+            else if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node))
             {
                 totalEnergy += node.Weight;
                 node.IsEnergyApplied = true;
             }
             else
             {
-                // Reset energy applied flag if node is not fully delivered (or is a producer that's captured)
+                // Reset energy applied flag if node is not connected to producer (or is a producer that's captured)
                 node.IsEnergyApplied = false;
+                
+                // Reset deliveries if node is no longer connected to a producer
+                // This ensures that when a connection breaks, the delivered value resets
+                node.ResetDeliveries();
             }
         }
         
@@ -691,6 +757,9 @@ public class ConnectionManager : MonoBehaviour
             ghostLineRenderer.startWidth = ghostLineWidth;
             ghostLineRenderer.endWidth = ghostLineWidth;
             
+            // Set higher sorting order to ensure ghost line renders above placeholder lines
+            ghostLineRenderer.sortingOrder = 100;
+            
             // The prefab's material is already set, we just need to update its color
             // Create a material instance so we can change color without affecting the prefab
             if (ghostLineRenderer.material != null)
@@ -700,8 +769,8 @@ public class ConnectionManager : MonoBehaviour
         }
         
         // Ensure both start and end Y coordinates are always 0
-        startPosition.y = 0f;
-        endPosition.y = 0f;
+        startPosition.y = 0.1f;
+        endPosition.y = 0.1f;
         
         // Update positions
         ghostLineRenderer.SetPosition(0, startPosition);
@@ -791,6 +860,17 @@ public class ConnectionManager : MonoBehaviour
         if (ghostLineObject != null)
         {
             ghostLineObject.SetActive(false);
+        }
+    }
+    
+    /// <summary>
+    /// Play sound effect when connection is created
+    /// </summary>
+    private void PlayConnectionCreatedSound()
+    {
+        if (connectionCreatedSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(connectionCreatedSound);
         }
     }
     

@@ -6155,16 +6155,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
   connectionColor: {r: 1, g: 1, b: 1, a: 1}
-  connectionWidth: 0.6
+  connectionWidth: 0.4
   groundLevelY: -0.48
   ghostLineValidColor: {r: 0, g: 1, b: 0, a: 0.69803923}
   ghostLineInvalidColor: {r: 1, g: 0, b: 0, a: 0.69803923}
   ghostLineNeutralColor: {r: 0.5773585, g: 0.5773585, b: 0.56101817, a: 0.63529414}
-  ghostLineWidth: 0.6
+  ghostLineWidth: 0.4
   wallLayer:
     serializedVersion: 2
     m_Bits: 4294967295
   wallTag: Wall
+  connectionCreatedSound: {fileID: 0}
+  audioSource: {fileID: 0}
 --- !u!114 &492060975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18454,7 +18456,7 @@ MonoBehaviour:
   energySlider: {fileID: 82073327}
   resetButton: {fileID: 1936849224}
   pauseButton: {fileID: 375611665}
-  sliderAnimationDuration: 0.3
+  sliderAnimationSpeed: 5
   canvasGroup: {fileID: 2132006984}
 --- !u!225 &2132006984
 CanvasGroup:

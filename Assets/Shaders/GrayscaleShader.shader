@@ -83,30 +83,10 @@ Shader "Custom/GrayscaleShader"
                 // Progress threshold: 1.0 - _EffectPower (when _EffectPower = 0, threshold = 1.0 = all color)
                 float progressThreshold = 1.0 - _EffectPower;
                 
-                // Smooth transition zone for color covering animation
-                float transitionZone = 0.05; // Small transition zone for smoothness
-                
-                // Calculate grayscale factor with smooth transition
+                // Simple step function - smoothness comes from script-side interpolation
                 // If normalizedY is below threshold, show color (grayscaleFactor = 0)
                 // If normalizedY is above threshold, show grayscale (grayscaleFactor = 1)
-                // Smooth transition at the boundary
-                float grayscaleFactor = 0.0;
-                if (normalizedY < progressThreshold - transitionZone)
-                {
-                    // Below threshold - fully colored
-                    grayscaleFactor = 0.0;
-                }
-                else if (normalizedY > progressThreshold + transitionZone)
-                {
-                    // Above threshold - fully grayscale
-                    grayscaleFactor = 1.0;
-                }
-                else
-                {
-                    // In transition zone - smooth interpolation
-                    float t = (normalizedY - (progressThreshold - transitionZone)) / (transitionZone * 2.0);
-                    grayscaleFactor = smoothstep(0.0, 1.0, t);
-                }
+                float grayscaleFactor = step(progressThreshold, normalizedY);
                 
                 fixed4 grayscaleColor = fixed4(gray, gray, gray, col.a);
                 fixed4 finalColor = lerp(col, grayscaleColor, grayscaleFactor);

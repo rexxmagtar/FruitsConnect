@@ -456,6 +456,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   connectionParticles: {fileID: 4703336398679346077}
+  requiredDeliveries: 3
+  progressAnimationSpeed: 5
 --- !u!1 &7948511750864575672
 GameObject:
   m_ObjectHideFlags: 0

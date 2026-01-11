@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using DataRepository;
 using TMPro;
-using System.Collections;
 
 /// <summary>
 /// UI overlay for gameplay - displays level info, energy balance, and controls
@@ -17,12 +16,11 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private Button pauseButton;
     
     [Header("Animation Settings")]
-    [SerializeField] private float sliderAnimationDuration = 0.3f;
+    [SerializeField] private float sliderAnimationSpeed = 5f;
     
     [Header("Canvas Group")]
     [SerializeField] private CanvasGroup canvasGroup;
     
-    private Coroutine sliderAnimationCoroutine;
     private float targetSliderValue;
     
     private void Awake()
@@ -159,58 +157,15 @@ public class GameplayUI : MonoBehaviour
             energyBalanceText.text = $"{currentEnergy}/{maxEnergy}";
         }
         
-        // Update slider with animation
+        // Update slider target value
         if (energySlider != null && maxEnergy > 0)
         {
-            float targetValue = (float)currentEnergy / maxEnergy;
-            AnimateSliderToValue(targetValue);
+            targetSliderValue = (float)currentEnergy / maxEnergy;
         }
         else if (energySlider != null)
         {
-            UpdateSliderValue(0f);
+            targetSliderValue = 0f;
         }
-    }
-    
-    /// <summary>
-    /// Animate slider to target value smoothly
-    /// </summary>
-    private void AnimateSliderToValue(float targetValue)
-    {
-        targetSliderValue = targetValue;
-        
-        // Stop existing animation if running
-        if (sliderAnimationCoroutine != null)
-        {
-            StopCoroutine(sliderAnimationCoroutine);
-        }
-        
-        // Start new animation
-        sliderAnimationCoroutine = StartCoroutine(AnimateSliderCoroutine(targetValue));
-    }
-    
-    /// <summary>
-    /// Coroutine to smoothly animate slider value
-    /// </summary>
-    private IEnumerator AnimateSliderCoroutine(float targetValue)
-    {
-        float startValue = energySlider.value;
-        float elapsedTime = 0f;
-        
-        while (elapsedTime < sliderAnimationDuration)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsedTime / sliderAnimationDuration);
-            
-            // Use smooth step for easing
-            float smoothT = t * t * (3f - 2f * t);
-            energySlider.value = Mathf.Lerp(startValue, targetValue, smoothT);
-            
-            yield return null;
-        }
-        
-        // Ensure final value is set
-        energySlider.value = targetValue;
-        sliderAnimationCoroutine = null;
     }
     
     /// <summary>
@@ -221,6 +176,7 @@ public class GameplayUI : MonoBehaviour
         if (energySlider != null)
         {
             energySlider.value = Mathf.Clamp01(value);
+            targetSliderValue = value;
         }
     }
     
@@ -275,6 +231,12 @@ public class GameplayUI : MonoBehaviour
     {
         // Update energy display continuously to reflect changes
         UpdateEnergyDisplay();
+        
+        // Interpolate slider value toward target
+        if (energySlider != null)
+        {
+            energySlider.value = Mathf.Lerp(energySlider.value, targetSliderValue, sliderAnimationSpeed * Time.deltaTime);
+        }
     }
 }
 

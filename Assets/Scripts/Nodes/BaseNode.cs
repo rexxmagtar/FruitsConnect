@@ -58,6 +58,10 @@ public abstract class BaseNode : MonoBehaviour
     private float meshMinY = -0.5f;
     private float meshMaxY = 0.5f;
     
+    // Smooth animation for delivery progress visualization
+    private float currentVisualEffectPower = 1.0f; // Current visual effect power (for smooth interpolation)
+    [SerializeField] private float progressAnimationSpeed = 2.0f; // Speed of progress animation
+    
     // Properties
     public string NodeID 
     { 
@@ -154,6 +158,44 @@ public abstract class BaseNode : MonoBehaviour
         
         // Update connection status visual on start
         UpdateConnectionStatusVisual();
+        
+        // Initialize visual effect power based on current progress
+        currentVisualEffectPower = 1.0f - DeliveryProgress;
+    }
+    
+    private void Update()
+    {
+        // Calculate target effect power based on connection status
+        // If disconnected or captured, always target full grayscale (1.0)
+        // Otherwise, target based on delivery progress
+        float targetEffectPower;
+        
+        // Check if connected to producer AND not captured
+        // For grayscale progress, we want to show progress incrementally as items are delivered
+        // So we check if connected to producer (path-wise), not if fully delivered
+        bool isConnectedToProducer = !isCaptured && IsConnectedToProducer();
+        
+        if (isConnectedToProducer)
+        {
+            // Connected: target based on delivery progress (updates incrementally as items are delivered)
+            targetEffectPower = 1.0f - DeliveryProgress;
+        }
+        else
+        {
+            // Disconnected or captured: always full grayscale
+            targetEffectPower = 1.0f;
+        }
+        
+        // Only update if there's a difference (avoid unnecessary updates)
+        if (Mathf.Abs(currentVisualEffectPower - targetEffectPower) > 0.001f)
+        {
+            // Smoothly interpolate towards target
+            currentVisualEffectPower = Mathf.Lerp(currentVisualEffectPower, targetEffectPower, 
+                progressAnimationSpeed * Time.deltaTime);
+            
+            // Update shader with interpolated value
+            UpdateGrayscaleMaterialProgress();
+        }
     }
     
     /// <summary>
@@ -616,8 +658,8 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void UpdateGrayscaleMaterialProgress()
     {
-        // Calculate effect power (inverted delivery progress: 1.0 = all grayscale, 0.0 = all color)
-        float effectPower = 1.0f - DeliveryProgress;
+        // Use current visual effect power (smoothly interpolated value)
+        float effectPower = currentVisualEffectPower;
         
         // Update main renderer grayscale materials
         if (cachedGrayscaleMainMaterials != null)
@@ -902,6 +944,7 @@ public abstract class BaseNode : MonoBehaviour
     public void ResetDeliveries()
     {
         currentDeliveries = 0;
+        currentVisualEffectPower = 1.0f; // Reset visual to all grayscale
         RefreshConnectionStatusVisual();
     }
     
