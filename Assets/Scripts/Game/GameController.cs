@@ -464,6 +464,34 @@ public class GameController : MonoBehaviour
     {
         gameplayEnabled = false;
         
+        // Check if this level has a boss fight
+        if (currentLevelConfig != null && currentLevelConfig.IsBossFight)
+        {
+            // Start boss fight instead of showing level complete screen
+            BossFightManager bossFightManager = BossFightManager.Instance;
+            if (bossFightManager != null)
+            {
+                bossFightManager.StartBossFight(currentLevel, currentLevelConfig);
+            }
+            else
+            {
+                Debug.LogError("GameController: BossFightManager not found! Cannot start boss fight.");
+                // Fall back to normal level complete
+                ShowLevelCompleteScreen();
+            }
+        }
+        else
+        {
+            // Normal level complete flow
+            ShowLevelCompleteScreen();
+        }
+    }
+    
+    /// <summary>
+    /// Show level complete screen (called after boss fight or for normal levels)
+    /// </summary>
+    public void ShowLevelCompleteScreen()
+    {
         int coinsEarned = 0;
         int nextLevel = 1;
         
@@ -476,7 +504,7 @@ public class GameController : MonoBehaviour
             {
                 coinsEarned = config.CoinReward;
                 
-                // Award coins
+                // Award coins (boss gold is already awarded by BossFightManager if boss was defeated)
                 GameManager.Instance.AddCoins(coinsEarned);
                 
                 // Complete level (increments CurrentLevel)
@@ -488,13 +516,11 @@ public class GameController : MonoBehaviour
         }
         
         // Hide gameplay UI
-
         if (gameplayUI != null)
         {
             gameplayUI.Hide();
         }
     
-
         if (levelCompleteUI != null)
         {
             levelCompleteUI.Show(coinsEarned, nextLevel);
@@ -505,6 +531,14 @@ public class GameController : MonoBehaviour
         }
         
         OnLevelWon?.Invoke();
+    }
+    
+    /// <summary>
+    /// Fallback method for boss fight if boss is not found
+    /// </summary>
+    public void OnLevelCompleteFallback()
+    {
+        ShowLevelCompleteScreen();
     }
     
     /// <summary>
