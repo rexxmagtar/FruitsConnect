@@ -223,6 +223,15 @@ public class Connection : MonoBehaviour
     }
     
     /// <summary>
+    /// Public method to stop animation and hide animated objects
+    /// Used when hiding connections during boss fight
+    /// </summary>
+    public void StopAnimationAndHideObjects()
+    {
+        StopAnimation();
+    }
+    
+    /// <summary>
     /// Animation loop that spawns objects periodically
     /// </summary>
     private IEnumerator AnimationLoop()
@@ -378,6 +387,8 @@ public class Connection : MonoBehaviour
         {
             if (obj != null)
             {
+                // Hide the object first (in case it's parented to ConnectionManager and won't be destroyed with connection)
+                obj.SetActive(false);
                 Destroy(obj);
             }
         }

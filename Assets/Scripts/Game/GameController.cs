@@ -351,7 +351,7 @@ public class GameController : MonoBehaviour
     }
     
     /// <summary>
-    /// Check if all consumers are connected to at least one producer
+    /// Check if all consumers are connected to at least one producer AND fully activated
     /// Uses BFS from each consumer backwards through incoming connections
     /// </summary>
     public bool CheckWinCondition()
@@ -366,18 +366,26 @@ public class GameController : MonoBehaviour
             return false;
         }
         
-        // Check each consumer
+        // Check each consumer - must be both connected AND fully delivered (activated)
         foreach (ConsumerNode consumer in consumers)
         {
+            // Check if consumer is connected to a producer
             if (!IsConsumerConnectedToProducer(consumer))
             {
                 // At least one consumer is not connected
                 return false;
             }
+            
+            // Check if consumer is fully delivered (activated)
+            if (!consumer.IsFullyDelivered)
+            {
+                // At least one consumer is not activated yet
+                return false;
+            }
         }
         
-        // All consumers are connected!
-        Debug.Log("WIN! All consumers connected to producers");
+        // All consumers are connected AND activated!
+        Debug.Log("WIN! All consumers connected to producers and fully activated");
         OnLevelComplete();
         return true;
     }

@@ -151,8 +151,8 @@ public class BossFightUI : MonoBehaviour
     {
         if (timerSlider != null && timeLimit > 0f)
         {
-            // Timer slider fills from 0 to 1 as time runs out
-            float normalizedTime = 1f - (timeRemaining / timeLimit);
+            // Timer slider goes from 1 to 0 as time runs out
+            float normalizedTime = timeRemaining / timeLimit;
             timerSlider.value = Mathf.Clamp01(normalizedTime);
         }
         

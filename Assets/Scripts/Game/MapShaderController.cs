@@ -125,10 +125,10 @@ public class MapShaderController : MonoBehaviour
                 {
                     isConnectedToProducer = !node.IsCaptured;
                 }
-                // Consumers only show colored zones if connected to producer
+                // Consumers only show colored zones if connected to producer AND fully activated
                 else if (node is ConsumerNode)
                 {
-                    isConnectedToProducer = connectionManager.IsConnectedToProducer(node);
+                    isConnectedToProducer = connectionManager.IsConnectedToProducer(node) && node.IsFullyDelivered;
                 }
                 // Other nodes show colored zones if connected to producer
                 else
@@ -157,12 +157,12 @@ public class MapShaderController : MonoBehaviour
             }
         }
         
-        // Get consumers that are connected to producer (for shader)
+        // Get consumers that are connected to producer AND fully activated (for shader)
         List<ConsumerNode> consumers = levelController.GetConsumerNodes();
         List<ConsumerNode> connectedConsumers = new List<ConsumerNode>();
         foreach (ConsumerNode consumer in consumers)
         {
-            if (consumer != null && connectionManager.IsConnectedToProducer(consumer))
+            if (consumer != null && connectionManager.IsConnectedToProducer(consumer) && consumer.IsFullyDelivered)
             {
                 connectedConsumers.Add(consumer);
             }
@@ -284,15 +284,15 @@ public class MapShaderController : MonoBehaviour
                 {
                     shouldCheckNode = !node.IsCaptured;
                 }
-                // Consumers only show colored zones if connected to producer
+                // Consumers only show colored zones if connected to producer AND fully activated
                 else if (node is ConsumerNode)
                 {
-                    shouldCheckNode = connectionManager.IsConnectedToProducer(node);
+                    shouldCheckNode = connectionManager.IsConnectedToProducer(node) && node.IsFullyDelivered;
                 }
-                // Other nodes show colored zones if connected to producer
+                // Other nodes show colored zones if connected to producer AND fully delivered
                 else
                 {
-                    shouldCheckNode = connectionManager.IsConnectedToProducer(node);
+                    shouldCheckNode = connectionManager.IsConnectedToProducer(node) && node.IsFullyDelivered;
                 }
                 
                 if (shouldCheckNode)

@@ -16,6 +16,12 @@ public class BossFightManager : MonoBehaviour
     [SerializeField] private float bossAlertDisplayDuration = 2.5f;
     [SerializeField] private float cameraTransitionDuration = 1.5f;
     
+    [Header("Audio")]
+    [SerializeField] private AudioClip bossFightAlarmSound;
+    [SerializeField] private AudioClip bossFightMusic;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioSource musicAudioSource;
+    
     // Singleton
     private static BossFightManager _instance;
     public static BossFightManager Instance => _instance;
@@ -67,6 +73,35 @@ public class BossFightManager : MonoBehaviour
         if (bossFightUI == null)
         {
             bossFightUI = FindFirstObjectByType<BossFightUI>();
+        }
+        
+        // Get or add AudioSource for alarm sound if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+            }
+        }
+        
+        // Get or add AudioSource for boss fight music if not assigned
+        if (musicAudioSource == null)
+        {
+            // Try to find existing AudioSource that's not the alarm one
+            AudioSource[] sources = GetComponents<AudioSource>();
+            if (sources.Length > 1)
+            {
+                musicAudioSource = sources[1]; // Use second AudioSource if multiple exist
+            }
+            else
+            {
+                // Create new AudioSource for music
+                musicAudioSource = gameObject.AddComponent<AudioSource>();
+                musicAudioSource.playOnAwake = false;
+                musicAudioSource.loop = true; // Boss fight music should loop
+            }
         }
     }
     
@@ -166,6 +201,13 @@ public class BossFightManager : MonoBehaviour
             bossFightUI.ShowBossAlert();
         }
         
+        // Play boss fight alarm sound
+        PlayBossFightAlarmSound();
+        
+        // Wait 1 second to hear the alarm sound, then start boss fight music
+        yield return new WaitForSeconds(1f);
+        StartBossFightMusic();
+        
         // Step 3: Move camera to boss view
         if (cameraController != null)
         {
@@ -241,7 +283,7 @@ public class BossFightManager : MonoBehaviour
             }
         }
         
-        // Hide all connections
+        // Hide all connections and stop their animations
         ConnectionManager connectionManager = ConnectionManager.Instance;
         if (connectionManager != null)
         {
@@ -250,6 +292,8 @@ public class BossFightManager : MonoBehaviour
             {
                 if (connection != null)
                 {
+                    // Stop animation and hide animated objects
+                    connection.StopAnimationAndHideObjects();
                     connection.gameObject.SetActive(false);
                     hiddenObjects.Add(connection.gameObject);
                 }
@@ -376,6 +420,9 @@ public class BossFightManager : MonoBehaviour
         // Wait a bit for animations
         yield return new WaitForSeconds(2f);
         
+        // Stop boss fight music and resume ambient music
+        StopBossFightMusic();
+        
         // Hide fight UI
         if (bossFightUI != null)
         {
@@ -397,6 +444,63 @@ public class BossFightManager : MonoBehaviour
         currentBoss = null;
         currentLevel = null;
         currentLevelConfig = null;
+    }
+    
+    /// <summary>
+    /// Play boss fight alarm sound
+    /// </summary>
+    private void PlayBossFightAlarmSound()
+    {
+        if (bossFightAlarmSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(bossFightAlarmSound);
+        }
+    }
+    
+    /// <summary>
+    /// Start playing boss fight music (replaces ambient music)
+    /// </summary>
+    private void StartBossFightMusic()
+    {
+        // Stop ambient music
+        AmbienceSound ambienceSound = AmbienceSound.Instance;
+        if (ambienceSound != null)
+        {
+            ambienceSound.StopAmbience();
+        }
+        
+        // Play boss fight music
+        if (bossFightMusic != null && musicAudioSource != null)
+        {
+            musicAudioSource.clip = bossFightMusic;
+            musicAudioSource.loop = true;
+            musicAudioSource.Play();
+            Debug.Log("Boss fight music started");
+        }
+        else if (bossFightMusic == null)
+        {
+            Debug.LogWarning("BossFightManager: Boss fight music clip not assigned!");
+        }
+    }
+    
+    /// <summary>
+    /// Stop boss fight music and resume ambient music
+    /// </summary>
+    private void StopBossFightMusic()
+    {
+        // Stop boss fight music
+        if (musicAudioSource != null && musicAudioSource.isPlaying)
+        {
+            musicAudioSource.Stop();
+            Debug.Log("Boss fight music stopped");
+        }
+        
+        // Resume ambient music
+        AmbienceSound ambienceSound = AmbienceSound.Instance;
+        if (ambienceSound != null)
+        {
+            ambienceSound.PlayAmbience();
+        }
     }
     
     private void OnDestroy()

@@ -895,6 +895,17 @@ public abstract class BaseNode : MonoBehaviour
         {
             // Node is now fully delivered - activate it
             ActivateNode();
+            
+            // If this is a consumer node, check win condition after activation
+            if (this is ConsumerNode)
+            {
+                GameController gameController = GameController.Instance;
+                if (gameController != null)
+                {
+                    gameController.CheckWinCondition();
+                }
+            }
+            
             return true;
         }
         
