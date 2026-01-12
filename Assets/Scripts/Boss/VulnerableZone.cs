@@ -38,18 +38,20 @@ public class VulnerableZone : MonoBehaviour
         }
         
         // Store original scale
-        originalScale = transform.localScale;
+        isInitialized = false;
     }
+
+    private bool isInitialized = false;
     
     /// <summary>
     /// Initialize vulnerable zone
     /// </summary>
-    public void Initialize(Boss bossRef, Vector3 position, float zoneDuration)
-    {
+    public void Initialize(Boss bossRef, float zoneDuration)
+    {isInitialized = true;
         boss = bossRef;
         duration = zoneDuration;
         elapsedTime = 0f;
-        transform.position = position;
+        originalScale = transform.localScale;
         
         // Setup visual feedback
         SetupVisuals();
@@ -92,26 +94,13 @@ public class VulnerableZone : MonoBehaviour
     
     private void Update()
     {
-        if (isDestroyed) return;
+        if (isDestroyed || !isInitialized) return;
         
         // Pulse animation
         float pulse = Mathf.Lerp(pulseScaleMin, pulseScaleMax, 
             (Mathf.Sin(Time.time * pulseSpeed) + 1f) * 0.5f);
         transform.localScale = originalScale * pulse;
         
-        // Rotate slowly for visual effect
-        transform.Rotate(Vector3.up, 30f * Time.deltaTime);
-        
-        // Face camera
-        if (Camera.main != null)
-        {
-            Vector3 directionToCamera = Camera.main.transform.position - transform.position;
-            directionToCamera.y = 0; // Keep upright
-            if (directionToCamera != Vector3.zero)
-            {
-                transform.rotation = Quaternion.LookRotation(-directionToCamera);
-            }
-        }
     }
     
     /// <summary>
@@ -119,7 +108,7 @@ public class VulnerableZone : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        if (isDestroyed || boss == null) return;
+        if (isDestroyed || boss == null || !isInitialized) return;
         
         // Check if boss fight is active
         BossFightManager manager = BossFightManager.Instance;
@@ -128,8 +117,8 @@ public class VulnerableZone : MonoBehaviour
             return;
         }
         
-        // Deal 2x damage to boss
-        boss.TakeDamage(1, true);
+        // Deal 2x damage to boss (pass position for hit effect)
+        boss.TakeDamage(1, true, transform.position);
         
         // Show "Perfect" feedback at this position
         boss.ShowPerfectHitFeedback(transform.position);

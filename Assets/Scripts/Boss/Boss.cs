@@ -18,7 +18,7 @@ public class Boss : MonoBehaviour
     [SerializeField] private GameObject vulnerableZonePrefab;
     [SerializeField] private float vulnerableZoneSpawnInterval = 5f;
     [SerializeField] private float vulnerableZoneDuration = 3f;
-    [SerializeField] private float vulnerableZoneSpawnRadius = 2f;
+    [SerializeField] private List<Transform> vulnerableZoneSpawnPoints = new List<Transform>();
     [SerializeField] private int maxVulnerableZones = 2;
     
     [Header("Component References")]
@@ -28,6 +28,7 @@ public class Boss : MonoBehaviour
     
     [Header("Audio")]
     [SerializeField] private AudioClip hitSound;
+    [SerializeField] private AudioClip vulnerableZoneHitSound;
     [SerializeField] private AudioClip dieSound;
     [SerializeField] private AudioClip escapeSound;
     [SerializeField] private AudioSource audioSource;
@@ -41,6 +42,9 @@ public class Boss : MonoBehaviour
     [SerializeField] private float perfectHitSpriteDuration = 0.3f;
     [SerializeField] private float perfectHitSpriteMoveDistance = 2f;
     
+    [Header("Hit Effect Pool")]
+    [SerializeField] private BossHitEffectPool hitEffectPool;
+    
     // State
     private int currentHealth;
     private bool isDead = false;
@@ -50,6 +54,7 @@ public class Boss : MonoBehaviour
     private Coroutine hitScaleCoroutine;
     private Coroutine vulnerableZoneSpawnCoroutine;
     private List<VulnerableZone> activeVulnerableZones = new List<VulnerableZone>();
+    private Dictionary<Transform, VulnerableZone> occupiedSpawnPoints = new Dictionary<Transform, VulnerableZone>();
     
     // Animation triggers
     private const string TRIGGER_GET_HIT = "GetHit";
@@ -125,6 +130,17 @@ public class Boss : MonoBehaviour
         currentHealth = maxHealth;
         isDead = false;
         hasEscaped = false;
+        
+        // Initialize hit effect pool if available
+        if (hitEffectPool == null)
+        {
+            hitEffectPool = BossHitEffectPool.Instance;
+        }
+        
+        if (hitEffectPool != null)
+        {
+            hitEffectPool.Initialize();
+        }
         
         // Update health bar
         if (healthBar != null)
@@ -203,13 +219,38 @@ public class Boss : MonoBehaviour
             return;
         }
         
-        TakeDamage(1, false);
+        // Calculate touch position
+        Vector3 hitPosition = GetTouchPosition();
+        
+        TakeDamage(1, false, hitPosition);
+    }
+    
+    /// <summary>
+    /// Get the world position where the boss was touched
+    /// </summary>
+    private Vector3 GetTouchPosition()
+    {
+        // Get mouse/touch position
+        Vector3 inputPosition = Input.mousePosition;
+        
+        // Use raycast to find hit point on boss collider
+        Ray ray = Camera.main.ScreenPointToRay(inputPosition);
+        RaycastHit hit;
+        
+        Collider bossCollider = GetComponent<Collider>();
+        if (bossCollider != null && bossCollider.Raycast(ray, out hit, 1000f))
+        {
+            return hit.point;
+        }
+        
+        // Fallback: use boss position
+        return transform.position;
     }
     
     /// <summary>
     /// Take damage from player tap or vulnerable zone
     /// </summary>
-    public void TakeDamage(int damage, bool isVulnerableZone = false)
+    public void TakeDamage(int damage, bool isVulnerableZone = false, Vector3? hitPosition = null)
     {
         if (isDead || hasEscaped || !isFighting) return;
         
@@ -231,11 +272,25 @@ public class Boss : MonoBehaviour
             animator.SetTrigger(TRIGGER_GET_HIT);
         }
         
-        // Play hit sound
-        PlayHitSound();
+        // Play hit sound (different sound for vulnerable zones)
+        if (isVulnerableZone)
+        {
+            PlayVulnerableZoneHitSound();
+        }
+        else
+        {
+            PlayHitSound();
+        }
         
         // Play hit particle effect
         PlayHitParticleEffect();
+        
+        // Spawn hit effect prefab at touch position (only for regular hits, not vulnerable zones)
+        // Vulnerable zones already have their own specific prefab (perfect hit sprite)
+        if (!isVulnerableZone && hitPosition.HasValue)
+        {
+            SpawnHitEffect(hitPosition.Value);
+        }
         
         // Play hit scale animation
         PlayHitScaleAnimation();
@@ -248,24 +303,45 @@ public class Boss : MonoBehaviour
     }
     
     /// <summary>
-    /// Spawn vulnerable zone around boss
+    /// Spawn vulnerable zone at a random spawn point
     /// </summary>
     private void SpawnVulnerableZone()
     {
         if (activeVulnerableZones.Count >= maxVulnerableZones) return;
         if (vulnerableZonePrefab == null) return;
         
-        // Calculate spawn position around boss
-        float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-        Vector3 spawnOffset = new Vector3(
-            Mathf.Cos(angle) * vulnerableZoneSpawnRadius,
-            0f,
-            Mathf.Sin(angle) * vulnerableZoneSpawnRadius
-        );
-        Vector3 spawnPosition = transform.position + spawnOffset;
+        // Validate spawn points
+        if (vulnerableZoneSpawnPoints == null || vulnerableZoneSpawnPoints.Count == 0)
+        {
+            Debug.LogWarning("Boss: No vulnerable zone spawn points defined!");
+            return;
+        }
         
-        // Spawn vulnerable zone
-        GameObject zoneObj = Instantiate(vulnerableZonePrefab, spawnPosition, Quaternion.identity);
+        // Filter out null transforms and get available spawn points
+        List<Transform> availableSpawnPoints = new List<Transform>();
+        foreach (Transform spawnPoint in vulnerableZoneSpawnPoints)
+        {
+            if (spawnPoint != null && !occupiedSpawnPoints.ContainsKey(spawnPoint))
+            {
+                availableSpawnPoints.Add(spawnPoint);
+            }
+        }
+        
+        // Check if we have any available spawn points
+        if (availableSpawnPoints.Count == 0)
+        {
+            Debug.LogWarning("Boss: No available spawn points for vulnerable zone!");
+            return;
+        }
+        
+        // Pick a random available spawn point
+        Transform selectedSpawnPoint = availableSpawnPoints[Random.Range(0, availableSpawnPoints.Count)];
+        
+        // Spawn vulnerable zone as a child of the spawn point transform
+        GameObject zoneObj = Instantiate(vulnerableZonePrefab, selectedSpawnPoint);
+        zoneObj.transform.localPosition = Vector3.zero;
+        zoneObj.transform.localRotation = Quaternion.identity;
+        
         VulnerableZone zone = zoneObj.GetComponent<VulnerableZone>();
         
         if (zone == null)
@@ -273,10 +349,14 @@ public class Boss : MonoBehaviour
             zone = zoneObj.AddComponent<VulnerableZone>();
         }
         
-        zone.Initialize(this, spawnPosition, vulnerableZoneDuration);
+        // Initialize zone (position is handled by parent transform)
+        zone.Initialize(this, vulnerableZoneDuration);
         activeVulnerableZones.Add(zone);
         
-        Debug.Log($"Spawned vulnerable zone at {spawnPosition}");
+        // Mark this spawn point as occupied
+        occupiedSpawnPoints[selectedSpawnPoint] = zone;
+        
+        Debug.Log($"Spawned vulnerable zone as child of spawn point: {selectedSpawnPoint.name} (world position: {selectedSpawnPoint.position})");
     }
     
     /// <summary>
@@ -296,13 +376,29 @@ public class Boss : MonoBehaviour
     }
     
     /// <summary>
-    /// Remove vulnerable zone from active list
+    /// Remove vulnerable zone from active list and free its spawn point
     /// </summary>
     public void RemoveVulnerableZone(VulnerableZone zone)
     {
         if (zone != null && activeVulnerableZones.Contains(zone))
         {
             activeVulnerableZones.Remove(zone);
+            
+            // Find and remove the spawn point entry for this zone
+            Transform spawnPointToRemove = null;
+            foreach (var kvp in occupiedSpawnPoints)
+            {
+                if (kvp.Value == zone)
+                {
+                    spawnPointToRemove = kvp.Key;
+                    break;
+                }
+            }
+            
+            if (spawnPointToRemove != null)
+            {
+                occupiedSpawnPoints.Remove(spawnPointToRemove);
+            }
         }
     }
     
@@ -433,6 +529,22 @@ public class Boss : MonoBehaviour
     }
     
     /// <summary>
+    /// Play vulnerable zone hit sound effect
+    /// </summary>
+    private void PlayVulnerableZoneHitSound()
+    {
+        if (vulnerableZoneHitSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(vulnerableZoneHitSound);
+        }
+        else if (hitSound != null && audioSource != null)
+        {
+            // Fallback to regular hit sound if vulnerable zone sound not assigned
+            audioSource.PlayOneShot(hitSound);
+        }
+    }
+    
+    /// <summary>
     /// Handle boss death
     /// </summary>
     public void Die()
@@ -458,6 +570,7 @@ public class Boss : MonoBehaviour
             }
         }
         activeVulnerableZones.Clear();
+        occupiedSpawnPoints.Clear();
         
         // Trigger die animation
         if (animator != null)
@@ -524,6 +637,7 @@ public class Boss : MonoBehaviour
             }
         }
         activeVulnerableZones.Clear();
+        occupiedSpawnPoints.Clear();
         
         // Trigger escape animation
         if (animator != null)
@@ -583,6 +697,47 @@ public class Boss : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// Spawn hit effect prefab at position using pool
+    /// </summary>
+    private void SpawnHitEffect(Vector3 position)
+    {
+        // Get pool reference if not assigned
+        if (hitEffectPool == null)
+        {
+            hitEffectPool = BossHitEffectPool.Instance;
+        }
+        
+        if (hitEffectPool == null)
+        {
+            Debug.LogWarning("Boss: HitEffectPool not found! Hit effects will not spawn.");
+            return;
+        }
+        
+        // Get random effect from pool
+        GameObject effect = hitEffectPool.GetRandomEffect();
+        if (effect == null)
+        {
+            Debug.LogWarning("Boss: Could not get hit effect from pool!");
+            return;
+        }
+        
+        // Set position
+        effect.transform.position = position;
+        
+        // Activate and play
+        HitEffectPrefab hitEffect = effect.GetComponent<HitEffectPrefab>();
+        if (hitEffect != null)
+        {
+            hitEffect.Play();
+        }
+        else
+        {
+            // Fallback: just activate if no HitEffectPrefab component
+            effect.SetActive(true);
+        }
+    }
+    
     private void OnDestroy()
     {
         // Cleanup coroutines
@@ -603,5 +758,7 @@ public class Boss : MonoBehaviour
                 Destroy(zone.gameObject);
             }
         }
+        activeVulnerableZones.Clear();
+        occupiedSpawnPoints.Clear();
     }
 }

@@ -7496,6 +7496,7 @@ GameObject:
   - component: {fileID: 983725535}
   - component: {fileID: 983725537}
   - component: {fileID: 983725536}
+  - component: {fileID: 983725538}
   m_Layer: 0
   m_Name: Essentials
   m_TagString: Untagged
@@ -7749,6 +7750,20 @@ MonoBehaviour:
   bossFightMusic: {fileID: 8300000, guid: 3d54e1137404a2f4283b8124b3a0b224, type: 3}
   audioSource: {fileID: 173883360}
   musicAudioSource: {fileID: 173883360}
+--- !u!114 &983725538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 983725521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80533d2916d4a73488a248ec42db0c6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  config: {fileID: 11400000, guid: 8b9cc01ebd727aa4796451bf6199cfb0, type: 2}
+  poolSizePerPrefab: 3
 --- !u!1 &1059988283
 GameObject:
   m_ObjectHideFlags: 0

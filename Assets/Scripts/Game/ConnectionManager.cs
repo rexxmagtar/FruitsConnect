@@ -540,6 +540,14 @@ public class ConnectionManager : MonoBehaviour
             return false;
         }
         
+        // Rule 0: SOURCE node must be fully activated (ProducerNodes are always active)
+        // Nodes that are connected but not yet fully delivered cannot build new connections
+        if (!(from is ProducerNode) && !from.IsFullyDelivered)
+        {
+            Debug.LogWarning($"Cannot connect from node {from.NodeID} - node is connected but not yet fully activated (deliveries: {from.CurrentDeliveries}/{from.RequiredDeliveries})");
+            return false;
+        }
+        
         // Rule 1: SOURCE node has available outgoing slots
         if (!from.HasAvailableOutgoingSlot())
         {
@@ -586,20 +594,6 @@ public class ConnectionManager : MonoBehaviour
         {
             Debug.LogWarning($"Cannot create connection: neither {from.NodeID} nor {to.NodeID} is connected to a producer");
             return false;
-        }
-        
-        // Rule 7: Check if any producer is captured - cannot build connections if producer is captured
-        if (currentLevel != null)
-        {
-            List<ProducerNode> producers = currentLevel.GetProducerNodes();
-            foreach (ProducerNode producer in producers)
-            {
-                if (producer != null && producer.IsCaptured)
-                {
-                    Debug.LogWarning($"Cannot create connection: producer {producer.NodeID} is captured by a monster");
-                    return false;
-                }
-            }
         }
         
         return true;
