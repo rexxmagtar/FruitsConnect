@@ -374,6 +374,7 @@ Transform:
   m_LocalScale: {x: 4.329911, y: 4.329911, z: 4.329911}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2727897823454683811}
   - {fileID: 3474107658073191623}
   - {fileID: 1797560664230997688}
   m_Father: {fileID: 0}
@@ -5582,11 +5583,11 @@ Transform:
   m_GameObject: {fileID: 5401873284498291866}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1, z: -0, w: 0}
-  m_LocalPosition: {x: -0.008, y: 0.511, z: 0}
+  m_LocalPosition: {x: -0.008000016, y: 0.511, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 3474107658073191623}
+  m_Father: {fileID: 2883946152437166777}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!198 &9109983900351290604
 ParticleSystem:
@@ -11200,7 +11201,6 @@ Transform:
   - {fileID: 8794226686130539810}
   - {fileID: 6990522984607265346}
   - {fileID: 1329702858652129440}
-  - {fileID: 2727897823454683811}
   - {fileID: 4139763225679935857}
   m_Father: {fileID: 2883946152437166777}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
@@ -11268,6 +11268,7 @@ MonoBehaviour:
   perfectHitSpriteDuration: 1
   perfectHitSpriteMoveDistance: 2
   hitEffectPool: {fileID: 0}
+  hitEffectCameraOffset: 2
   portal: {fileID: 0}
   portalSpawnDuration: 0.5
   bossSuctionDuration: 2

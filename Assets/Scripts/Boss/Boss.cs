@@ -44,6 +44,7 @@ public class Boss : MonoBehaviour
     
     [Header("Hit Effect Pool")]
     [SerializeField] private BossHitEffectPool hitEffectPool;
+    [SerializeField] private float hitEffectCameraOffset = 0.5f; // Offset towards camera to prevent mesh occlusion
     
     [Header("Fail Animation Settings")]
     [SerializeField] private GameObject portal; // Portal GameObject already in scene
@@ -597,12 +598,8 @@ public class Boss : MonoBehaviour
         activeVulnerableZones.Clear();
         occupiedSpawnPoints.Clear();
         
-        // Trigger die animation
-        if (animator != null)
-        {
-            animator.SetTrigger(TRIGGER_DIE);
-        }
         
+        Debug.Log("PlayDieSound");
         // Play die sound
         PlayDieSound();
         
@@ -615,25 +612,23 @@ public class Boss : MonoBehaviour
     /// </summary>
     private IEnumerator DeathSequence()
     {
-        // Wait for death animation to complete (3 seconds)
+        yield return new WaitForSeconds(0.5f);
+
+          // Trigger die animation
+        if (animator != null)
+        {
+            Debug.Log("Trigger die animation");
+            animator.SetTrigger(TRIGGER_DIE);
+        }
+
         yield return new WaitForSeconds(3f);
         
         if (dieParticleEffect != null)
         {
+            Debug.Log("Play die particle effect");
             dieParticleEffect.Play();
         }
         
-        // Hide all boss renderers
-        Renderer[] renderers = GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-            if (renderer != null)
-            {
-                renderer.enabled = false;
-            }
-        }
-        
-        yield return new WaitForSeconds(1f);
         
         // Notify manager
         OnBossDied?.Invoke(this);
@@ -902,8 +897,16 @@ public class Boss : MonoBehaviour
             return;
         }
         
+        // Calculate offset towards camera to prevent mesh occlusion
+        Vector3 spawnPosition = position;
+        if (Camera.main != null)
+        {
+            Vector3 directionToCamera = (Camera.main.transform.position - position).normalized;
+            spawnPosition = position + directionToCamera * hitEffectCameraOffset;
+        }
+        
         // Set position
-        effect.transform.position = position;
+        effect.transform.position = spawnPosition;
         
         // Activate and play
         HitEffectPrefab hitEffect = effect.GetComponent<HitEffectPrefab>();

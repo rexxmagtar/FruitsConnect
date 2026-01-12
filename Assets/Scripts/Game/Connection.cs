@@ -289,7 +289,7 @@ public class Connection : MonoBehaviour
             Vector3 endPos = toNode.transform.position;
             float currentDistance = Vector3.Distance(startPos, endPos);
             
-            if (currentDistance > 0.01f)
+            if (currentDistance > 2f)
             {
                 // Calculate progress increment
                 float progressIncrement = (animationSpeed * Time.deltaTime) / currentDistance;

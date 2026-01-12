@@ -108,6 +108,23 @@ public abstract class BaseNode : MonoBehaviour
     public float DeliveryProgress => requiredDeliveries > 0 ? (float)currentDeliveries / requiredDeliveries : 0f;
     public bool IsFullyDelivered => currentDeliveries >= requiredDeliveries;
     
+    /// <summary>
+    /// Check if this node is activated and can be clicked/interacted with
+    /// ProducerNodes are always activated (unless captured)
+    /// Other nodes must be fully delivered to be activated
+    /// </summary>
+    public bool IsActivated()
+    {
+        // Don't allow interaction if node is captured
+        if (isCaptured) return false;
+        
+        // ProducerNodes are always activated (they don't need deliveries)
+        if (this is ProducerNode) return true;
+        
+        // Other nodes must be fully delivered to be activated
+        return IsFullyDelivered;
+    }
+    
     protected virtual void Awake()
     {
         // Clean up old display components early to prevent them from running
@@ -973,8 +990,8 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
-        // Don't allow interaction if node is captured
-        if (isCaptured) return;
+        // Don't allow interaction if node is not activated
+        if (!IsActivated()) return;
         
         GameController controller = GameController.Instance;
         if (controller != null)
@@ -988,6 +1005,10 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void OnMouseDrag()
     {
+        // OnMouseDrag is called on the source node being dragged from
+        // We should only allow dragging from activated nodes
+        if (!IsActivated()) return;
+        
         GameController controller = GameController.Instance;
         if (controller != null)
         {
@@ -1012,13 +1033,19 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void OnMouseEnter()
     {
-        OnHover();
-        
-        // Notify controller for drag over detection
+        // Always notify controller for drag over detection (even for inactive nodes)
+        // This allows dragging TO inactive nodes from active nodes
         GameController controller = GameController.Instance;
         if (controller != null)
         {
             controller.OnNodeHoverEnter(this);
+        }
+        
+        // Only show visual hover effect if node is activated
+        // Inactive nodes can still be connection targets, but won't show hover visual
+        if (IsActivated())
+        {
+            OnHover();
         }
     }
     
