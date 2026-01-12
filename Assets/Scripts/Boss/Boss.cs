@@ -71,6 +71,9 @@ public class Boss : MonoBehaviour
     private const string TRIGGER_ESCAPE = "Escape";
     private const string TRIGGER_FAIL = "Fail";
     
+    // Animation parameters
+    private const string PARAM_GET_HIT = "GetHitParam";
+    
     // Properties
     public int MaxHealth => maxHealth;
     public int CurrentHealth => currentHealth;
@@ -286,9 +289,11 @@ public class Boss : MonoBehaviour
             healthBar.UpdateDisplay();
         }
         
-        // Trigger get hit animation
+        // Trigger get hit animation with random variation (1-3)
         if (animator != null)
         {
+            int randomHitType = Random.Range(1, 4); // Random value between 1 and 3 (inclusive)
+            animator.SetInteger(PARAM_GET_HIT, randomHitType);
             animator.SetTrigger(TRIGGER_GET_HIT);
         }
         
@@ -610,25 +615,31 @@ public class Boss : MonoBehaviour
     /// </summary>
     private IEnumerator DeathSequence()
     {
-        // Wait for dying animation
-        yield return new WaitForSeconds(1f);
+        // Wait for death animation to complete (3 seconds)
+        yield return new WaitForSeconds(3f);
         
         if (dieParticleEffect != null)
         {
             dieParticleEffect.Play();
         }
         
-        // Hide boss renderer
-        Renderer renderer = GetComponentInChildren<Renderer>();
-        if (renderer != null)
+        // Hide all boss renderers
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
         {
-            renderer.enabled = false;
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
         }
         
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(1f);
         
         // Notify manager
         OnBossDied?.Invoke(this);
+        
+        // Disable the boss GameObject after notification
+        gameObject.SetActive(false);
     }
     
     /// <summary>

@@ -263,7 +263,7 @@ MonoBehaviour:
   maxOutgoingConnections: 1
   weight: 0
   isEnergyApplied: 0
-  meshRenderer: {fileID: 1185123897848721624}
+  meshRenderer: {fileID: 7485015564507374411}
   defaultMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
   hoverMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
@@ -296,6 +296,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   connectionParticles: {fileID: 0}
+  requiredDeliveries: 3
+  progressAnimationSpeed: 2
 --- !u!1 &6540075499941803140
 GameObject:
   m_ObjectHideFlags: 0
@@ -608,6 +610,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 876516361d383f347a4a7fd26f811d14, type: 3}
+--- !u!23 &7485015564507374411 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 876516361d383f347a4a7fd26f811d14, type: 3}
+  m_PrefabInstance: {fileID: 8079889145769099215}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8623039938069567524 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 876516361d383f347a4a7fd26f811d14, type: 3}

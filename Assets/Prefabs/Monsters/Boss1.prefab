@@ -6228,7 +6228,7 @@ ParticleSystem:
     m_Position: {x: 0, y: 0, z: 0}
     m_Rotation: {x: 0, y: 0, z: 0}
     m_Scale: {x: 1, y: 1, z: 1}
-    placementMode: 0
+    placementMode: 2
     m_MeshMaterialIndex: 0
     m_MeshNormalOffset: 0
     m_MeshSpawn:
@@ -6535,7 +6535,7 @@ ParticleSystem:
       countCurve:
         serializedVersion: 2
         minMaxState: 0
-        scalar: 300
+        scalar: 800
         minScalar: 30
         maxCurve:
           serializedVersion: 2
@@ -11268,6 +11268,11 @@ MonoBehaviour:
   perfectHitSpriteDuration: 1
   perfectHitSpriteMoveDistance: 2
   hitEffectPool: {fileID: 0}
+  portal: {fileID: 0}
+  portalSpawnDuration: 0.5
+  bossSuctionDuration: 2
+  portalCloseDuration: 0.5
+  bossRotationSpeed: 360
 --- !u!95 &4960008600991099466
 Animator:
   serializedVersion: 7

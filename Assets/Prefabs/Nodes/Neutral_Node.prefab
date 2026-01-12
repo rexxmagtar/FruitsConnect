@@ -423,7 +423,7 @@ MonoBehaviour:
   maxOutgoingConnections: 1
   weight: 0
   isEnergyApplied: 0
-  meshRenderer: {fileID: 6396887079982869515}
+  meshRenderer: {fileID: 7859415214208263752}
   defaultMaterial: {fileID: 2100000, guid: 344ea3be13433a24ea538ae45803b5ce, type: 2}
   selectedMaterial: {fileID: 2100000, guid: 344ea3be13433a24ea538ae45803b5ce, type: 2}
   hoverMaterial: {fileID: 2100000, guid: 344ea3be13433a24ea538ae45803b5ce, type: 2}
@@ -5578,6 +5578,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 052894e59e14c0842ad84402707c965b, type: 3}
+--- !u!23 &7859415214208263752 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 052894e59e14c0842ad84402707c965b, type: 3}
+  m_PrefabInstance: {fileID: 8850652845453458124}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &9032369978177805607 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 052894e59e14c0842ad84402707c965b, type: 3}

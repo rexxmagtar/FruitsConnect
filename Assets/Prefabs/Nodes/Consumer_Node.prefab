@@ -106,7 +106,7 @@ MonoBehaviour:
   maxOutgoingConnections: 0
   weight: 0
   isEnergyApplied: 0
-  meshRenderer: {fileID: 6942326032743715776}
+  meshRenderer: {fileID: 8795083573174354613}
   defaultMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
   selectedMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
   hoverMaterial: {fileID: 2100000, guid: cabbdb2541f940342b36c32d00b3a871, type: 2}
@@ -5104,9 +5104,17 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: c910def407642e445b7145991833714a, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: c910def407642e445b7145991833714a, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 27889c4059c0bbc45a8558e7d6e1fa9b, type: 2}
+    - target: {fileID: -7511558181221131132, guid: c910def407642e445b7145991833714a, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: db1cf7abb5dba8149b5ead861dbbb1cc, type: 2}
     - target: {fileID: -5754084199372789682, guid: c910def407642e445b7145991833714a, type: 3}
       propertyPath: m_Mesh
       value: 
@@ -5123,5 +5131,10 @@ PrefabInstance:
 --- !u!4 &7657602839525571034 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c910def407642e445b7145991833714a, type: 3}
+  m_PrefabInstance: {fileID: 7912820458734280241}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &8795083573174354613 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: c910def407642e445b7145991833714a, type: 3}
   m_PrefabInstance: {fileID: 7912820458734280241}
   m_PrefabAsset: {fileID: 0}

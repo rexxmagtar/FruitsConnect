@@ -98,14 +98,14 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EffectPower: 1
+    - _EffectPower: 0.752
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _GrayscaleIntensity: 1
-    - _MeshMaxY: 35.38
-    - _MeshMinY: -11.56
+    - _MeshMaxY: 1.5
+    - _MeshMinY: -1.5
     - _Metallic: 0.867
     - _OcclusionStrength: 1
     - _Parallax: 0.005
