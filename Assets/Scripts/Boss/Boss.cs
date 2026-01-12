@@ -45,6 +45,13 @@ public class Boss : MonoBehaviour
     [Header("Hit Effect Pool")]
     [SerializeField] private BossHitEffectPool hitEffectPool;
     
+    [Header("Fail Animation Settings")]
+    [SerializeField] private GameObject portal; // Portal GameObject already in scene
+    [SerializeField] private float portalSpawnDuration = 0.5f;
+    [SerializeField] private float bossSuctionDuration = 2f;
+    [SerializeField] private float portalCloseDuration = 0.5f;
+    [SerializeField] private float bossRotationSpeed = 360f; // degrees per second
+    
     // State
     private int currentHealth;
     private bool isDead = false;
@@ -53,13 +60,16 @@ public class Boss : MonoBehaviour
     private Vector3 originalScale;
     private Coroutine hitScaleCoroutine;
     private Coroutine vulnerableZoneSpawnCoroutine;
+    private Coroutine failAnimationCoroutine;
     private List<VulnerableZone> activeVulnerableZones = new List<VulnerableZone>();
     private Dictionary<Transform, VulnerableZone> occupiedSpawnPoints = new Dictionary<Transform, VulnerableZone>();
+    private Vector3 portalOriginalScale;
     
     // Animation triggers
     private const string TRIGGER_GET_HIT = "GetHit";
     private const string TRIGGER_DIE = "Die";
     private const string TRIGGER_ESCAPE = "Escape";
+    private const string TRIGGER_FAIL = "Fail";
     
     // Properties
     public int MaxHealth => maxHealth;
@@ -102,6 +112,14 @@ public class Boss : MonoBehaviour
         
         // Store original scale for hit animation
         originalScale = transform.localScale;
+        
+        // Initialize portal (set scale to zero as default and store original scale)
+        if (portal != null)
+        {
+            portalOriginalScale = portal.transform.localScale;
+            portal.transform.localScale = Vector3.zero;
+            portal.SetActive(true);
+        }
     }
     
     private void Start()
@@ -147,6 +165,8 @@ public class Boss : MonoBehaviour
         {
             healthBar.UpdateDisplay();
         }
+        
+        // Portal should already be initialized to zero scale in Awake()
         
         // Start spawning vulnerable zones
         if (vulnerableZoneSpawnCoroutine != null)
@@ -255,7 +275,7 @@ public class Boss : MonoBehaviour
         if (isDead || hasEscaped || !isFighting) return;
         
         // Apply damage multiplier for vulnerable zones
-        int finalDamage = isVulnerableZone ? damage * 2 : damage;
+        int finalDamage = isVulnerableZone ? damage * 4 : damage;
         
         currentHealth -= finalDamage;
         currentHealth = Mathf.Max(0, currentHealth);
@@ -639,21 +659,170 @@ public class Boss : MonoBehaviour
         activeVulnerableZones.Clear();
         occupiedSpawnPoints.Clear();
         
-        // Trigger escape animation
+        // Trigger fail animation
         if (animator != null)
         {
-            animator.SetTrigger(TRIGGER_ESCAPE);
+            animator.SetTrigger(TRIGGER_FAIL);
         }
         
         // Play escape sound
         PlayEscapeSound();
         
-        // Start escape sequence
-        StartCoroutine(EscapeSequence());
+        // Start fail animation sequence
+        if (failAnimationCoroutine != null)
+        {
+            StopCoroutine(failAnimationCoroutine);
+        }
+        failAnimationCoroutine = StartCoroutine(FailAnimationSequence());
     }
     
     /// <summary>
-    /// Escape sequence: wait for animation, then notify manager
+    /// Fail animation sequence: portal spawn, boss suction, portal close
+    /// </summary>
+    private IEnumerator FailAnimationSequence()
+    {
+        // Step 1: Spawn portal with scale animation
+        if (portal != null)
+        {
+            // Portal should already be at zero scale from StartBossFight
+            // Animate portal appearing
+            yield return StartCoroutine(AnimatePortalSpawn(portal, portalSpawnDuration));
+        }
+        else
+        {
+            Debug.LogWarning("Boss: Portal not assigned! Skipping portal animation.");
+        }
+        yield return new WaitForSeconds(1.5f);
+        // Step 2: Animate boss being sucked into portal (rotation + scale)
+        yield return StartCoroutine(AnimateBossSuction(bossSuctionDuration));
+        
+        // Step 3: Close portal (scale back to zero)
+        if (portal != null)
+        {
+            yield return StartCoroutine(AnimatePortalClose(portal, portalCloseDuration));
+        }
+        
+        // Notify manager
+        OnBossEscaped?.Invoke(this);
+    }
+    
+    /// <summary>
+    /// Animate portal spawning (scale from 0 to original scale)
+    /// </summary>
+    private IEnumerator AnimatePortalSpawn(GameObject portal, float duration)
+    {
+        if (portal == null) yield break;
+        
+        Vector3 startScale = Vector3.zero;
+        Vector3 endScale = portalOriginalScale;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            if (portal == null) yield break;
+            
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            // Use ease-out curve for smoother animation
+            t = 1f - Mathf.Pow(1f - t, 3f);
+            
+            portal.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+            yield return null;
+        }
+        
+        // Ensure final scale
+        if (portal != null)
+        {
+            portal.transform.localScale = endScale;
+        }
+    }
+    
+    /// <summary>
+    /// Animate boss being sucked into portal (rotation + scale down + move towards portal)
+    /// </summary>
+    private IEnumerator AnimateBossSuction(float duration)
+    {
+        Vector3 startPosition = transform.position;
+        Vector3 startScale = transform.localScale;
+        Vector3 endScale = Vector3.zero;
+        Quaternion startRotation = transform.rotation;
+        
+        // Calculate end position (portal center or slightly behind it)
+        Vector3 endPosition = startPosition;
+        if (portal != null)
+        {
+            endPosition = portal.transform.position;
+        }
+        
+        float elapsedTime = 0f;
+        float totalRotation = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            
+            // Use ease-in curve for faster acceleration as it gets sucked in
+            t = Mathf.Pow(t, 2f);
+            
+            // Rotate boss (spinning around Z axis as it gets sucked in)
+            totalRotation += bossRotationSpeed * Time.deltaTime;
+            transform.rotation = startRotation * Quaternion.Euler(0f, 0f, totalRotation);
+            
+            // Scale down boss
+            transform.localScale = Vector3.Lerp(startScale, endScale, t);
+            
+            // Move boss towards portal center
+            transform.position = Vector3.Lerp(startPosition, endPosition, t);
+            
+            yield return null;
+        }
+        
+        // Ensure final state
+        transform.localScale = endScale;
+        transform.position = endPosition;
+        
+        // Hide boss renderer
+        Renderer renderer = GetComponentInChildren<Renderer>();
+        if (renderer != null)
+        {
+            renderer.enabled = false;
+        }
+    }
+    
+    /// <summary>
+    /// Animate portal closing (scale from original scale to 0)
+    /// </summary>
+    private IEnumerator AnimatePortalClose(GameObject portal, float duration)
+    {
+        if (portal == null) yield break;
+        
+        Vector3 startScale = portalOriginalScale;
+        Vector3 endScale = Vector3.zero;
+        float elapsedTime = 0f;
+        
+        while (elapsedTime < duration)
+        {
+            if (portal == null) yield break;
+            
+            elapsedTime += Time.deltaTime;
+            float t = elapsedTime / duration;
+            // Use ease-in curve for faster closing
+            t = Mathf.Pow(t, 2f);
+            
+            portal.transform.localScale = Vector3.Lerp(startScale, endScale, t);
+            yield return null;
+        }
+        
+        // Ensure final scale
+        if (portal != null)
+        {
+            portal.transform.localScale = endScale;
+        }
+    }
+    
+    /// <summary>
+    /// Escape sequence: wait for animation, then notify manager (kept for backwards compatibility)
     /// </summary>
     private IEnumerator EscapeSequence()
     {
@@ -748,6 +917,10 @@ public class Boss : MonoBehaviour
         if (vulnerableZoneSpawnCoroutine != null)
         {
             StopCoroutine(vulnerableZoneSpawnCoroutine);
+        }
+        if (failAnimationCoroutine != null)
+        {
+            StopCoroutine(failAnimationCoroutine);
         }
         
         // Cleanup vulnerable zones
