@@ -12,6 +12,9 @@ public class LevelController : MonoBehaviour
     
     [Header("Visualization")]
     [SerializeField] private GraphVisualizer graphVisualizer;
+    
+    [Header("Level Complete Effects")]
+    [SerializeField] private ParticleSystem levelCompleteParticles;
 
     public MeshRenderer TerrainMeshRenderer;
     
@@ -275,6 +278,17 @@ public class LevelController : MonoBehaviour
     public GraphVisualizer GetGraphVisualizer()
     {
         return graphVisualizer;
+    }
+    
+    /// <summary>
+    /// Activate level complete particle effects
+    /// </summary>
+    public void ActivateLevelCompleteParticles()
+    {
+        if (levelCompleteParticles != null)
+        {
+            levelCompleteParticles.Play();
+        }
     }
 }
 

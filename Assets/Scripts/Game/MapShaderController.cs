@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -22,6 +23,7 @@ public class MapShaderController : MonoBehaviour
     // Shader property IDs (cached for performance)
     private static readonly int ColorRadiusID = Shader.PropertyToID("_ColorRadius");
     private static readonly int SmoothFalloffID = Shader.PropertyToID("_SmoothFalloff");
+    private static readonly int GlobalColorBlendID = Shader.PropertyToID("_GlobalColorBlend");
     private static readonly int ConnectedNodePositionsID = Shader.PropertyToID("_ConnectedNodePositions");
     private static readonly int ConnectedNodeCountID = Shader.PropertyToID("_ConnectedNodeCount");
     private static readonly int ConsumerPositionsID = Shader.PropertyToID("_ConsumerPositions");
@@ -32,6 +34,10 @@ public class MapShaderController : MonoBehaviour
     
     // Maximum number of nodes shader can handle
     private const int MAX_NODES = 32;
+    
+    // List of all terrain materials that use MapGrayscaleShader
+    private List<Material> terrainMaterials = new List<Material>();
+    private Dictionary<Material, float> originalColorRadii = new Dictionary<Material, float>();
     
     private void Awake()
     {
@@ -52,6 +58,9 @@ public class MapShaderController : MonoBehaviour
         }
         ConnectionManager.OnConnectionsChanged += OnConnectionsChanged;
         
+        // Initialize terrain materials
+        InitializeTerrainMaterials();
+        
         // Initial update
         UpdateShaderProperties();
     }
@@ -71,14 +80,113 @@ public class MapShaderController : MonoBehaviour
     }
     
     /// <summary>
+    /// Initialize terrain materials by finding all materials using MapGrayscaleShader under "Terrain" parent
+    /// </summary>
+    public void InitializeTerrainMaterials()
+    {
+        terrainMaterials.Clear();
+        originalColorRadii.Clear();
+        
+        if (levelController == null)
+        {
+            GameController gameController = GameController.Instance;
+            if (gameController != null)
+            {
+                levelController = gameController.CurrentLevel;
+            }
+        }
+        
+        if (levelController == null)
+        {
+            Debug.LogWarning("MapShaderController: Level controller not found! Cannot initialize terrain materials.");
+            return;
+        }
+        
+        // Find "Terrain" parent GameObject in the level
+        Transform terrainParent = levelController.transform.Find("Terrain");
+        if (terrainParent == null)
+        {
+            // Try to find by name in all children
+            terrainParent = levelController.transform.GetComponentsInChildren<Transform>()
+                .FirstOrDefault(t => t.name == "Terrain");
+        }
+        
+        if (terrainParent == null)
+        {
+            Debug.LogWarning("MapShaderController: 'Terrain' parent GameObject not found in level!");
+            return;
+        }
+        
+        // Get all Renderer components under Terrain parent
+        Renderer[] renderers = terrainParent.GetComponentsInChildren<Renderer>(true);
+        HashSet<Material> uniqueMaterials = new HashSet<Material>();
+        
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer == null) continue;
+            
+            // Get all materials from this renderer
+            Material[] materials = renderer.sharedMaterials;
+            foreach (Material mat in materials)
+            {
+                if (mat == null) continue;
+                
+                // Check if material uses MapGrayscaleShader
+                if (mat.shader != null && mat.shader.name == "Custom/MapGrayscaleShader")
+                {
+                    if (uniqueMaterials.Add(mat))
+                    {
+                        terrainMaterials.Add(mat);
+                        // Store original color radius if it exists
+                        if (mat.HasProperty(ColorRadiusID))
+                        {
+                            originalColorRadii[mat] = mat.GetFloat(ColorRadiusID);
+                        }
+                        else
+                        {
+                            originalColorRadii[mat] = colorRadius;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Also add the original mapMaterial if it exists and uses the shader
+        if (mapMaterial != null && mapMaterial.shader != null && mapMaterial.shader.name == "Custom/MapGrayscaleShader")
+        {
+            if (uniqueMaterials.Add(mapMaterial))
+            {
+                terrainMaterials.Add(mapMaterial);
+                if (mapMaterial.HasProperty(ColorRadiusID))
+                {
+                    originalColorRadii[mapMaterial] = mapMaterial.GetFloat(ColorRadiusID);
+                }
+                else
+                {
+                    originalColorRadii[mapMaterial] = colorRadius;
+                }
+            }
+        }
+        
+        Debug.Log($"MapShaderController: Initialized {terrainMaterials.Count} terrain materials.");
+    }
+    
+    /// <summary>
     /// Update shader properties with current connected nodes and consumers
     /// Should be called when connections change
     /// </summary>
     public void UpdateShaderProperties()
     {
-        if (mapMaterial == null)
+        // Get list of materials to update (all terrain materials + original mapMaterial if different)
+        List<Material> materialsToUpdate = new List<Material>(terrainMaterials);
+        if (mapMaterial != null && !terrainMaterials.Contains(mapMaterial))
         {
-            Debug.LogWarning("MapShaderController: Map material not assigned!");
+            materialsToUpdate.Add(mapMaterial);
+        }
+        
+        if (materialsToUpdate.Count == 0)
+        {
+            Debug.LogWarning("MapShaderController: No materials to update!");
             return;
         }
         
@@ -168,11 +276,7 @@ public class MapShaderController : MonoBehaviour
             }
         }
         
-        // Set shader properties
-        mapMaterial.SetFloat(ColorRadiusID, colorRadius);
-        mapMaterial.SetFloat(SmoothFalloffID, smoothFalloff);
-        
-        // Pass connected node positions to shader
+        // Prepare shader data
         Vector4[] connectedNodePositions = new Vector4[MAX_NODES];
         int connectedCount = Mathf.Min(connectedNodes.Count, MAX_NODES);
         
@@ -191,10 +295,6 @@ public class MapShaderController : MonoBehaviour
             connectedNodePositions[i] = Vector4.zero;
         }
         
-        mapMaterial.SetVectorArray(ConnectedNodePositionsID, connectedNodePositions);
-        mapMaterial.SetInt(ConnectedNodeCountID, connectedCount);
-        
-        // Pass connected consumer positions to shader (only consumers connected to producer)
         Vector4[] consumerPositions = new Vector4[MAX_NODES];
         int consumerCount = Mathf.Min(connectedConsumers.Count, MAX_NODES);
         
@@ -213,10 +313,6 @@ public class MapShaderController : MonoBehaviour
             consumerPositions[i] = Vector4.zero;
         }
         
-        mapMaterial.SetVectorArray(ConsumerPositionsID, consumerPositions);
-        mapMaterial.SetInt(ConsumerCountID, consumerCount);
-        
-        // Pass partial node positions and progress to shader
         Vector4[] partialNodePositions = new Vector4[MAX_NODES];
         float[] partialNodeProgress = new float[MAX_NODES];
         int partialCount = Mathf.Min(partialNodes.Count, MAX_NODES);
@@ -238,9 +334,26 @@ public class MapShaderController : MonoBehaviour
             partialNodeProgress[i] = 0f;
         }
         
-        mapMaterial.SetVectorArray(PartialNodePositionsID, partialNodePositions);
-        mapMaterial.SetFloatArray(PartialNodeProgressID, partialNodeProgress);
-        mapMaterial.SetInt(PartialNodeCountID, partialCount);
+        // Update all materials
+        foreach (Material mat in materialsToUpdate)
+        {
+            if (mat == null) continue;
+            
+            mat.SetFloat(ColorRadiusID, colorRadius);
+            mat.SetFloat(SmoothFalloffID, smoothFalloff);
+            // Set global color blend to 1.0 (normal operation - distance-based coloring)
+            if (mat.HasProperty(GlobalColorBlendID))
+            {
+                mat.SetFloat(GlobalColorBlendID, 1.0f);
+            }
+            mat.SetVectorArray(ConnectedNodePositionsID, connectedNodePositions);
+            mat.SetInt(ConnectedNodeCountID, connectedCount);
+            mat.SetVectorArray(ConsumerPositionsID, consumerPositions);
+            mat.SetInt(ConsumerCountID, consumerCount);
+            mat.SetVectorArray(PartialNodePositionsID, partialNodePositions);
+            mat.SetFloatArray(PartialNodeProgressID, partialNodeProgress);
+            mat.SetInt(PartialNodeCountID, partialCount);
+        }
     }
     
     /// <summary>
@@ -354,6 +467,84 @@ public class MapShaderController : MonoBehaviour
     public void SetLevelController(LevelController level)
     {
         levelController = level;
+        InitializeTerrainMaterials();
         UpdateShaderProperties();
+    }
+    
+    /// <summary>
+    /// Smoothly remove grayscale from all terrain materials over duration
+    /// Interpolates _GlobalColorBlend from 1.0 (distance-based) to 0.0 (full color everywhere)
+    /// </summary>
+    public IEnumerator RemoveGrayscaleFromAllMaterials(float duration)
+    {
+        if (terrainMaterials.Count == 0)
+        {
+            Debug.LogWarning("MapShaderController: No terrain materials to animate!");
+            yield break;
+        }
+        
+        // Check if materials support GlobalColorBlend property
+        bool hasBlendProperty = false;
+        foreach (Material mat in terrainMaterials)
+        {
+            if (mat != null && mat.HasProperty(GlobalColorBlendID))
+            {
+                hasBlendProperty = true;
+                break;
+            }
+        }
+        
+        if (!hasBlendProperty)
+        {
+            Debug.LogWarning("MapShaderController: Materials don't support _GlobalColorBlend property! Shader may need update.");
+            yield break;
+        }
+        
+        float elapsedTime = 0f;
+        const float startBlend = 1.0f; // Start with distance-based coloring (normal operation)
+        const float endBlend = 0.0f;   // End with full color everywhere (blend = 0 means full color)
+        
+        // Wait one frame to ensure materials are initialized
+        yield return null;
+        
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / duration);
+            
+            // Smooth interpolation using ease-out curve
+            t = 1f - Mathf.Pow(1f - t, 3f);
+            
+            // Interpolate blend factor: 1.0 (distance-based) -> 0.0 (full color everywhere)
+            // Shader: finalColor = lerp(texColor.rgb, distanceBasedColor, _GlobalColorBlend)
+            // When blend = 0: full color (texColor.rgb)
+            // When blend = 1: distance-based color (distanceBasedColor)
+            float currentBlend = Mathf.Lerp(startBlend, endBlend, t);
+            
+            // Update all materials
+            foreach (Material mat in terrainMaterials)
+            {
+                if (mat == null) continue;
+                
+                if (mat.HasProperty(GlobalColorBlendID))
+                {
+                    mat.SetFloat(GlobalColorBlendID, currentBlend);
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Ensure final state - set to 0 for full color everywhere
+        foreach (Material mat in terrainMaterials)
+        {
+            if (mat == null) continue;
+            if (mat.HasProperty(GlobalColorBlendID))
+            {
+                mat.SetFloat(GlobalColorBlendID, endBlend);
+            }
+        }
+        
+        Debug.Log("MapShaderController: Grayscale removal animation completed.");
     }
 }

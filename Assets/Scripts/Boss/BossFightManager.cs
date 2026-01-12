@@ -34,9 +34,11 @@ public class BossFightManager : MonoBehaviour
     private float timeRemaining;
     private float timeLimit;
     private List<GameObject> hiddenObjects = new List<GameObject>();
+    private List<GameObject> fadeableObjects = new List<GameObject>();
     private Vector3 originalCameraPosition;
     private Quaternion originalCameraRotation;
     private bool terrainWasVisible = true;
+    private Coroutine fadeAwayCoroutine;
     
     // Properties
     public bool IsBossFightActive => isBossFightActive;
@@ -192,8 +194,15 @@ public class BossFightManager : MonoBehaviour
             cameraController.StoreCurrentPositionAsOriginal();
         }
         
-        // Step 1: Hide map elements (nodes, connections, monsters, terrain)
-        HideMapElements();
+        // Step 1: Collect fadeable elements and start fade animation (non-blocking)
+        CollectFadeableElements();
+        
+        // Start fade-away animation (runs in parallel, doesn't block)
+        if (fadeAwayCoroutine != null)
+        {
+            StopCoroutine(fadeAwayCoroutine);
+        }
+        fadeAwayCoroutine = StartCoroutine(FadeAwayAllMapElements());
         
         // Step 2: Show boss alert UI immediately (before camera transition completes)
         if (bossFightUI != null)
@@ -264,26 +273,62 @@ public class BossFightManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Hide all map elements except boss
+    /// Collect all map elements that need to be faded out (nodes, terrain, vegetation)
     /// </summary>
-    private void HideMapElements()
+    private void CollectFadeableElements()
     {
+        fadeableObjects.Clear();
         hiddenObjects.Clear();
         
         if (currentLevel == null) return;
         
-        // Hide all nodes
+        // Collect all nodes (except boss)
         List<BaseNode> nodes = currentLevel.GetAllNodes();
         foreach (var node in nodes)
         {
             if (node != null && node.gameObject != currentBoss.gameObject)
             {
-                node.gameObject.SetActive(false);
-                hiddenObjects.Add(node.gameObject);
+                fadeableObjects.Add(node.gameObject);
             }
         }
         
-        // Hide all connections and stop their animations
+        // Collect base terrain plane (TerrainMeshRenderer)
+        if (currentLevel != null && currentLevel.TerrainMeshRenderer != null)
+        {
+            terrainWasVisible = currentLevel.TerrainMeshRenderer.enabled;
+            fadeableObjects.Add(currentLevel.TerrainMeshRenderer.gameObject);
+        }
+        
+        // Collect all vegetation objects under "Terrain" parent
+        Transform terrainParent = currentLevel.transform.Find("Terrain");
+        if (terrainParent == null)
+        {
+            // Try to find by name in all children
+            Transform[] allChildren = currentLevel.transform.GetComponentsInChildren<Transform>(true);
+            foreach (Transform child in allChildren)
+            {
+                if (child.name == "Terrain")
+                {
+                    terrainParent = child;
+                    break;
+                }
+            }
+        }
+        
+        if (terrainParent != null)
+        {
+            // Get all direct children of Terrain parent (vegetation objects)
+            for (int i = 0; i < terrainParent.childCount; i++)
+            {
+                Transform child = terrainParent.GetChild(i);
+                if (child != null && child.gameObject != currentBoss.gameObject)
+                {
+                    fadeableObjects.Add(child.gameObject);
+                }
+            }
+        }
+        
+        // Hide all connections and stop their animations (these don't fade, just hide immediately)
         ConnectionManager connectionManager = ConnectionManager.Instance;
         if (connectionManager != null)
         {
@@ -300,11 +345,10 @@ public class BossFightManager : MonoBehaviour
             }
         }
         
-        // Hide all monsters
+        // Hide all monsters (these don't fade, just hide immediately)
         MonsterAiManager monsterManager = MonsterAiManager.Instance;
         if (monsterManager != null)
         {
-            // Get all monsters (we'll need to add a method to MonsterAiManager or find them)
             Monster[] monsters = FindObjectsByType<Monster>(FindObjectsSortMode.None);
             foreach (var monster in monsters)
             {
@@ -322,13 +366,146 @@ public class BossFightManager : MonoBehaviour
         {
             gameplayUI.Hide();
         }
-        
-        // Hide terrain renderer from LevelController if available
-        if (currentLevel != null && currentLevel.TerrainMeshRenderer != null)
+    }
+    
+    /// <summary>
+    /// Fade away all map elements (nodes, terrain, vegetation) smoothly
+    /// </summary>
+    private IEnumerator FadeAwayAllMapElements()
+    {
+        if (fadeableObjects.Count == 0)
         {
-            terrainWasVisible = currentLevel.TerrainMeshRenderer.enabled;
-            currentLevel.TerrainMeshRenderer.enabled = false;
+            yield break;
         }
+        
+        float fadeDuration = 1.5f; // Fade duration in seconds
+        float elapsedTime = 0f;
+        
+        // Store renderers and their materials for fading
+        Dictionary<Renderer, Material[]> rendererMaterials = new Dictionary<Renderer, Material[]>();
+        Dictionary<Material, Color> originalColors = new Dictionary<Material, Color>();
+        List<Material> materialsToFade = new List<Material>();
+        
+        foreach (GameObject obj in fadeableObjects)
+        {
+            if (obj == null) continue;
+            
+            Renderer[] renderers = obj.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null) continue;
+                
+                // Get instance materials (this creates copies we can modify)
+                Material[] materials = renderer.materials;
+                rendererMaterials[renderer] = materials;
+                
+                foreach (Material mat in materials)
+                {
+                    if (mat == null) continue;
+                    
+                    // Check if material has _Color property
+                    if (mat.HasProperty("_Color"))
+                    {
+                        Color originalColor = mat.color;
+                        originalColors[mat] = originalColor;
+                        materialsToFade.Add(mat);
+                    }
+                }
+            }
+        }
+        
+        if (materialsToFade.Count == 0)
+        {
+            Debug.LogWarning("BossFightManager: No materials with _Color property found for fade animation!");
+            // Just deactivate objects
+            foreach (GameObject obj in fadeableObjects)
+            {
+                if (obj != null) obj.SetActive(false);
+            }
+            fadeableObjects.Clear();
+            yield break;
+        }
+        
+        // Fade out animation
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / fadeDuration);
+            
+            // Smooth fade using ease-out curve
+            t = 1f - Mathf.Pow(1f - t, 2f);
+            
+            // Update all materials and assign back to renderers
+            foreach (var kvp in rendererMaterials)
+            {
+                Renderer renderer = kvp.Key;
+                Material[] materials = kvp.Value;
+                
+                if (renderer == null) continue;
+                
+                bool materialsChanged = false;
+                foreach (Material mat in materials)
+                {
+                    if (mat == null) continue;
+                    
+                    if (originalColors.ContainsKey(mat))
+                    {
+                        Color originalColor = originalColors[mat];
+                        // Fade alpha from original to 0
+                        Color fadedColor = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * (1f - t));
+                        mat.color = fadedColor;
+                        materialsChanged = true;
+                    }
+                }
+                
+                // Assign materials array back to renderer to ensure changes persist
+                if (materialsChanged)
+                {
+                    renderer.materials = materials;
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Ensure final state (fully transparent) and assign back
+        foreach (var kvp in rendererMaterials)
+        {
+            Renderer renderer = kvp.Key;
+            Material[] materials = kvp.Value;
+            
+            if (renderer == null) continue;
+            
+            bool materialsChanged = false;
+            foreach (Material mat in materials)
+            {
+                if (mat == null) continue;
+                
+                if (originalColors.ContainsKey(mat))
+                {
+                    Color originalColor = originalColors[mat];
+                    Color transparentColor = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+                    mat.color = transparentColor;
+                    materialsChanged = true;
+                }
+            }
+            
+            if (materialsChanged)
+            {
+                renderer.materials = materials;
+            }
+        }
+        
+        // Deactivate all objects
+        foreach (GameObject obj in fadeableObjects)
+        {
+            if (obj != null)
+            {
+                obj.SetActive(false);
+            }
+        }
+        
+        fadeableObjects.Clear();
     }
     
     /// <summary>
@@ -508,6 +685,12 @@ public class BossFightManager : MonoBehaviour
         // Unsubscribe from events
         Boss.OnBossDied -= OnBossDied;
         Boss.OnBossEscaped -= OnBossEscaped;
+        
+        // Stop fade coroutine if running
+        if (fadeAwayCoroutine != null)
+        {
+            StopCoroutine(fadeAwayCoroutine);
+        }
         
         if (_instance == this)
         {

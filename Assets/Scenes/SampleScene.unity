@@ -6515,6 +6515,8 @@ MonoBehaviour:
   gameplayUI: {fileID: 2132006983}
   levelCompleteUI: {fileID: 1859521324}
   gameplayEnabled: 0
+  levelCompleteColorReturnSound: {fileID: 8300000, guid: d460ab72fd419884e83a1d13ab8f00b1, type: 3}
+  audioSource: {fileID: 173883360}
   currentEnergy: 0
   startingEnergy: 5
 --- !u!4 &492060976

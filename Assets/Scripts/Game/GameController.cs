@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,6 +14,10 @@ public class GameController : MonoBehaviour
     
     [Header("Gameplay")]
     [SerializeField] private bool gameplayEnabled = false;
+    
+    [Header("Level Complete Effects")]
+    [SerializeField] private AudioClip levelCompleteColorReturnSound;
+    [SerializeField] private AudioSource audioSource;
     
     [Header("Energy System")]
     [SerializeField] private int currentEnergy = 0;
@@ -98,6 +103,16 @@ public class GameController : MonoBehaviour
     
     private void Awake()
     {
+        // Get or add AudioSource if not assigned
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                audioSource.playOnAwake = false;
+            }
+        }
         // Singleton setup
         if (_instance == null)
         {
@@ -472,10 +487,41 @@ public class GameController : MonoBehaviour
     {
         gameplayEnabled = false;
         
-        // Check if this level has a boss fight
+        // Play level complete animation (color return) before proceeding
+        StartCoroutine(PlayLevelCompleteAnimation());
+    }
+    
+    /// <summary>
+    /// Play level complete animation: return color to environment, play sound and particles
+    /// </summary>
+    private IEnumerator PlayLevelCompleteAnimation()
+    {
+        // Get MapShaderController and start color return animation
+        MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
+        {
+            StartCoroutine(mapShaderController.RemoveGrayscaleFromAllMaterials(5f));
+        }
+        
+        // Play sound effect
+        if (levelCompleteColorReturnSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(levelCompleteColorReturnSound);
+        }
+        
+        // Activate particle system from LevelController
+        if (currentLevel != null)
+        {
+            currentLevel.ActivateLevelCompleteParticles();
+        }
+        
+        // Wait for animation to complete (5 seconds)
+        yield return new WaitForSeconds(5f);
+        
+        // Now proceed with boss fight or level complete screen
         if (currentLevelConfig != null && currentLevelConfig.IsBossFight)
         {
-            // Start boss fight instead of showing level complete screen
+            // Start boss fight
             BossFightManager bossFightManager = BossFightManager.Instance;
             if (bossFightManager != null)
             {

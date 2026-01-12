@@ -659,6 +659,7 @@ MonoBehaviour:
     validTargetIDs:
     - Node_fa6ebc4e
   graphVisualizer: {fileID: 91657577106277341}
+  TerrainMeshRenderer: {fileID: 0}
 --- !u!114 &91657577106277341
 MonoBehaviour:
   m_ObjectHideFlags: 0

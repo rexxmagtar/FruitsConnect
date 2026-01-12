@@ -6,6 +6,7 @@ Shader "Custom/MapGrayscaleShader"
         _Color ("Color", Color) = (1,1,1,1)
         _ColorRadius ("Color Radius", Float) = 3.0
         _SmoothFalloff ("Smooth Falloff", Range(0, 1)) = 0.3
+        _GlobalColorBlend ("Global Color Blend", Range(0, 1)) = 0.0
     }
     
     SubShader
@@ -41,6 +42,7 @@ Shader "Custom/MapGrayscaleShader"
             fixed4 _Color;
             float _ColorRadius;
             float _SmoothFalloff;
+            float _GlobalColorBlend;
             
             // Arrays for node positions (max 32 nodes)
             float4 _ConnectedNodePositions[32];
@@ -120,7 +122,11 @@ Shader "Custom/MapGrayscaleShader"
                 }
                 
                 // Lerp between grayscale and original color based on distance
-                fixed3 finalColor = lerp(grayscaleColor, texColor.rgb, colorFactor);
+                fixed3 distanceBasedColor = lerp(grayscaleColor, texColor.rgb, colorFactor);
+                
+                // Apply global color blend (0 = full color everywhere, 1 = distance-based coloring)
+                // This allows smooth transition from distance-based to full color globally
+                fixed3 finalColor = lerp(texColor.rgb, distanceBasedColor, _GlobalColorBlend);
                 
                 return fixed4(finalColor, texColor.a);
             }
