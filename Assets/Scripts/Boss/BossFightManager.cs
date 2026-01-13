@@ -194,15 +194,8 @@ public class BossFightManager : MonoBehaviour
             cameraController.StoreCurrentPositionAsOriginal();
         }
         
-        // Step 1: Collect fadeable elements and start fade animation (non-blocking)
+        // Step 1: Collect fadeable elements
         CollectFadeableElements();
-        
-        // Start fade-away animation (runs in parallel, doesn't block)
-        if (fadeAwayCoroutine != null)
-        {
-            StopCoroutine(fadeAwayCoroutine);
-        }
-        fadeAwayCoroutine = StartCoroutine(FadeAwayAllMapElements());
         
         // Step 2: Show boss alert UI immediately (before camera transition completes)
         if (bossFightUI != null)
@@ -243,8 +236,16 @@ public class BossFightManager : MonoBehaviour
             }
         }
         
-        // Wait for camera transition
-        yield return new WaitForSeconds(cameraTransitionDuration);
+        // Step 4: Start fade-away animation 1 second after camera transition starts (runs in parallel, doesn't block)
+        yield return new WaitForSeconds(1f);
+        if (fadeAwayCoroutine != null)
+        {
+            StopCoroutine(fadeAwayCoroutine);
+        }
+        fadeAwayCoroutine = StartCoroutine(FadeAwayAllMapElements());
+        
+        // Wait for remaining camera transition time
+        yield return new WaitForSeconds(cameraTransitionDuration - 1f);
         
         // Wait for alert display
         yield return new WaitForSeconds(bossAlertDisplayDuration);
@@ -370,6 +371,7 @@ public class BossFightManager : MonoBehaviour
     
     /// <summary>
     /// Fade away all map elements (nodes, terrain, vegetation) smoothly
+    /// Uses UnlitAlphaFade shader procedurally for materials that don't support alpha
     /// </summary>
     private IEnumerator FadeAwayAllMapElements()
     {
@@ -381,11 +383,26 @@ public class BossFightManager : MonoBehaviour
         float fadeDuration = 1.5f; // Fade duration in seconds
         float elapsedTime = 0f;
         
-        // Store renderers and their materials for fading
-        Dictionary<Renderer, Material[]> rendererMaterials = new Dictionary<Renderer, Material[]>();
-        Dictionary<Material, Color> originalColors = new Dictionary<Material, Color>();
-        List<Material> materialsToFade = new List<Material>();
+        // Load the UnlitAlphaFade shader
+        Shader fadeShader = Shader.Find("Custom/UnlitAlphaFade");
+        if (fadeShader == null)
+        {
+            Debug.LogError("BossFightManager: UnlitAlphaFade shader not found! Cannot perform fade animation.");
+            // Just deactivate objects
+            foreach (GameObject obj in fadeableObjects)
+            {
+                if (obj != null) obj.SetActive(false);
+            }
+            fadeableObjects.Clear();
+            yield break;
+        }
         
+        // Store renderers, original materials, and fade materials
+        Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
+        Dictionary<Renderer, Material[]> fadeMaterials = new Dictionary<Renderer, Material[]>();
+        List<Material> createdFadeMaterials = new List<Material>(); // For cleanup
+        
+        // Create fade materials for all renderers
         foreach (GameObject obj in fadeableObjects)
         {
             if (obj == null) continue;
@@ -395,28 +412,63 @@ public class BossFightManager : MonoBehaviour
             {
                 if (renderer == null) continue;
                 
-                // Get instance materials (this creates copies we can modify)
-                Material[] materials = renderer.materials;
-                rendererMaterials[renderer] = materials;
+                // Store original materials
+                Material[] originalMats = renderer.sharedMaterials;
+                originalMaterials[renderer] = originalMats;
                 
-                foreach (Material mat in materials)
+                // Create fade materials using UnlitAlphaFade shader
+                Material[] fadeMats = new Material[originalMats.Length];
+                for (int i = 0; i < originalMats.Length; i++)
                 {
-                    if (mat == null) continue;
-                    
-                    // Check if material has _Color property
-                    if (mat.HasProperty("_Color"))
+                    Material originalMat = originalMats[i];
+                    if (originalMat == null)
                     {
-                        Color originalColor = mat.color;
-                        originalColors[mat] = originalColor;
-                        materialsToFade.Add(mat);
+                        fadeMats[i] = null;
+                        continue;
                     }
+                    
+                    // Create new material with fade shader
+                    Material fadeMat = new Material(fadeShader);
+                    fadeMat.name = originalMat.name + "_Fade";
+                    
+                    // Copy main texture if available
+                    if (originalMat.HasProperty("_MainTex"))
+                    {
+                        Texture mainTex = originalMat.GetTexture("_MainTex");
+                        if (mainTex != null)
+                        {
+                            fadeMat.SetTexture("_MainTex", mainTex);
+                        }
+                        
+                        // Copy texture tiling (scale) and offset
+                        Vector2 tiling = originalMat.GetTextureScale("_MainTex");
+                        Vector2 offset = originalMat.GetTextureOffset("_MainTex");
+                        fadeMat.SetTextureScale("_MainTex", tiling);
+                        fadeMat.SetTextureOffset("_MainTex", offset);
+                    }
+                    
+                    // Set initial color (full alpha)
+                    Color originalColor = Color.white;
+                    if (originalMat.HasProperty("_Color"))
+                    {
+                        originalColor = originalMat.color;
+                    }
+                    fadeMat.SetColor("_Color", originalColor);
+                    
+                    fadeMats[i] = fadeMat;
+                    createdFadeMaterials.Add(fadeMat);
                 }
+                
+                fadeMaterials[renderer] = fadeMats;
+                
+                // Apply fade materials to renderer
+                renderer.materials = fadeMats;
             }
         }
         
-        if (materialsToFade.Count == 0)
+        if (fadeMaterials.Count == 0)
         {
-            Debug.LogWarning("BossFightManager: No materials with _Color property found for fade animation!");
+            Debug.LogWarning("BossFightManager: No renderers found for fade animation!");
             // Just deactivate objects
             foreach (GameObject obj in fadeableObjects)
             {
@@ -435,66 +487,48 @@ public class BossFightManager : MonoBehaviour
             // Smooth fade using ease-out curve
             t = 1f - Mathf.Pow(1f - t, 2f);
             
-            // Update all materials and assign back to renderers
-            foreach (var kvp in rendererMaterials)
+            // Update all fade materials' alpha
+            foreach (var kvp in fadeMaterials)
             {
                 Renderer renderer = kvp.Key;
-                Material[] materials = kvp.Value;
+                Material[] fadeMats = kvp.Value;
                 
                 if (renderer == null) continue;
                 
-                bool materialsChanged = false;
-                foreach (Material mat in materials)
+                foreach (Material fadeMat in fadeMats)
                 {
-                    if (mat == null) continue;
+                    if (fadeMat == null) continue;
                     
-                    if (originalColors.ContainsKey(mat))
-                    {
-                        Color originalColor = originalColors[mat];
-                        // Fade alpha from original to 0
-                        Color fadedColor = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * (1f - t));
-                        mat.color = fadedColor;
-                        materialsChanged = true;
-                    }
-                }
-                
-                // Assign materials array back to renderer to ensure changes persist
-                if (materialsChanged)
-                {
-                    renderer.materials = materials;
+                    // Get current color and fade alpha
+                    Color currentColor = fadeMat.GetColor("_Color");
+                    currentColor.a = 1f - t; // Fade from 1 to 0
+                    fadeMat.SetColor("_Color", currentColor);
                 }
             }
             
             yield return null;
         }
         
-        // Ensure final state (fully transparent) and assign back
-        foreach (var kvp in rendererMaterials)
+        // Ensure final state (fully transparent)
+        foreach (var kvp in fadeMaterials)
         {
             Renderer renderer = kvp.Key;
-            Material[] materials = kvp.Value;
+            Material[] fadeMats = kvp.Value;
             
             if (renderer == null) continue;
             
-            bool materialsChanged = false;
-            foreach (Material mat in materials)
+            foreach (Material fadeMat in fadeMats)
             {
-                if (mat == null) continue;
+                if (fadeMat == null) continue;
                 
-                if (originalColors.ContainsKey(mat))
-                {
-                    Color originalColor = originalColors[mat];
-                    Color transparentColor = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
-                    mat.color = transparentColor;
-                    materialsChanged = true;
-                }
-            }
-            
-            if (materialsChanged)
-            {
-                renderer.materials = materials;
+                Color transparentColor = fadeMat.GetColor("_Color");
+                transparentColor.a = 0f;
+                fadeMat.SetColor("_Color", transparentColor);
             }
         }
+        
+        // Wait a frame to ensure final state is rendered
+        yield return null;
         
         // Deactivate all objects
         foreach (GameObject obj in fadeableObjects)
@@ -505,7 +539,19 @@ public class BossFightManager : MonoBehaviour
             }
         }
         
+        // Clean up created fade materials
+        foreach (Material fadeMat in createdFadeMaterials)
+        {
+            if (fadeMat != null)
+            {
+                Destroy(fadeMat);
+            }
+        }
+        
         fadeableObjects.Clear();
+        originalMaterials.Clear();
+        fadeMaterials.Clear();
+        createdFadeMaterials.Clear();
     }
     
     /// <summary>
