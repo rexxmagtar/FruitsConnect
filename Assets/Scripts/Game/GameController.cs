@@ -524,7 +524,7 @@ public class GameController : MonoBehaviour
         }
         
         // Wait for animation to complete (5 seconds)
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(3f);
         
         // Now proceed with boss fight or level complete screen
         if (currentLevelConfig != null && currentLevelConfig.IsBossFight)
@@ -696,18 +696,32 @@ public class GameController : MonoBehaviour
         // Unload current level
         UnloadLevel();
         
+        // Reset camera force (in case it was moved during boss fight)
+        CameraController cameraController = CameraController.Instance;
+        if (cameraController != null)
+        {
+            cameraController.ResetCameraForce();
+        }
+        
         // Hide gameplay UI
-        GameplayUI gameplayUI = FindFirstObjectByType<GameplayUI>();
         if (gameplayUI != null)
         {
             gameplayUI.Hide();
         }
+        else
+        {
+            GameplayUI foundGameplayUI = FindFirstObjectByType<GameplayUI>(FindObjectsInactive.Include);
+            if (foundGameplayUI != null)
+            {
+                foundGameplayUI.Hide();
+            }
+        }
         
-        // Show main menu
-        MainMenuUI mainMenu = FindFirstObjectByType<MainMenuUI>();
+        // Show main menu (include inactive objects in search)
+        MainMenuUI mainMenu = FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
         if (mainMenu != null)
         {
-            // Preload current level for menu background
+            // Preload current level for menu background (GetCurrentLevelConfig returns the level to play next)
             LevelsManager levelsManager = LevelsManager.Instance;
             if (levelsManager != null)
             {
@@ -718,7 +732,13 @@ public class GameController : MonoBehaviour
                 }
             }
             
+            // Ensure main menu is active and visible
+            mainMenu.gameObject.SetActive(true);
             mainMenu.Show();
+        }
+        else
+        {
+            Debug.LogError("GameController: MainMenuUI not found! Cannot return to main menu.");
         }
     }
     

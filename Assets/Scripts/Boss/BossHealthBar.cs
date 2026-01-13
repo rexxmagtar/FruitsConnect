@@ -11,15 +11,10 @@ public class BossHealthBar : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Canvas canvas;
-    [SerializeField] private Transform healthTilesContainer;
-    [SerializeField] private GameObject healthTilePrefab;
+    [SerializeField] private Slider healthSlider;
     
-    [SerializeField] private Color filledColor = Color.red;
-    [SerializeField] private Color emptyColor = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-    
-     [SerializeField] private Boss boss;
-    private Image[] healthTiles;
-    private int maxHealth;
+    [SerializeField] private Boss boss;
+    private float maxHealth;
     
     private void Awake()
     {
@@ -63,87 +58,79 @@ public class BossHealthBar : MonoBehaviour
         }
         
         maxHealth = boss.MaxHealth;
-        CreateHealthTiles();
+        
+        // Setup slider if not assigned
+        if (healthSlider == null)
+        {
+            CreateHealthSlider();
+        }
+        
+        if (healthSlider != null)
+        {
+            healthSlider.minValue = 0f;
+            healthSlider.maxValue = maxHealth;
+            healthSlider.value = maxHealth;
+        }
+        
         UpdateDisplay();
     }
     
     /// <summary>
-    /// Create health tiles based on max health
+    /// Create health slider if not assigned
     /// </summary>
-    private void CreateHealthTiles()
+    private void CreateHealthSlider()
     {
-        // Clear existing tiles
-        if (healthTilesContainer != null)
-        {
-            foreach (Transform child in healthTilesContainer)
-            {
-                if (Application.isPlaying)
-                {
-                    Destroy(child.gameObject);
-                }
-                else
-                {
-                    DestroyImmediate(child.gameObject);
-                }
-            }
-        }
-        else
-        {
-            // Create container if it doesn't exist
-            GameObject containerObj = new GameObject("HealthTilesContainer");
-            containerObj.transform.SetParent(transform);
-            containerObj.transform.localPosition = Vector3.zero;
-            healthTilesContainer = containerObj.transform;
-        }
+        // Try to find existing slider
+        healthSlider = GetComponentInChildren<Slider>();
         
-        // Create health tiles
-        healthTiles = new Image[maxHealth];
-        float tileSpacing = 0.3f;
-        float startX = -(maxHealth - 1) * tileSpacing * 0.5f;
-        
-        for (int i = 0; i < maxHealth; i++)
+        if (healthSlider == null)
         {
-            GameObject tileObj;
+            // Create slider GameObject
+            GameObject sliderObj = new GameObject("HealthSlider");
+            sliderObj.transform.SetParent(transform);
+            sliderObj.transform.localPosition = Vector3.zero;
             
-            if (healthTilePrefab != null)
-            {
-                tileObj = Instantiate(healthTilePrefab, healthTilesContainer);
-            }
-            else
-            {
-                // Create default tile if no prefab
-                tileObj = new GameObject($"HealthTile_{i}");
-                tileObj.transform.SetParent(healthTilesContainer);
-                
-                // Add Image component
-                Image image = tileObj.AddComponent<Image>();
-                image.color = filledColor;
-                
-                // Setup RectTransform
-                RectTransform rect = tileObj.GetComponent<RectTransform>();
-                if (rect == null)
-                {
-                    rect = tileObj.AddComponent<RectTransform>();
-                }
-                rect.sizeDelta = new Vector2(0.2f, 0.2f);
-                rect.anchoredPosition = new Vector2(startX + i * tileSpacing, 0);
-            }
+            // Add RectTransform
+            RectTransform rect = sliderObj.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(2f, 0.2f);
+            rect.anchoredPosition = Vector2.zero;
             
-            // Get Image component
-            Image tileImage = tileObj.GetComponent<Image>();
-            if (tileImage == null)
-            {
-                tileImage = tileObj.AddComponent<Image>();
-            }
+            // Add Slider component
+            healthSlider = sliderObj.AddComponent<Slider>();
             
-            healthTiles[i] = tileImage;
+            // Create background
+            GameObject bgObj = new GameObject("Background");
+            bgObj.transform.SetParent(sliderObj.transform);
+            Image bgImage = bgObj.AddComponent<Image>();
+            bgImage.color = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+            RectTransform bgRect = bgObj.GetComponent<RectTransform>();
+            bgRect.anchorMin = Vector2.zero;
+            bgRect.anchorMax = Vector2.one;
+            bgRect.sizeDelta = Vector2.zero;
+            bgRect.anchoredPosition = Vector2.zero;
+            healthSlider.targetGraphic = bgImage;
             
-            // Position tile
-            RectTransform tileRect = tileObj.GetComponent<RectTransform>();
-            if (tileRect != null)
-            {
-                tileRect.anchoredPosition = new Vector2(startX + i * tileSpacing, 0);
-            }
+            // Create fill area
+            GameObject fillAreaObj = new GameObject("Fill Area");
+            fillAreaObj.transform.SetParent(sliderObj.transform);
+            RectTransform fillAreaRect = fillAreaObj.AddComponent<RectTransform>();
+            fillAreaRect.anchorMin = Vector2.zero;
+            fillAreaRect.anchorMax = Vector2.one;
+            fillAreaRect.sizeDelta = Vector2.zero;
+            fillAreaRect.anchoredPosition = Vector2.zero;
+            
+            // Create fill
+            GameObject fillObj = new GameObject("Fill");
+            fillObj.transform.SetParent(fillAreaObj.transform);
+            Image fillImage = fillObj.AddComponent<Image>();
+            fillImage.color = Color.red;
+            RectTransform fillRect = fillObj.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.sizeDelta = Vector2.zero;
+            fillRect.anchoredPosition = Vector2.zero;
+            
+            healthSlider.fillRect = fillRect;
         }
     }
     
@@ -152,18 +139,10 @@ public class BossHealthBar : MonoBehaviour
     /// </summary>
     public void UpdateDisplay()
     {
-        if (boss == null || healthTiles == null) return;
+        if (boss == null || healthSlider == null) return;
         
-        int currentHealth = boss.CurrentHealth;
-        
-        for (int i = 0; i < healthTiles.Length; i++)
-        {
-            if (healthTiles[i] != null)
-            {
-                // Fill tile if health point is active
-                healthTiles[i].color = i < currentHealth ? filledColor : emptyColor;
-            }
-        }
+        float currentHealth = boss.CurrentHealth;
+        healthSlider.value = currentHealth;
     }
     
     private void LateUpdate()

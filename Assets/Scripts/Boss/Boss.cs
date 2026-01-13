@@ -10,7 +10,7 @@ using UnityEngine.UI;
 public class Boss : MonoBehaviour
 {
     [Header("Boss Configuration")]
-    [SerializeField] private int maxHealth = 20;
+    [SerializeField] private float maxHealth = 20f;
     [SerializeField] private float hitScaleAmount = 1.2f;
     [SerializeField] private float hitScaleDuration = 0.2f;
     
@@ -54,7 +54,7 @@ public class Boss : MonoBehaviour
     [SerializeField] private float bossRotationSpeed = 360f; // degrees per second
     
     // State
-    private int currentHealth;
+    private float currentHealth;
     private bool isDead = false;
     private bool hasEscaped = false;
     private bool isFighting = false;
@@ -76,8 +76,8 @@ public class Boss : MonoBehaviour
     private const string PARAM_GET_HIT = "GetHitParam";
     
     // Properties
-    public int MaxHealth => maxHealth;
-    public int CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+    public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
     public bool HasEscaped => hasEscaped;
     public bool IsFighting => isFighting;
@@ -157,11 +157,6 @@ public class Boss : MonoBehaviour
         if (hitEffectPool == null)
         {
             hitEffectPool = BossHitEffectPool.Instance;
-        }
-        
-        if (hitEffectPool != null)
-        {
-            hitEffectPool.Initialize();
         }
         
         // Update health bar
@@ -246,7 +241,14 @@ public class Boss : MonoBehaviour
         // Calculate touch position
         Vector3 hitPosition = GetTouchPosition();
         
-        TakeDamage(1, false, hitPosition);
+        // Get damage multiplier from PlayerProgressController
+        float damageMultiplier = 1f;
+        if (PlayerProgressController.Instance != null)
+        {
+            damageMultiplier = PlayerProgressController.Instance.GetMonsterDamage();
+        }
+        
+        TakeDamage(damageMultiplier, false, hitPosition);
     }
     
     /// <summary>
@@ -274,15 +276,15 @@ public class Boss : MonoBehaviour
     /// <summary>
     /// Take damage from player tap or vulnerable zone
     /// </summary>
-    public void TakeDamage(int damage, bool isVulnerableZone = false, Vector3? hitPosition = null)
+    public void TakeDamage(float damage, bool isVulnerableZone = false, Vector3? hitPosition = null)
     {
         if (isDead || hasEscaped || !isFighting) return;
         
         // Apply damage multiplier for vulnerable zones
-        int finalDamage = isVulnerableZone ? damage * 4 : damage;
+        float finalDamage = isVulnerableZone ? damage * 4f : damage;
         
         currentHealth -= finalDamage;
-        currentHealth = Mathf.Max(0, currentHealth);
+        currentHealth = Mathf.Max(0f, currentHealth);
         
         // Update healthbar
         if (healthBar != null)

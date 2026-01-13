@@ -117,8 +117,15 @@ public class VulnerableZone : MonoBehaviour
             return;
         }
         
-        // Deal 2x damage to boss (pass position for hit effect)
-        boss.TakeDamage(1, true, transform.position);
+        // Get damage multiplier from PlayerProgressController
+        float damageMultiplier = 1f;
+        if (PlayerProgressController.Instance != null)
+        {
+            damageMultiplier = PlayerProgressController.Instance.GetMonsterDamage();
+        }
+        
+        // Deal 4x damage to boss (pass position for hit effect)
+        boss.TakeDamage(damageMultiplier, true, transform.position);
         
         // Show "Perfect" feedback at this position
         boss.ShowPerfectHitFeedback(transform.position);

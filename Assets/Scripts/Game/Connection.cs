@@ -25,7 +25,7 @@ public class Connection : MonoBehaviour
     
     [Header("Animation Settings")]
     [SerializeField] private GameObject animationPrefab;
-    [SerializeField] private float animationSpeed = 2f; // Units per second
+    [SerializeField] private float baseAnimationSpeed = 2f; // Base speed in units per second (multiplied by upgrade)
     [SerializeField] private float spawnInterval = 0.5f; // Time between spawning new objects
     [SerializeField] private bool isAnimating = false;
     
@@ -291,8 +291,17 @@ public class Connection : MonoBehaviour
             
             if (currentDistance > 2f &&  (obj.transform.position - endPos).magnitude > 1f)
             {
+                // Get speed multiplier from PlayerProgressController
+                float speedMultiplier = 1f;
+                if (PlayerProgressController.Instance != null)
+                {
+                    speedMultiplier = PlayerProgressController.Instance.GetConnectionSpeed();
+                }
+                
+                float currentSpeed = baseAnimationSpeed * speedMultiplier;
+                
                 // Calculate progress increment
-                float progressIncrement = (animationSpeed * Time.deltaTime) / currentDistance;
+                float progressIncrement = (currentSpeed * Time.deltaTime) / currentDistance;
                 progress += progressIncrement;
                 progress = Mathf.Clamp01(progress);
                 

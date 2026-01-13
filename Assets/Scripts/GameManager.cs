@@ -12,6 +12,16 @@ public class SaveData
     public int CurrentLevel { get; set; }
     public int TotalCoins { get; set; }
     public bool IsAdEnabled { get; set; }
+    
+    // Connection Speed Upgrade
+    public int ConnectionSpeedLevel { get; set; }
+    public int ConnectionSpeedSteps { get; set; }
+    public int ConnectionSpeedPowerValue { get; set; }
+    
+    // Monster Damage Upgrade
+    public int MonsterDamageLevel { get; set; }
+    public int MonsterDamageSteps { get; set; }
+    public int MonsterDamagePowerValue { get; set; }
 }
 
 public class GameManager : MonoBehaviour
@@ -101,6 +111,9 @@ public class GameManager : MonoBehaviour
             
             // 5. Ads - Initialize after compliance and auth
             await InitializeAds();
+
+            // 6. Player Progress - Initialize after save progress
+            await InitializePlayerProgress();
 
             // ProgressSaveManager<SaveData>.Instance.SyncWithCloud();
             
@@ -294,7 +307,15 @@ public class GameManager : MonoBehaviour
         return Task.CompletedTask;
     }
     
-    
+    /// <summary>
+    /// Initialize Player Progress
+    /// </summary>
+    private async Task InitializePlayerProgress()
+    {
+        LogDebug("Initializing Player Progress...");
+        OnInitializationProgress?.Invoke(0.7f);
+        PlayerProgressController.Instance.Initialize();
+    }
     
     /// <summary>
     /// Restart the game initialization process

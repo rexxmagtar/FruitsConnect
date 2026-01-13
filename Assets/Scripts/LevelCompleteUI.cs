@@ -9,9 +9,9 @@ public class LevelCompleteUI : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI levelCompleteText;
-    [SerializeField] private Button continueButton;
+    [SerializeField] private Button continueButton; // Deprecated - kept for backward compatibility but hidden
     [SerializeField] private Button returnToMenuButton;
-    [SerializeField] private TextMeshProUGUI continueButtonText;
+    [SerializeField] private TextMeshProUGUI continueButtonText; // Deprecated - kept for backward compatibility but hidden
     [SerializeField] private TextMeshProUGUI coinsEarnedText;
     [SerializeField] private TextMeshProUGUI totalCoinsText;
     [SerializeField] private RectTransform coinIconTransform;
@@ -40,7 +40,7 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private Vector2 coinParticleSize = new Vector2(30f, 30f);
     
     // Events
-    public static event System.Action OnContinueButtonPressed;
+    public static event System.Action OnContinueButtonPressed; // Deprecated - kept for backward compatibility
     public static event System.Action OnReturnToMenuButtonPressed;
     
     // State
@@ -72,10 +72,10 @@ public class LevelCompleteUI : MonoBehaviour
             }
         }
         
-        // Setup continue button
+        // Setup continue button (deprecated - hide it)
         if (continueButton != null)
         {
-            continueButton.onClick.AddListener(OnContinueButtonClick);
+            continueButton.gameObject.SetActive(false);
         }
         
         // Setup return to menu button
@@ -256,30 +256,19 @@ public class LevelCompleteUI : MonoBehaviour
         isVisible = true;
         isAnimating = true;
         
-        // Get all images and texts from buttons
-        Image[] continueButtonImages = GetAllImagesFromButton(continueButton);
+        // Get all images and texts from menu button only (continue button is hidden)
         Image[] menuButtonImages = GetAllImagesFromButton(returnToMenuButton);
-        TextMeshProUGUI[] continueButtonTexts = GetAllTextsFromButton(continueButton);
         TextMeshProUGUI[] menuButtonTexts = GetAllTextsFromButton(returnToMenuButton);
         
-        // Set buttons to fully transparent and store original alpha values
-        float[] continueButtonImageAlphas = SetImagesAlpha(continueButtonImages, 0f);
+        // Set button to fully transparent and store original alpha values
         float[] menuButtonImageAlphas = SetImagesAlpha(menuButtonImages, 0f);
-        float[] continueButtonTextAlphas = SetTextsAlpha(continueButtonTexts, 0f);
         float[] menuButtonTextAlphas = SetTextsAlpha(menuButtonTexts, 0f);
         
-        // Disable buttons until animations complete
-        if (continueButton != null)
-        {
-            continueButton.interactable = false;
-        }
+        // Disable button until animations complete
         if (returnToMenuButton != null)
         {
             returnToMenuButton.interactable = false;
         }
-        
-        // Update continue button text based on next level
-        UpdateContinueButtonText();
 
         coinsEarnedText.text = $"+{coinsEarned}";
         
@@ -316,21 +305,15 @@ public class LevelCompleteUI : MonoBehaviour
             yield return StartCoroutine(AnimateCoins(coinsEarned, currentBalance));
         }
         
-        // All animations complete, fade in buttons (images and texts simultaneously for both buttons)
-        StartCoroutine(FadeInImages(continueButtonImages, continueButtonImageAlphas, buttonFadeInDuration));
-        StartCoroutine(FadeInTexts(continueButtonTexts, continueButtonTextAlphas, buttonFadeInDuration));
+        // All animations complete, fade in menu button (images and texts simultaneously)
         StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
         StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
         
         // Wait for fade-in to complete
         yield return new WaitForSeconds(buttonFadeInDuration);
         
-        // Enable buttons
+        // Enable button
         isAnimating = false;
-        if (continueButton != null)
-        {
-            continueButton.interactable = true;
-        }
         if (returnToMenuButton != null)
         {
             returnToMenuButton.interactable = true;

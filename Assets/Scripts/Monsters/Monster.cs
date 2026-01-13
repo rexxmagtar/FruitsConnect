@@ -8,7 +8,7 @@ using System.Collections;
 public class Monster : MonoBehaviour
 {
     [Header("Monster Configuration")]
-    [SerializeField] private int maxHealth = 5;
+    [SerializeField] private float maxHealth = 5f;
     [SerializeField] private float movementSpeed = 1.5f;
     [SerializeField] private float reachDistance = 0.5f;
     [SerializeField] private float positionOffsetY = 1.5f; // Height above captured target
@@ -45,7 +45,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private MonsterGoal currentGoal;
     
     // State
-    private int currentHealth;
+    private float currentHealth;
     private bool isGoalCompleted = false;
     private bool isDead = false;
     private bool canMove = false; // Can only move after spawn animation completes
@@ -57,8 +57,8 @@ public class Monster : MonoBehaviour
     private Coroutine stunCoroutine;
     
     // Properties
-    public int MaxHealth => maxHealth;
-    public int CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+    public float CurrentHealth => currentHealth;
     public bool IsDead => isDead;
     public bool IsGoalCompleted => isGoalCompleted;
     public MonsterGoal CurrentGoal => currentGoal;
@@ -452,18 +452,25 @@ public class Monster : MonoBehaviour
         
         if (isDead) return;
         
-        TakeDamage(1);
+        // Get damage multiplier from PlayerProgressController
+        float damageMultiplier = 1f;
+        if (PlayerProgressController.Instance != null)
+        {
+            damageMultiplier = PlayerProgressController.Instance.GetMonsterDamage();
+        }
+        
+        TakeDamage(damageMultiplier);
     }
     
     /// <summary>
     /// Take damage from player tap
     /// </summary>
-    public void TakeDamage(int damage)
+    public void TakeDamage(float damage)
     {
         if (isDead) return;
         
         currentHealth -= damage;
-        currentHealth = Mathf.Max(0, currentHealth);
+        currentHealth = Mathf.Max(0f, currentHealth);
         
         // Update healthbar
         if (healthBar != null)

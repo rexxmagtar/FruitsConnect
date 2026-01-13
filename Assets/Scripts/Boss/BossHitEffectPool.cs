@@ -47,6 +47,8 @@ public class BossHitEffectPool : MonoBehaviour
             containerObj.transform.SetParent(transform);
             poolContainer = containerObj.transform;
         }
+
+        Initialize();
     }
     
     /// <summary>

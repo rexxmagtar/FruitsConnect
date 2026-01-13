@@ -114,5 +114,79 @@ public static class ProgressSaveManagerExtensions
         data.IsAdEnabled = enabled;
         manager.SaveGameData();
     }
+    
+    // Connection Speed Upgrade Methods
+    public static int GetConnectionSpeedLevel(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().ConnectionSpeedLevel;
+    }
+    
+    public static void SetConnectionSpeedLevel(this ProgressSaveManager<SaveData> manager, int level)
+    {
+        var data = manager.GetGameData();
+        data.ConnectionSpeedLevel = level;
+        manager.SaveGameData();
+    }
+    
+    public static int GetConnectionSpeedSteps(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().ConnectionSpeedSteps;
+    }
+    
+    public static void SetConnectionSpeedSteps(this ProgressSaveManager<SaveData> manager, int steps)
+    {
+        var data = manager.GetGameData();
+        data.ConnectionSpeedSteps = steps;
+        manager.SaveGameData();
+    }
+    
+    public static int GetConnectionSpeedPowerValue(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().ConnectionSpeedPowerValue;
+    }
+    
+    public static void SetConnectionSpeedPowerValue(this ProgressSaveManager<SaveData> manager, int powerValue)
+    {
+        var data = manager.GetGameData();
+        data.ConnectionSpeedPowerValue = powerValue;
+        manager.SaveGameData();
+    }
+    
+    // Monster Damage Upgrade Methods
+    public static int GetMonsterDamageLevel(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().MonsterDamageLevel;
+    }
+    
+    public static void SetMonsterDamageLevel(this ProgressSaveManager<SaveData> manager, int level)
+    {
+        var data = manager.GetGameData();
+        data.MonsterDamageLevel = level;
+        manager.SaveGameData();
+    }
+    
+    public static int GetMonsterDamageSteps(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().MonsterDamageSteps;
+    }
+    
+    public static void SetMonsterDamageSteps(this ProgressSaveManager<SaveData> manager, int steps)
+    {
+        var data = manager.GetGameData();
+        data.MonsterDamageSteps = steps;
+        manager.SaveGameData();
+    }
+    
+    public static int GetMonsterDamagePowerValue(this ProgressSaveManager<SaveData> manager)
+    {
+        return manager.GetGameData().MonsterDamagePowerValue;
+    }
+    
+    public static void SetMonsterDamagePowerValue(this ProgressSaveManager<SaveData> manager, int powerValue)
+    {
+        var data = manager.GetGameData();
+        data.MonsterDamagePowerValue = powerValue;
+        manager.SaveGameData();
+    }
 }
 
