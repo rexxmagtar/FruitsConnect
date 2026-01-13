@@ -237,7 +237,7 @@ public class BossFightManager : MonoBehaviour
         }
         
         // Step 4: Start fade-away animation 1 second after camera transition starts (runs in parallel, doesn't block)
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.4f);
         if (fadeAwayCoroutine != null)
         {
             StopCoroutine(fadeAwayCoroutine);
@@ -343,6 +343,16 @@ public class BossFightManager : MonoBehaviour
                     connection.gameObject.SetActive(false);
                     hiddenObjects.Add(connection.gameObject);
                 }
+            }
+        }
+        
+        // Hide all connection placeholders (these don't fade, just hide immediately)
+        if (currentLevel != null)
+        {
+            GraphVisualizer graphVisualizer = currentLevel.GetGraphVisualizer();
+            if (graphVisualizer != null)
+            {
+                graphVisualizer.SetShowPlaceholders(false);
             }
         }
         

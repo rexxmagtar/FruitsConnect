@@ -521,7 +521,7 @@ public class MainMenuUI : MonoBehaviour
         }
         
         // Show upgrades only if user has completed first 2 levels (CurrentLevel >= 2)
-        bool shouldShowUpgrades = currentLevelIndex >= 2;
+        bool shouldShowUpgrades = currentLevelIndex >= 3;
         
         // Update visibility of upgrade containers
         if (connectionSpeedContainer != null)
