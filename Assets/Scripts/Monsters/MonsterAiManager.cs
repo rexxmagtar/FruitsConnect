@@ -488,6 +488,27 @@ public class MonsterAiManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Kill all active monsters by forcing them to take lethal damage
+    /// Used when all consumers are activated to prevent monsters from capturing nodes
+    /// </summary>
+    public void KillAllMonsters()
+    {
+        // Create a copy of the list to avoid modification during iteration
+        List<Monster> monstersToKill = new List<Monster>(activeMonsters);
+        
+        foreach (Monster monster in monstersToKill)
+        {
+            if (monster != null && !monster.IsDead)
+            {
+                // Deal enough damage to kill the monster (use MaxHealth to ensure death)
+                monster.TakeDamage(monster.MaxHealth);
+            }
+        }
+        
+        Debug.Log($"Killed all {monstersToKill.Count} active monsters");
+    }
+    
+    /// <summary>
     /// Clear all active monsters (for level reset)
     /// </summary>
     public void ClearAllMonsters()

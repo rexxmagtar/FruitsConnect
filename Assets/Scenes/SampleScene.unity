@@ -7636,7 +7636,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ambienceClip: {fileID: 8300000, guid: dd3891e0e4afbbc42809eb9b3ab50850, type: 3}
-  volume: 0.5
+  volume: 0.3
   playOnAwake: 1
 --- !u!114 &983725530
 MonoBehaviour:

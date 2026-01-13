@@ -487,6 +487,14 @@ public class GameController : MonoBehaviour
     {
         gameplayEnabled = false;
         
+        // Stop spawning and kill all monsters to prevent them from capturing nodes after level completion
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.StopSpawning();
+            monsterManager.KillAllMonsters();
+        }
+        
         // Play level complete animation (color return) before proceeding
         StartCoroutine(PlayLevelCompleteAnimation());
     }
