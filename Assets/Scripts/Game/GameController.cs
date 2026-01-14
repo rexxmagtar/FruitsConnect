@@ -44,6 +44,7 @@ public class GameController : MonoBehaviour
     public LevelController CurrentLevel => currentLevel;
     public bool GameplayEnabled => gameplayEnabled;
     public LevelConfig CurrentLevelConfig => currentLevelConfig;
+    public bool IsDragging => isDragging; // Expose drag state for cut manager
     
     /// <summary>
     /// Get current player energy
@@ -136,6 +137,14 @@ public class GameController : MonoBehaviour
                 connectionManager = cmObj.AddComponent<ConnectionManager>();
                 cmObj.transform.SetParent(transform);
             }
+        }
+        
+        // Ensure ConnectionCutManager exists
+        if (ConnectionCutManager.Instance == null)
+        {
+            GameObject cutManagerObj = new GameObject("ConnectionCutManager");
+            cutManagerObj.AddComponent<ConnectionCutManager>();
+            cutManagerObj.transform.SetParent(transform);
         }
     }
     

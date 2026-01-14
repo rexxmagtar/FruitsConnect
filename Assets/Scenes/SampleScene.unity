@@ -6530,6 +6530,7 @@ GameObject:
   - component: {fileID: 492060976}
   - component: {fileID: 492060975}
   - component: {fileID: 492060974}
+  - component: {fileID: 492060977}
   m_Layer: 0
   m_Name: GamePlayController
   m_TagString: Untagged
@@ -6557,10 +6558,6 @@ MonoBehaviour:
   ghostLineInvalidColor: {r: 1, g: 0, b: 0, a: 0.69803923}
   ghostLineNeutralColor: {r: 0.5773585, g: 0.5773585, b: 0.56101817, a: 0.63529414}
   ghostLineWidth: 0.4
-  wallLayer:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  wallTag: Wall
   connectionCreatedSound: {fileID: 8300000, guid: a1c0cc083a34a5c45bcdb96c6c3a8c24, type: 3}
   audioSource: {fileID: 173883360}
 --- !u!114 &492060975
@@ -6598,6 +6595,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &492060977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 492060973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3186d04f01dcea74f9e35d4c6f15ab95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  connectionManager: {fileID: 492060974}
+  gameController: {fileID: 492060975}
+  cutParticlePrefab: {fileID: 380970571241757524, guid: 1ba2f941b7d253847ad1b4542389f165, type: 3}
+  particleFollowSpeed: 20
+  particleLifetime: 0.5
+  cutDetectionDistance: 0.3
+  planeLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &503358607
 GameObject:
   m_ObjectHideFlags: 0

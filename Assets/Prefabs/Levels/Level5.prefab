@@ -5240,7 +5240,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7270991357346082894, guid: 202301a3607cf1748b988c5f5789105f, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18434,7 +18434,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7270991357346082894, guid: 202301a3607cf1748b988c5f5789105f, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

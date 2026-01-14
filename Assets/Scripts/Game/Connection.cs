@@ -177,17 +177,23 @@ public class Connection : MonoBehaviour
     
     /// <summary>
     /// Handle mouse click on connection to remove it
+    /// DISABLED: Connections are now cut by swiping across them, not by tapping
     /// </summary>
     private void OnMouseDown()
     {
-        // Don't allow removal if connection is captured
-        if (isCaptured) return;
+        // Disabled - connections are now cut using the cut mechanism (swipe across connection)
+        // Keeping this method for potential future use or debugging
+        return;
         
-        ConnectionManager manager = ConnectionManager.Instance;
-        if (manager != null)
-        {
-            manager.RemoveConnection(this);
-        }
+        // Old code (disabled):
+        // Don't allow removal if connection is captured
+        // if (isCaptured) return;
+        // 
+        // ConnectionManager manager = ConnectionManager.Instance;
+        // if (manager != null)
+        // {
+        //     manager.RemoveConnection(this);
+        // }
     }
     
     /// <summary>

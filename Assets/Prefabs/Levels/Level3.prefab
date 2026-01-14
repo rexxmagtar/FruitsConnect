@@ -10053,7 +10053,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 456811763718166796, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name
@@ -20307,7 +20307,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 456811763718166796, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name

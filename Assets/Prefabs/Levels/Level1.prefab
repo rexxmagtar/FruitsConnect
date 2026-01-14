@@ -6356,7 +6356,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2634313592032313596, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5247993299587000686, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_LocalPosition.x
@@ -20084,7 +20084,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 456811763718166796, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name
