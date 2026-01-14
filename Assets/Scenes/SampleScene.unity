@@ -7813,7 +7813,7 @@ MonoBehaviour:
   mapMaterial: {fileID: 2100000, guid: 705c49310f08bec4bb8f10eaf539cb75, type: 2}
   colorRadius: 5
   smoothFalloff: 0.3
-  minSpawnAreaRadius: 1.5
+  minSpawnAreaRadius: 0.5
   spawnAreaSamplePoints: 8
   levelController: {fileID: 0}
 --- !u!114 &983725536

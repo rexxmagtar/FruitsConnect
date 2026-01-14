@@ -33,10 +33,15 @@ public class Connection : MonoBehaviour
     [SerializeField] private float creationAnimationDuration = 0.3f; // Duration of creation scale animation
     [SerializeField] private AnimationCurve creationScaleCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     
+    [Header("Destruction Particle Settings")]
+    [SerializeField] private ParticleSystem destructionParticleSystem;
+    [SerializeField] private float particleLifetime = 0.5f; // How long particles play before destroying connection
+    
     // Active animation objects
     private List<GameObject> activeAnimationObjects = new List<GameObject>();
     private Coroutine animationCoroutine;
     private Coroutine creationAnimationCoroutine;
+    private Coroutine destructionCoroutine;
     
     public BaseNode FromNode => fromNode;
     public BaseNode ToNode => toNode;
@@ -85,6 +90,19 @@ public class Connection : MonoBehaviour
         lineWidth = width;
         lineColor = color;
         animationPrefab = animPrefab;
+        
+        // Get ParticleSystem component if not assigned
+        if (destructionParticleSystem == null)
+        {
+            destructionParticleSystem = GetComponent<ParticleSystem>();
+            if (destructionParticleSystem == null)
+            {
+                destructionParticleSystem = GetComponentInChildren<ParticleSystem>();
+            }
+        }
+        
+        // Configure particle system shape to match connection line
+        ConfigureParticleSystemShape();
         
         // Setup LineRenderer
         if (lineRenderer != null)
@@ -429,7 +447,100 @@ public class Connection : MonoBehaviour
             toNode.RemoveIncomingConnection(this);
         }
         
-        // Destroy GameObject
+        // Hide line renderer immediately
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = false;
+        }
+        
+        // Disable collider
+        if (boxCollider != null)
+        {
+            boxCollider.enabled = false;
+        }
+        
+        // Play destruction particles and destroy after animation
+        if (destructionCoroutine != null)
+        {
+            StopCoroutine(destructionCoroutine);
+        }
+        destructionCoroutine = StartCoroutine(DestructionSequence());
+    }
+    
+    /// <summary>
+    /// Configure particle system shape to match the connection line
+    /// </summary>
+    private void ConfigureParticleSystemShape()
+    {
+        if (destructionParticleSystem == null || fromNode == null || toNode == null)
+            return;
+        
+        // Get connection line endpoints
+        Vector3 startPos = fromNode.transform.position;
+        Vector3 endPos = toNode.transform.position;
+        startPos.y = groundLevelY;
+        endPos.y = groundLevelY;
+        
+        // Calculate connection properties
+        Vector3 direction = endPos - startPos;
+        float connectionLength = direction.magnitude;
+        Vector3 midpoint = (startPos + endPos) / 2f;
+        
+        // Position and rotate particle system GameObject to align with connection
+        Transform particleTransform = destructionParticleSystem.transform;
+        
+        // Calculate desired midpoint position
+        midpoint.y = groundLevelY;
+        
+        // Set position ensuring local Y is zero
+        if (particleTransform.parent != null)
+        {
+            // Convert to local space, set Y=0, then convert back to world space
+            Vector3 localPos = particleTransform.parent.InverseTransformPoint(midpoint);
+            localPos.y = 0f;
+            particleTransform.localPosition = localPos;
+        }
+        else
+        {
+            // No parent, just set world position with Y at ground level
+            particleTransform.position = midpoint;
+        }
+        
+        if (direction != Vector3.zero)
+        {
+            particleTransform.rotation = Quaternion.LookRotation(direction.normalized);
+        }
+        
+        // Configure shape module
+        var shape = destructionParticleSystem.shape;
+        shape.enabled = true;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        
+        // Set box size to match connection line
+        // X = line width (height), Y = line width (depth), Z = connection length (length along forward axis)
+        shape.scale = new Vector3(lineWidth, lineWidth, connectionLength);
+        
+        // Reset shape position and rotation since we're using the GameObject transform
+        shape.position = Vector3.zero;
+        shape.rotation = Vector3.zero;
+    }
+    
+    /// <summary>
+    /// Coroutine that plays particles and destroys the connection after animation
+    /// </summary>
+    private IEnumerator DestructionSequence()
+    {
+        // Configure particle system shape to match current connection state
+        if (destructionParticleSystem != null)
+        {
+            ConfigureParticleSystemShape();
+            destructionParticleSystem.Play();
+        }
+        
+        // Wait for particle lifetime
+        yield return new WaitForSeconds(particleLifetime);
+        
+        // Destroy the connection GameObject
         Destroy(gameObject);
     }
     

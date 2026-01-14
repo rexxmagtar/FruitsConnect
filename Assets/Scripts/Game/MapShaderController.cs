@@ -132,7 +132,7 @@ public class MapShaderController : MonoBehaviour
                 if (mat == null) continue;
                 
                 // Check if material uses MapGrayscaleShader
-                if (mat.shader != null && mat.shader.name == "Custom/MapGrayscaleShader")
+                if (mat.shader != null && (mat.shader.name == "Custom/MapGrayscaleShader" || mat.shader.name == "Custom/MapGrayscaleShaderStandard"))
                 {
                     if (uniqueMaterials.Add(mat))
                     {
@@ -152,7 +152,7 @@ public class MapShaderController : MonoBehaviour
         }
         
         // Also add the original mapMaterial if it exists and uses the shader
-        if (mapMaterial != null && mapMaterial.shader != null && mapMaterial.shader.name == "Custom/MapGrayscaleShader")
+        if (mapMaterial != null && mapMaterial.shader != null && (mapMaterial.shader.name == "Custom/MapGrayscaleShader" || mapMaterial.shader.name == "Custom/MapGrayscaleShaderStandard"))
         {
             if (uniqueMaterials.Add(mapMaterial))
             {

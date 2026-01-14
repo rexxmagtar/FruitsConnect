@@ -472,6 +472,21 @@ public class MonsterAiManager : MonoBehaviour
             }
         }
         
+        // If still no valid goals, fall back to producer nodes (even if they don't have connections)
+        List<BaseNode> allNodesForProducerFallback = currentLevel.GetAllNodes();
+        List<BaseNode> producerNodes = allNodesForProducerFallback.Where(n => 
+            n != null && 
+            !n.IsCaptured && 
+            n is ProducerNode
+        ).ToList();
+        
+        if (producerNodes.Count > 0)
+        {
+            goal.goalType = MonsterGoalType.DestroyNodeConnections;
+            goal.targetNode = producerNodes[Random.Range(0, producerNodes.Count)];
+            return goal;
+        }
+        
         // No valid goals available
         return null;
     }
