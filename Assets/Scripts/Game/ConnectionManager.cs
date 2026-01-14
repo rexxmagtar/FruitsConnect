@@ -36,10 +36,6 @@ public class ConnectionManager : MonoBehaviour
     [SerializeField] private Color ghostLineNeutralColor = Color.yellow;
     [SerializeField] private float ghostLineWidth = 0.1f; // Match connectionWidth
     
-    [Header("Wall Detection")]
-    [SerializeField] private LayerMask wallLayer = -1; // Default to all layers
-    [SerializeField] private string wallTag = "Wall"; // Tag for wall objects
-    
     [Header("Audio")]
     [SerializeField] private AudioClip connectionCreatedSound;
     [SerializeField] private AudioSource audioSource;
@@ -810,40 +806,6 @@ public class ConnectionManager : MonoBehaviour
             default:
                 return ghostLineNeutralColor;
         }
-    }
-    
-    /// <summary>
-    /// Check if a line from start to end intersects with any wall
-    /// </summary>
-    public bool CheckWallIntersection(Vector3 startPosition, Vector3 endPosition)
-    {
-        // Clamp both positions to same Y plane
-        endPosition.y = startPosition.y;
-        
-        // Perform a linecast to check for wall collisions
-        RaycastHit[] hits = Physics.RaycastAll(startPosition, (endPosition - startPosition).normalized, 
-                                                Vector3.Distance(startPosition, endPosition), wallLayer);
-        
-        // Check each hit to see if it's a wall
-        foreach (RaycastHit hit in hits)
-        {
-            // Check by tag if wall tag is set
-            if (!string.IsNullOrEmpty(wallTag) && hit.collider.CompareTag(wallTag))
-            {
-                return true;
-            }
-            
-            // Also check if the hit object has a MeshRenderer (as mentioned by user)
-            // and is not a node (nodes also have MeshRenderers)
-            if (hit.collider.GetComponent<MeshRenderer>() != null && 
-                hit.collider.GetComponent<BaseNode>() == null)
-            {
-                // It's likely a wall
-                return true;
-            }
-        }
-        
-        return false;
     }
     
     /// <summary>

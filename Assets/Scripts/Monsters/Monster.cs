@@ -236,78 +236,11 @@ public class Monster : MonoBehaviour
     }
     
     /// <summary>
-    /// Calculate movement direction with obstacle avoidance
+    /// Calculate movement direction (no obstacle avoidance needed since walls no longer exist)
     /// </summary>
     private Vector3 CalculatePathWithObstacleAvoidance(Vector3 currentPos, Vector3 desiredDirection, Vector3 targetPos)
     {
-        ConnectionManager connectionManager = ConnectionManager.Instance;
-        if (connectionManager == null)
-        {
-            // Fallback to direct movement if ConnectionManager not available
-            return desiredDirection;
-        }
-        
-        // Check if direct path to target has obstacles
-        Vector3 checkPosition = currentPos + desiredDirection * obstacleCheckDistance;
-        bool hasObstacle = connectionManager.CheckWallIntersection(currentPos, checkPosition);
-        
-        if (!hasObstacle)
-        {
-            // No obstacle, move directly toward target
-            return desiredDirection;
-        }
-        
-        // Obstacle detected - try to steer around it
-        // Try steering left and right to find a clear path
-        Vector3[] steeringDirections = new Vector3[]
-        {
-            Quaternion.Euler(0, steeringAngle, 0) * desiredDirection,      // Steer right
-            Quaternion.Euler(0, -steeringAngle, 0) * desiredDirection,  // Steer left
-            Quaternion.Euler(0, steeringAngle * 2, 0) * desiredDirection,  // Steer right more
-            Quaternion.Euler(0, -steeringAngle * 2, 0) * desiredDirection, // Steer left more
-        };
-        
-        // Try each steering direction
-        foreach (Vector3 steerDir in steeringDirections)
-        {
-            Vector3 testPosition = currentPos + steerDir * obstacleCheckDistance;
-            if (!connectionManager.CheckWallIntersection(currentPos, testPosition))
-            {
-                // This direction is clear, use it
-                return steerDir.normalized;
-            }
-        }
-        
-        // All steering directions blocked, try perpendicular movement
-        Vector3 perpendicularRight = Vector3.Cross(desiredDirection, Vector3.up).normalized;
-        Vector3 perpendicularLeft = -perpendicularRight;
-        
-        Vector3[] perpendicularDirections = new Vector3[]
-        {
-            perpendicularRight,
-            perpendicularLeft,
-            (perpendicularRight + desiredDirection * 0.5f).normalized,
-            (perpendicularLeft + desiredDirection * 0.5f).normalized,
-        };
-        
-        foreach (Vector3 perpDir in perpendicularDirections)
-        {
-            Vector3 testPosition = currentPos + perpDir * obstacleCheckDistance;
-            if (!connectionManager.CheckWallIntersection(currentPos, testPosition))
-            {
-                return perpDir.normalized;
-            }
-        }
-        
-        // All paths blocked, try to move away from obstacle (backward)
-        Vector3 awayDirection = -desiredDirection;
-        Vector3 testAwayPosition = currentPos + awayDirection * obstacleCheckDistance;
-        if (!connectionManager.CheckWallIntersection(currentPos, testAwayPosition))
-        {
-            return awayDirection.normalized;
-        }
-        
-        // Completely blocked, return original direction (monster will stop when hitting wall)
+        // No walls exist, so just return the desired direction directly
         return desiredDirection;
     }
     

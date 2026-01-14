@@ -270,12 +270,6 @@ public class GameController : MonoBehaviour
             targetPosition = currentHoveredNode.transform.position;
         }
         
-        // Check for wall intersection - overrides state to Invalid if wall is hit
-        if (connectionManager.CheckWallIntersection(dragStartNode.transform.position, targetPosition))
-        {
-            state = GhostLineState.Invalid;
-        }
-        
         // Update ghost line
         connectionManager.ShowGhostLine(dragStartNode.transform.position, targetPosition, state);
     }
