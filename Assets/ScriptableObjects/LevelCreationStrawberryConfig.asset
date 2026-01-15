@@ -18,6 +18,7 @@ MonoBehaviour:
   doubleNeutralNodePrefab: {fileID: 7834006245877090456, guid: 0248198e7630cd34fbecab2743a576b3, type: 3}
   levelTemplate: {fileID: 7758629621863314383, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
   connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
+  animationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}
   wallPrefab: {fileID: 6222451527443582071, guid: 254f8e2354c622d4db6ff508a8611b44, type: 3}
   defaultNodeSpacing: 4
   defaultGridColumns: 10

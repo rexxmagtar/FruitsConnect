@@ -15,8 +15,10 @@ MonoBehaviour:
   producerNodePrefab: {fileID: 3136780035601444894, guid: 202301a3607cf1748b988c5f5789105f, type: 3}
   consumerNodePrefab: {fileID: 7410220202179923500, guid: 727b9f876e66aa94db7e17a62872c1ce, type: 3}
   neutralNodePrefab: {fileID: 2837622666717314074, guid: 87757dfac51b1d245a31cce950e850f5, type: 3}
+  doubleNeutralNodePrefab: {fileID: 7834006245877090456, guid: 01ee2c415d2cf4245af3611aab7774ea, type: 3}
   levelTemplate: {fileID: 7758629621863314383, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
   connectionPrefab: {fileID: 2110098879336127562, guid: a39f9c10d98edca41a5e9e754d2b3a1a, type: 3}
+  animationPrefab: {fileID: 536847310261410110, guid: 278f007cfdf2cd14395bb39525df674e, type: 3}
   wallPrefab: {fileID: 6222451527443582071, guid: 254f8e2354c622d4db6ff508a8611b44, type: 3}
   defaultNodeSpacing: 4
   defaultGridColumns: 10

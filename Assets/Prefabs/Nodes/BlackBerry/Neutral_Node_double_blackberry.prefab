@@ -35,14 +35,14 @@ PrefabInstance:
     - target: {fileID: 1227352100241495170, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 09d463496595ea548a2692c46bb1ac0f, type: 2}
+      objectReference: {fileID: 2100000, guid: 5290a8564212c9543973ef08b5334920, type: 2}
     - target: {fileID: 2527889017319869530, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 2.841
       objectReference: {fileID: 0}
     - target: {fileID: 2837622666717314074, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: m_Name
-      value: Neutral_Node_double_strawberry
+      value: Neutral_Node_double_blackberry
       objectReference: {fileID: 0}
     - target: {fileID: 3805172651766651812, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: m_LocalScale.x
@@ -99,7 +99,7 @@ PrefabInstance:
     - target: {fileID: 3957706889993232456, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 7027636043351174211, guid: a3832744c506de44c84692028bdefeb7, type: 3}
+      objectReference: {fileID: 7027636043351174211, guid: c7437fbb62e20fa4a81608b1cea40753, type: 3}
     - target: {fileID: 6382964089287062070, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: requiredDeliveries
       value: 12

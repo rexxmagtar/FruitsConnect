@@ -10,7 +10,27 @@ using UnityEditor;
 public static class GraphPatternGenerator
 {
     /// <summary>
+    /// Calculate neutral-only zone (excluding producer/consumer zones)
+    /// </summary>
+    public static Bounds GetNeutralZone(Bounds gameZoneBounds, LevelCreationConfig config)
+    {
+        float zRange = gameZoneBounds.size.z;
+        float producerZone = zRange * config.ProducerZoneSize;
+        float consumerZone = zRange * config.ConsumerZoneSize;
+        
+        // Neutral zone excludes producer/consumer areas
+        float neutralZMin = gameZoneBounds.min.z + producerZone;
+        float neutralZMax = gameZoneBounds.max.z - consumerZone;
+        
+        return new Bounds(
+            center: new Vector3(gameZoneBounds.center.x, 0, (neutralZMin + neutralZMax) / 2),
+            size: new Vector3(gameZoneBounds.size.x, 0, neutralZMax - neutralZMin)
+        );
+    }
+    
+    /// <summary>
     /// Generate nodes in a specific pattern within bounds
+    /// Now uses neutral-only zone to avoid producer/consumer areas
     /// </summary>
     public static List<BaseNode> GeneratePattern(
         GraphPattern pattern,
@@ -19,16 +39,19 @@ public static class GraphPatternGenerator
         LevelCreationConfig config,
         LevelController level)
     {
+        // Calculate neutral-only zone (excluding producer/consumer areas)
+        Bounds neutralZone = GetNeutralZone(bounds, config);
+        
         const float gridSize = 2f;
         List<Vector3> positions = pattern switch
         {
-            GraphPattern.Triangular => GenerateTriangularPattern(nodeCount, bounds),
-            GraphPattern.Grid => GenerateGridPattern(nodeCount, bounds),
-            GraphPattern.Circular => GenerateCircularPattern(nodeCount, bounds),
-            GraphPattern.Diamond => GenerateDiamondPattern(nodeCount, bounds),
-            GraphPattern.Tree => GenerateTreePattern(nodeCount, bounds),
-            GraphPattern.Mixed => GenerateMixedPattern(nodeCount, bounds),
-            _ => GenerateGridPattern(nodeCount, bounds)
+            GraphPattern.Triangular => GenerateTriangularPattern(nodeCount, neutralZone),
+            GraphPattern.Grid => GenerateGridPattern(nodeCount, neutralZone),
+            GraphPattern.Circular => GenerateCircularPattern(nodeCount, neutralZone),
+            GraphPattern.Diamond => GenerateDiamondPattern(nodeCount, neutralZone),
+            GraphPattern.Tree => GenerateTreePattern(nodeCount, neutralZone),
+            GraphPattern.Mixed => GenerateMixedPattern(nodeCount, neutralZone),
+            _ => GenerateGridPattern(nodeCount, neutralZone)
         };
         
         // Deduplicate positions to ensure no two nodes are at the same grid cell

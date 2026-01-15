@@ -10,6 +10,62 @@ using UnityEditor;
 public static class LevelGenerationHelper
 {
     /// <summary>
+    /// Validate that a node's connections don't exceed its max capacity
+    /// </summary>
+    public static bool ValidateConnectionCapacity(BaseNode node, LevelController level)
+    {
+        var mappings = level.GetConnectionMapping(node.NodeID);
+        
+        // Current connections should never exceed max
+        if (mappings.Count > node.MaxOutgoingConnections)
+        {
+            Debug.LogError($"Node {node.NodeID} has {mappings.Count} connections but max is {node.MaxOutgoingConnections}");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /// <summary>
+    /// Validate all nodes in level have valid connection capacities
+    /// </summary>
+    public static bool ValidateAllConnectionCapacities(List<BaseNode> nodes, LevelController level)
+    {
+        bool allValid = true;
+        
+        foreach (var node in nodes)
+        {
+            if (node == null) continue;
+            
+            if (!ValidateConnectionCapacity(node, level))
+            {
+                allValid = false;
+            }
+        }
+        
+        if (allValid)
+        {
+            Debug.Log($"✓ All {nodes.Count} nodes have valid connection capacities");
+        }
+        else
+        {
+            Debug.LogError("✗ Some nodes have invalid connection capacities");
+        }
+        
+        return allValid;
+    }
+    
+    /// <summary>
+    /// Check if a node has available connection capacity
+    /// </summary>
+    public static bool HasConnectionCapacity(BaseNode node, LevelController level)
+    {
+        var mappings = level.GetConnectionMapping(node.NodeID);
+        return mappings.Count < node.MaxOutgoingConnections;
+    }
+    
+
+    /// <summary>
     /// Create a node at a random valid position within bounds
     /// Producers spawn near bottom (Z min), Consumers near top (Z max)
     /// Uses grid-based placement with 1-unit spacing

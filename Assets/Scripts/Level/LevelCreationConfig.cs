@@ -28,6 +28,9 @@ public class LevelCreationConfig : ScriptableObject
     [Tooltip("Prefab for connection visual representation")]
     [SerializeField] private GameObject connectionPrefab;
     
+    [Tooltip("Prefab for objects that animate along connection lines (spawns at node A, moves to node B)")]
+    [SerializeField] private GameObject animationPrefab;
+    
     [Header("Wall Settings")]
     [Tooltip("Prefab for walls placed between nodes that can't be connected")]
     [SerializeField] private GameObject wallPrefab;
@@ -69,6 +72,7 @@ public class LevelCreationConfig : ScriptableObject
     public GameObject DoubleNeutralNodePrefab => doubleNeutralNodePrefab;
     public GameObject LevelTemplate => levelTemplate;
     public GameObject ConnectionPrefab => connectionPrefab;
+    public GameObject AnimationPrefab => animationPrefab;
     public GameObject WallPrefab => wallPrefab;
     public float DefaultNodeSpacing => defaultNodeSpacing;
     public int DefaultGridColumns => defaultGridColumns;
@@ -107,7 +111,7 @@ public class LevelCreationConfig : ScriptableObject
         // 20% chance to use double neutral, 80% chance to use regular neutral
         if (doubleNeutralNodePrefab != null)
         {
-            return Random.value < 0.2f ? doubleNeutralNodePrefab : neutralNodePrefab;
+            return Random.value < 0.05f ? doubleNeutralNodePrefab : neutralNodePrefab;
         }
         
         // Fallback to regular neutral if double neutral is not assigned
