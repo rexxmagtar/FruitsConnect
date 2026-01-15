@@ -40,6 +40,11 @@ public class BossFightManager : MonoBehaviour
     private bool terrainWasVisible = true;
     private Coroutine fadeAwayCoroutine;
     
+    // Reward State
+    private int bossBaseReward;
+    private float bossTimeMultiplier;
+    private bool bossDefeated;
+    
     // Properties
     public bool IsBossFightActive => isBossFightActive;
     public float TimeRemaining => timeRemaining;
@@ -617,13 +622,16 @@ public class BossFightManager : MonoBehaviour
         if (boss != currentBoss) return;
         
         isBossFightActive = false;
+        bossDefeated = true;
         
-        // Award gold
+        // Calculate reward results
         if (currentLevelConfig != null)
         {
-            int goldReward = currentLevelConfig.BossGoldReward;
-            GameManager.Instance.AddCoins(goldReward);
-            Debug.Log($"Boss defeated! Awarded {goldReward} gold.");
+            bossBaseReward = currentLevelConfig.BossGoldReward;
+            // Linear interpolation between x1 (time out) and x3 (instant kill)
+            bossTimeMultiplier = 1f + 2f * Mathf.Clamp01(timeRemaining / timeLimit);
+            
+            Debug.Log($"Boss defeated! Base Reward: {bossBaseReward}, Multiplier: {bossTimeMultiplier:F2}");
         }
         
         // Wait for death animation, then show level complete
@@ -638,6 +646,13 @@ public class BossFightManager : MonoBehaviour
         if (boss != currentBoss) return;
         
         isBossFightActive = false;
+        bossDefeated = false;
+        
+        if (currentLevelConfig != null)
+        {
+            bossBaseReward = currentLevelConfig.BossGoldReward;
+            bossTimeMultiplier = 1f;
+        }
         
         Debug.Log("Boss escaped! Time ran out.");
         
@@ -670,7 +685,7 @@ public class BossFightManager : MonoBehaviour
         GameController gameController = GameController.Instance;
         if (gameController != null)
         {
-            gameController.ShowLevelCompleteScreen();
+            gameController.ShowLevelCompleteScreen(bossBaseReward, bossTimeMultiplier, bossDefeated);
         }
         
         // Reset state

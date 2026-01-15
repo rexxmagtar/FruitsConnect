@@ -17,6 +17,12 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private RectTransform coinIconTransform;
     [SerializeField] private RectTransform balanceIconTransform;
     
+    [Header("Boss Reward References")]
+    [SerializeField] private GameObject bossRewardContainer;
+    [SerializeField] private TextMeshProUGUI bossBaseRewardText;
+    [SerializeField] private TextMeshProUGUI bossMultiplierText;
+    [SerializeField] private GameObject bossBountyLocker;
+    
     [Header("Animation Settings")]
     [SerializeField] private float fadeInDuration = 0.5f;
     [SerializeField] private float fadeOutDuration = 0.3f;
@@ -52,6 +58,12 @@ public class LevelCompleteUI : MonoBehaviour
     private int displayedBalance = 0;
     private int nextLevelNumber = 1;
     private bool isAnimating = false;
+    
+    // Boss Reward State
+    private int bossBaseReward = 0;
+    private float bossMultiplier = 1f;
+    private bool isBossDefeated = false;
+    private int bossTotalReward = 0;
     
     private void Awake()
     {
@@ -92,12 +104,17 @@ public class LevelCompleteUI : MonoBehaviour
     /// <summary>
     /// Show the level complete UI
     /// </summary>
-    public void Show(int coinsEarned = 0, int nextLevel = 1)
+    public void Show(int coinsEarned = 0, int nextLevel = 1, int bossBaseReward = 0, float bossMultiplier = 1f, bool bossDefeated = false)
     {
         if (isVisible) return;
         
         this.coinsEarned = coinsEarned;
         this.nextLevelNumber = nextLevel;
+        this.bossBaseReward = bossBaseReward;
+        this.bossMultiplier = bossMultiplier;
+        this.isBossDefeated = bossDefeated;
+        this.bossTotalReward = isBossDefeated ? (int)(bossBaseReward * bossMultiplier) : 0;
+        
         gameObject.SetActive(true);
         StartCoroutine(ShowAnimation());
     }
@@ -270,7 +287,20 @@ public class LevelCompleteUI : MonoBehaviour
             returnToMenuButton.interactable = false;
         }
 
-        coinsEarnedText.text = $"+{coinsEarned}";
+        // Initialize texts to zero
+        if (coinsEarnedText != null) coinsEarnedText.text = "+0";
+        if (bossBaseRewardText != null) bossBaseRewardText.text = "0";
+        if (bossMultiplierText != null) 
+        {
+            bossMultiplierText.text = $"x{bossMultiplier:F1}";
+            bossMultiplierText.gameObject.SetActive(false);
+            bossMultiplierText.transform.localScale = Vector3.zero;
+        }
+        
+        // Setup boss container and locker
+        bool isBossLevel = bossBaseReward > 0;
+        if (bossRewardContainer != null) bossRewardContainer.SetActive(isBossLevel);
+        if (bossBountyLocker != null) bossBountyLocker.SetActive(isBossLevel && !isBossDefeated);
         
         // Reset state
         canvasGroup.alpha = 0f;
@@ -297,12 +327,51 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         canvasGroup.alpha = 1f;
-        
-        // Start coin animation if coins were earned
+
+        // Sequence: Regular Reward
         if (coinsEarned > 0)
         {
-            int currentBalance = ProgressSaveManager<SaveData>.Instance.GetCoins() - coinsEarned;
-            yield return StartCoroutine(AnimateCoins(coinsEarned, currentBalance));
+            yield return StartCoroutine(AnimateTextCount(coinsEarnedText, 0, coinsEarned, 0.5f, "+"));
+        }
+
+        // Sequence: Boss Reward
+        if (isBossLevel)
+        {
+            yield return new WaitForSeconds(0.2f);
+            yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, 0, bossBaseReward, 0.5f));
+
+            if (isBossDefeated)
+            {
+                yield return new WaitForSeconds(0.2f);
+                // Scale up multiplier
+                if (bossMultiplierText != null)
+                {
+                    bossMultiplierText.gameObject.SetActive(true);
+                    float scaleElapsed = 0f;
+                    float scaleDuration = 0.3f;
+                    while (scaleElapsed < scaleDuration)
+                    {
+                        scaleElapsed += Time.deltaTime;
+                        bossMultiplierText.transform.localScale = Vector3.one * Mathf.Lerp(0f, 1.2f, scaleElapsed / scaleDuration);
+                        yield return null;
+                    }
+                    bossMultiplierText.transform.localScale = Vector3.one;
+                }
+
+                yield return new WaitForSeconds(0.1f);
+                // Increase base text amount to total boss reward
+                yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, bossBaseReward, bossTotalReward, 0.5f));
+            }
+        }
+        
+        // Start coin animation for total earned
+        int totalToAnimate = coinsEarned + bossTotalReward;
+        if (totalToAnimate > 0)
+        {
+            yield return new WaitForSeconds(0.3f);
+            int finalBalance = ProgressSaveManager<SaveData>.Instance.GetCoins();
+            int startBalance = finalBalance - totalToAnimate;
+            yield return StartCoroutine(AnimateCoins(totalToAnimate, startBalance));
         }
         
         // All animations complete, fade in menu button (images and texts simultaneously)
@@ -318,6 +387,24 @@ public class LevelCompleteUI : MonoBehaviour
         {
             returnToMenuButton.interactable = true;
         }
+    }
+
+    /// <summary>
+    /// Animate text counting from start to end
+    /// </summary>
+    private IEnumerator AnimateTextCount(TextMeshProUGUI text, int start, int end, float duration, string prefix = "")
+    {
+        if (text == null) yield break;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            int current = (int)Mathf.Lerp(start, end, elapsed / duration);
+            text.text = prefix + current.ToString();
+            yield return null;
+        }
+        text.text = prefix + end.ToString();
     }
     
     /// <summary>

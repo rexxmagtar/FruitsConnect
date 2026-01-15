@@ -549,7 +549,7 @@ public class GameController : MonoBehaviour
     /// <summary>
     /// Show level complete screen (called after boss fight or for normal levels)
     /// </summary>
-    public void ShowLevelCompleteScreen()
+    public void ShowLevelCompleteScreen(int bossBaseReward = 0, float multiplier = 1f, bool bossDefeated = false)
     {
         int coinsEarned = 0;
         int nextLevel = 1;
@@ -563,30 +563,33 @@ public class GameController : MonoBehaviour
             {
                 coinsEarned = config.CoinReward;
                 
-                // Award coins (boss gold is already awarded by BossFightManager if boss was defeated)
-                GameManager.Instance.AddCoins(coinsEarned);
+                // Calculate boss final reward
+                int bossFinalReward = bossDefeated ? (int)(bossBaseReward * multiplier) : 0;
+                
+                // Award all coins (regular level + boss bounty)
+                GameManager.Instance.AddCoins(coinsEarned + bossFinalReward);
                 
                 // Complete level (increments CurrentLevel)
                 GameManager.Instance.CompleteLevel();
                 
                 // Get next level number for display
                 nextLevel = levelsManager.GetCurrentLevelNumber();
+                
+                // Hide gameplay UI
+                if (gameplayUI != null)
+                {
+                    gameplayUI.Hide();
+                }
+            
+                if (levelCompleteUI != null)
+                {
+                    levelCompleteUI.Show(coinsEarned, nextLevel, bossBaseReward, multiplier, bossDefeated);
+                }
+                else
+                {
+                    Debug.LogWarning("LevelCompleteUI not found in scene!");
+                }
             }
-        }
-        
-        // Hide gameplay UI
-        if (gameplayUI != null)
-        {
-            gameplayUI.Hide();
-        }
-    
-        if (levelCompleteUI != null)
-        {
-            levelCompleteUI.Show(coinsEarned, nextLevel);
-        }
-        else
-        {
-            Debug.LogWarning("LevelCompleteUI not found in scene!");
         }
         
         OnLevelWon?.Invoke();
