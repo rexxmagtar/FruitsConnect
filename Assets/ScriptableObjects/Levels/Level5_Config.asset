@@ -17,3 +17,6 @@ MonoBehaviour:
   levelName: Level5
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 536847310261410110, guid: 278f007cfdf2cd14395bb39525df674e, type: 3}
+  isBossFight: 1
+  bossGoldReward: 50
+  bossFightTimeLimit: 30

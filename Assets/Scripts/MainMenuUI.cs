@@ -15,6 +15,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button shopButton;
     [SerializeField] private TextMeshProUGUI startButtonText;
     [SerializeField] private TextMeshProUGUI balanceText;
+    [SerializeField] private LevelsProgressSlider levelsProgressSlider;
     
     [Header("Upgrade Containers")]
     [SerializeField] private ProgressPurchaseContainer connectionSpeedContainer;
@@ -200,6 +201,17 @@ public class MainMenuUI : MonoBehaviour
         
         // Update boss alert visibility based on next level
         UpdateBossAlertVisibility();
+        
+        // Update progress slider
+        if (levelsProgressSlider != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelNumber = levelsManager.GetCurrentLevelNumber();
+                levelsProgressSlider.UpdateProgress(levelNumber);
+            }
+        }
         
         // Fade in
         float elapsedTime = 0f;
@@ -396,6 +408,17 @@ public class MainMenuUI : MonoBehaviour
             {
                 int levelNumber = levelsManager.GetCurrentLevelNumber();
                 startButtonText.text = string.Format(startButtonTextFormat, levelNumber);
+            }
+        }
+        
+        // Update progress slider
+        if (levelsProgressSlider != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelNumber = levelsManager.GetCurrentLevelNumber();
+                levelsProgressSlider.UpdateProgress(levelNumber);
             }
         }
     }
