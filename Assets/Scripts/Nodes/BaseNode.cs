@@ -8,7 +8,7 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] protected int maxOutgoingConnections = 1;
     
     [Header("Energy System")]
-    [SerializeField] [Range(-3, 3)] protected int weight = 0;
+    [SerializeField] protected int weight = 0;
     [SerializeField] protected bool isEnergyApplied = false;
     
     [Header("Visual Components")]
@@ -22,6 +22,9 @@ public abstract class BaseNode : MonoBehaviour
     [SerializeField] private NodeDisplay nodeDisplay;
     
     [Header("Pulse Animation")]
+    [Header("Audio")]
+    [SerializeField] private AudioClip activatedSound;
+    [SerializeField] private AudioSource audioSource;
     [SerializeField] private float pulseScale = 1.2f;
     [SerializeField] private float pulseDuration = 0.3f;
     [SerializeField] private AnimationCurve pulseCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -80,7 +83,7 @@ public abstract class BaseNode : MonoBehaviour
         get => weight;
         set
         {
-            weight = Mathf.Clamp(value, -3, 3);
+            weight = value;
             UpdateEnergyDisplay();
         }
     }
@@ -932,10 +935,13 @@ public abstract class BaseNode : MonoBehaviour
     /// <summary>
     /// Activate the node (apply energy, etc.)
     /// Called when node receives enough deliveries
+    /// Note: Energy may already be applied when connection is created (if connected to producer)
+    /// This check ensures energy is only applied once, even with multiple connections
     /// </summary>
     private void ActivateNode()
     {
-        // Apply energy if this is the first incoming connection and energy not yet applied
+        // Apply energy if node has connections and energy not yet applied
+        // Energy is typically applied when connection is created, but this ensures it's applied once
         if (incomingConnections.Count > 0 && !isEnergyApplied)
         {
             GameController gameController = GameController.Instance;
@@ -957,6 +963,8 @@ public abstract class BaseNode : MonoBehaviour
         
         // Update visuals
         RefreshConnectionStatusVisual();
+
+        PlayActivatedSound();
         
         // Notify MapShaderController
         MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();
@@ -966,6 +974,13 @@ public abstract class BaseNode : MonoBehaviour
         }
     }
     
+    private void PlayActivatedSound()
+    {
+        if (activatedSound != null)
+        {
+            audioSource.PlayOneShot(activatedSound);
+        }
+    }
     /// <summary>
     /// Reset delivery count (for level reset)
     /// </summary>

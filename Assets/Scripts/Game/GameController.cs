@@ -104,6 +104,7 @@ public class GameController : MonoBehaviour
     
     private void Awake()
     {
+        Debug.Log("GameController: Awake");
         // Get or add AudioSource if not assigned
         if (audioSource == null)
         {
@@ -122,6 +123,7 @@ public class GameController : MonoBehaviour
         }
         else if (_instance != this)
         {
+            Debug.Log("GameController: Destroying duplicate instance");
             Destroy(gameObject);
             return;
         }
@@ -137,14 +139,6 @@ public class GameController : MonoBehaviour
                 connectionManager = cmObj.AddComponent<ConnectionManager>();
                 cmObj.transform.SetParent(transform);
             }
-        }
-        
-        // Ensure ConnectionCutManager exists
-        if (ConnectionCutManager.Instance == null)
-        {
-            GameObject cutManagerObj = new GameObject("ConnectionCutManager");
-            cutManagerObj.AddComponent<ConnectionCutManager>();
-            cutManagerObj.transform.SetParent(transform);
         }
     }
     
@@ -747,6 +741,7 @@ public class GameController : MonoBehaviour
     
     private void OnDestroy()
     {
+        Debug.Log("GameController: OnDestroy");
         if (_instance == this)
         {
             _instance = null;

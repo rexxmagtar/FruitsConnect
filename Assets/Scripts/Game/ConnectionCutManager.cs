@@ -42,6 +42,7 @@ public class ConnectionCutManager : MonoBehaviour
         }
         else if (_instance != this)
         {
+            Debug.Log("ConnectionCutManager: Destroying duplicate instance");
             Destroy(gameObject);
             return;
         }

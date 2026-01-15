@@ -11,7 +11,7 @@ PrefabInstance:
     - target: {fileID: 4613069987059046273, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Mesh
       value: 
-      objectReference: {fileID: 7027636043351174211, guid: b0b3946ae3838fc43860bec89dcf4f47, type: 3}
+      objectReference: {fileID: 7027636043351174211, guid: e3d49e5accd4b2f44a8984f75d8efbf3, type: 3}
     - target: {fileID: 5276317913608345948, guid: cb417f6da802f594cb4105076c371345, type: 3}
       propertyPath: m_Name
       value: Producer_Node strawberry

@@ -69,6 +69,7 @@ public class ConnectionManager : MonoBehaviour
         }
         else if (_instance != this)
         {
+            Debug.Log("ConnectionManager: Destroying duplicate instance");
             Destroy(gameObject);
             return;
         }
@@ -551,30 +552,23 @@ public class ConnectionManager : MonoBehaviour
             return false;
         }
         
-        // Rule 2: TARGET node can only have 1 incoming connection
-        // This applies to ALL nodes (consumers and neutrals)
-        // Multiple paths are created in mappings, but player can only build ONE at a time
-        if (to.IncomingConnections.Count >= 1)
-        {
-            Debug.LogWarning($"Node {to.NodeID} already has an incoming connection - nodes can only have 1 input");
-            return false;
-        }
-        
-        // Rule 3: Connection mapping allows from→to (this already accounts for walls)
+        // Rule 2: Connection mapping allows from→to (this already accounts for walls)
         if (currentLevel != null && !currentLevel.CanConnect(from.NodeID, to.NodeID))
         {
             Debug.LogWarning($"Connection from {from.NodeID} to {to.NodeID} not allowed by level mapping");
             return false;
         }
         
-        // Rule 4: Connection doesn't already exist (in either direction)
+        // Rule 3: Connection doesn't already exist (in either direction)
         if (ConnectionExists(from, to))
         {
             Debug.LogWarning($"Connection between {from.NodeID} and {to.NodeID} already exists (connections are bidirectional)");
             return false;
         }
         
-        // Rule 5: Energy check - if target node has no incoming connections and negative weight, check energy
+        // Rule 4: Energy check - if target node has no incoming connections and negative weight, check energy
+        // Only check energy on first connection (when IncomingConnections.Count == 0)
+        // Subsequent connections won't trigger energy changes due to isEnergyApplied flag
         if (to.IncomingConnections.Count == 0 && to.Weight < 0)
         {
             GameController gameController = GameController.Instance;
@@ -585,7 +579,7 @@ public class ConnectionManager : MonoBehaviour
             }
         }
         
-        // Rule 6: Producer path check - at least one node must be connected to a producer
+        // Rule 5: Producer path check - at least one node must be connected to a producer
         if (!IsConnectedToProducer(from) && !IsConnectedToProducer(to))
         {
             Debug.LogWarning($"Cannot create connection: neither {from.NodeID} nor {to.NodeID} is connected to a producer");

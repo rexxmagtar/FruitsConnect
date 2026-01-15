@@ -17,6 +17,9 @@ public class LevelCreationConfig : ScriptableObject
     [Tooltip("Prefab for Neutral nodes (red outline spheres - pass-through)")]
     [SerializeField] private GameObject neutralNodePrefab;
     
+    [Tooltip("Prefab for Double Neutral nodes (same as neutral but with different mesh)")]
+    [SerializeField] private GameObject doubleNeutralNodePrefab;
+    
     [Header("Level Template")]
     [Tooltip("Base level template to use as starting point for level creation")]
     [SerializeField] private GameObject levelTemplate;
@@ -63,6 +66,7 @@ public class LevelCreationConfig : ScriptableObject
     public GameObject ProducerNodePrefab => producerNodePrefab;
     public GameObject ConsumerNodePrefab => consumerNodePrefab;
     public GameObject NeutralNodePrefab => neutralNodePrefab;
+    public GameObject DoubleNeutralNodePrefab => doubleNeutralNodePrefab;
     public GameObject LevelTemplate => levelTemplate;
     public GameObject ConnectionPrefab => connectionPrefab;
     public GameObject WallPrefab => wallPrefab;
@@ -86,9 +90,28 @@ public class LevelCreationConfig : ScriptableObject
         {
             NodeType.Producer => producerNodePrefab,
             NodeType.Consumer => consumerNodePrefab,
-            NodeType.Neutral => neutralNodePrefab,
+            NodeType.Neutral => GetNeutralNodePrefab(),
+            NodeType.NeutralDouble => doubleNeutralNodePrefab != null ? doubleNeutralNodePrefab : neutralNodePrefab,
             _ => null
         };
+    }
+    
+    /// <summary>
+    /// Get neutral node prefab, randomly choosing between regular and double neutral prefabs
+    /// Falls back to regular neutral if double neutral is not assigned
+    /// </summary>
+    /// <returns>Neutral node prefab GameObject</returns>
+    public GameObject GetNeutralNodePrefab()
+    {
+        // If double neutral prefab is assigned, randomly choose between regular and double
+        // 20% chance to use double neutral, 80% chance to use regular neutral
+        if (doubleNeutralNodePrefab != null)
+        {
+            return Random.value < 0.2f ? doubleNeutralNodePrefab : neutralNodePrefab;
+        }
+        
+        // Fallback to regular neutral if double neutral is not assigned
+        return neutralNodePrefab;
     }
     
     /// <summary>
@@ -133,6 +156,7 @@ public enum NodeType
 {
     Producer,
     Consumer,
-    Neutral
+    Neutral,
+    NeutralDouble
 }
 

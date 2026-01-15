@@ -241,9 +241,9 @@ public class LevelEditorWindow : EditorWindow
         maxOutgoingConnections = EditorGUILayout.IntField("Max Outgoing Connections", maxOutgoingConnections);
         
         // Show weight input only for neutral nodes
-        if (nodeTypeToAdd == NodeType.Neutral)
+        if (nodeTypeToAdd == NodeType.Neutral || nodeTypeToAdd == NodeType.NeutralDouble)
         {
-            nodeWeight = EditorGUILayout.IntSlider("Node Weight", nodeWeight, -3, 3);
+            nodeWeight = EditorGUILayout.IntField("Node Weight", nodeWeight);
             EditorGUILayout.HelpBox("Weight: Positive = gives energy, Negative = costs energy", MessageType.Info);
         }
         else
@@ -529,6 +529,9 @@ public class LevelEditorWindow : EditorWindow
                         case NodeType.Neutral:
                             nodeObj.name = $"Neutral_{nodeID}";
                             break;
+                        case NodeType.NeutralDouble:
+                            nodeObj.name = $"NeutralDouble_{nodeID}";
+                            break;
                     }
                     
                     Debug.Log($"Created node from prefab: {prefab.name}");
@@ -561,6 +564,10 @@ public class LevelEditorWindow : EditorWindow
                     node = nodeObj.AddComponent<NeutralNode>();
                     nodeObj.name = $"Neutral_{nodeID}";
                     break;
+                case NodeType.NeutralDouble:
+                    node = nodeObj.AddComponent<NeutralNode>();
+                    nodeObj.name = $"NeutralDouble_{nodeID}";
+                    break;
             }
             
             Debug.Log("Created node from primitive sphere (no prefab available).");
@@ -572,7 +579,7 @@ public class LevelEditorWindow : EditorWindow
             node.MaxOutgoingConnections = maxOutgoingConnections;
             
             // Set weight for neutral nodes
-            if (nodeTypeToAdd == NodeType.Neutral)
+            if (nodeTypeToAdd == NodeType.Neutral || nodeTypeToAdd == NodeType.NeutralDouble)
             {
                 node.Weight = nodeWeight;
             }
@@ -1394,6 +1401,9 @@ public class LevelEditorWindow : EditorWindow
                     break;
                 case NodeType.Neutral:
                     nodeObj.name = $"Neutral_{nodeID}";
+                    break;
+                case NodeType.NeutralDouble:
+                    nodeObj.name = $"NeutralDouble_{nodeID}";
                     break;
             }
             

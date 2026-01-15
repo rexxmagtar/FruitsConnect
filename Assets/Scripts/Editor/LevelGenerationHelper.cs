@@ -49,6 +49,7 @@ public static class LevelGenerationHelper
                 break;
                 
             case NodeType.Neutral:
+            case NodeType.NeutralDouble:
             default:
                 // Neutral nodes can spawn in middle area with margins from edges
                 spawnZMin = zMin + (zRange * config.NeutralZoneMargin);
@@ -144,6 +145,11 @@ public static class LevelGenerationHelper
                         break;
                     case NodeType.Neutral:
                         nodeObj.name = $"Neutral_{nodeID}";
+                        node.MaxOutgoingConnections = GetMaxConnectionsForDifficulty(difficulty, false);
+                        node.Weight = AssignWeightForDifficulty(difficulty); // Assign random weight
+                        break;
+                    case NodeType.NeutralDouble:
+                        nodeObj.name = $"NeutralDouble_{nodeID}";
                         node.MaxOutgoingConnections = GetMaxConnectionsForDifficulty(difficulty, false);
                         node.Weight = AssignWeightForDifficulty(difficulty); // Assign random weight
                         break;
