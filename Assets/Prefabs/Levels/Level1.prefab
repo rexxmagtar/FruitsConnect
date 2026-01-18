@@ -690,7 +690,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   placeholderLineMaterial: {fileID: 2100000, guid: 02146bf164e425c4dbbfdfb1d548b1aa, type: 2}
   placeholderLineColor: {r: 1, g: 1, b: 1, a: 1}
-  placeholderLineWidth: 0.4
+  placeholderLineWidth: 0.25
   showPlaceholders: 1
   groundLevelY: -0.48
 --- !u!1001 &3821286302229983

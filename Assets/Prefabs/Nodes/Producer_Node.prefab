@@ -200,7 +200,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.75
+  m_Radius: 1.02
   m_Center: {x: 0, y: 0.46, z: 0}
 --- !u!23 &1185123897848721624
 MeshRenderer:
@@ -269,6 +269,8 @@ MonoBehaviour:
   hoverMaterial: {fileID: 2100000, guid: 2ea83ca9609127e4a9369b97fa10c41b, type: 2}
   grayscaleMaterial: {fileID: 2100000, guid: db1cf7abb5dba8149b5ead861dbbb1cc, type: 2}
   nodeDisplay: {fileID: 7135945862184872115}
+  activatedSound: {fileID: 0}
+  audioSource: {fileID: 0}
   pulseScale: 1.2
   pulseDuration: 0.3
   pulseCurve:

@@ -753,8 +753,8 @@ public class ConnectionManager : MonoBehaviour
         }
         
         // Ensure both start and end Y coordinates are always 0
-        startPosition.y = 0.1f;
-        endPosition.y = 0.1f;
+        startPosition.y = groundLevelY + 0.03f;
+        endPosition.y = groundLevelY + 0.03f;
         
         // Update positions
         ghostLineRenderer.SetPosition(0, startPosition);

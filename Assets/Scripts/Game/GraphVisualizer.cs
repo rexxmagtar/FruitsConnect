@@ -15,7 +15,9 @@ public class GraphVisualizer : MonoBehaviour
     [SerializeField] private float placeholderLineWidth = 0.1f; // Increased width for visibility
     [SerializeField] private bool showPlaceholders = true;
     [SerializeField] private float groundLevelY = -0.48f; // Ground level Y coordinate for placeholder lines
-    
+    [SerializeField] private Vector2 placeholderLineTextureScale = new Vector2(1f, 0.5f);
+
+
     [Header("References")]
     private LevelController levelController;
     
@@ -236,12 +238,13 @@ public class GraphVisualizer : MonoBehaviour
         
         // Set texture mode to tile
         lineRenderer.textureMode = LineTextureMode.Tile;
+        lineRenderer.textureScale = placeholderLineTextureScale;
         
         // Set positions - ensure both start and end Y coordinates are always 0
         Vector3 startPos = fromNode.transform.position;
         Vector3 endPos = toNode.transform.position;
-        startPos.y = 0f;
-        endPos.y = 0f;
+        startPos.y = groundLevelY + 0.02f;
+        endPos.y = groundLevelY + 0.02f;
         
         lineRenderer.SetPosition(0, startPos);
         lineRenderer.SetPosition(1, endPos);
