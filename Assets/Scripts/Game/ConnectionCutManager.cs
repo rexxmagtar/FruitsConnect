@@ -20,11 +20,38 @@ public class ConnectionCutManager : MonoBehaviour
     [SerializeField] private float cutDetectionDistance = 0.3f; // Distance threshold for detecting line crossing
     [SerializeField] private LayerMask planeLayerMask = -1; // Layer mask for plane detection
     
+    [Header("Line Trajectory Settings")]
+    [SerializeField] private bool useLineTrajectory = true;
+    [SerializeField] private int maxLinePoints = 15;
+    [SerializeField] private float minPointDistance = 0.05f;
+    [SerializeField] private float trajectoryPointLifetime = 0.5f; // How long each point stays before disappearing
+    [SerializeField] private Color trajectoryColor = new Color(0.2f, 0.6f, 1f, 0.8f);
+    [SerializeField] private float trajectoryWidthMultiplier = 0.15f;
+    [SerializeField] private AnimationCurve trajectoryWidthCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
+    [SerializeField] private int trajectoryCornerVertices = 4;
+    [SerializeField] private int trajectoryEndCapVertices = 4;
+    [SerializeField] private Material trajectoryMaterial;
+    
+    // Struct to track point position and time for lifecycle
+    private struct TrajectoryPoint
+    {
+        public Vector3 position;
+        public float timeCreated;
+
+        public TrajectoryPoint(Vector3 pos, float time)
+        {
+            position = pos;
+            timeCreated = time;
+        }
+    }
+
     // Cut state
     private bool isCutting = false;
     private Vector3 lastTouchPosition;
     private GameObject activeCutParticles;
     private ParticleSystem activeParticleSystem;
+    private LineRenderer trajectoryLine;
+    private List<TrajectoryPoint> trajectoryPoints = new List<TrajectoryPoint>();
     
     // Track connections that have been cut in this swipe (to avoid cutting same connection multiple times)
     private HashSet<Connection> cutConnectionsThisSwipe = new HashSet<Connection>();
@@ -61,6 +88,13 @@ public class ConnectionCutManager : MonoBehaviour
     
     private void Update()
     {
+        // Update trajectory points lifecycle even if not currently cutting
+        // This allows the line to fade out naturally after the cut ends
+        if (useLineTrajectory && trajectoryPoints.Count > 0)
+        {
+            UpdateTrajectoryLifecycle();
+        }
+
         // Only process cuts when gameplay is enabled
         if (gameController == null || !gameController.GameplayEnabled)
         {
@@ -115,6 +149,34 @@ public class ConnectionCutManager : MonoBehaviour
         if (isTouching)
         {
             ProcessCutInput(touchPosition);
+        }
+    }
+
+    /// <summary>
+    /// Remove old points based on their lifetime
+    /// </summary>
+    private void UpdateTrajectoryLifecycle()
+    {
+        bool changed = false;
+        float currentTime = Time.time;
+
+        // Remove points that have exceeded their lifetime
+        while (trajectoryPoints.Count > 0 && currentTime - trajectoryPoints[0].timeCreated > trajectoryPointLifetime)
+        {
+            trajectoryPoints.RemoveAt(0);
+            changed = true;
+        }
+
+        // Update line renderer if points were removed
+        if (changed)
+        {
+            UpdateTrajectoryLine();
+            
+            // If all points are gone, hide the line
+            if (trajectoryPoints.Count == 0 && !isCutting && trajectoryLine != null)
+            {
+                trajectoryLine.gameObject.SetActive(false);
+            }
         }
     }
     
@@ -197,6 +259,15 @@ public class ConnectionCutManager : MonoBehaviour
         // Spawn particles
         SpawnCutParticles(worldPosition);
         
+        // Initialize trajectory line
+        if (useLineTrajectory)
+        {
+            InitializeTrajectoryLine();
+            trajectoryPoints.Clear();
+            trajectoryPoints.Add(new TrajectoryPoint(worldPosition+Vector3.up*0.1f, Time.time));
+            UpdateTrajectoryLine();
+        }
+        
         Debug.Log($"Started cutting at {worldPosition}");
     }
     
@@ -215,6 +286,24 @@ public class ConnectionCutManager : MonoBehaviour
                 targetPos,
                 particleFollowSpeed * Time.deltaTime
             );
+        }
+        
+        // Update trajectory line
+        if (useLineTrajectory && trajectoryLine != null)
+        {
+            // Only add point if it moved enough
+            if (trajectoryPoints.Count == 0 || Vector3.Distance(worldPosition, trajectoryPoints[trajectoryPoints.Count - 1].position) > minPointDistance)
+            {
+                trajectoryPoints.Add(new TrajectoryPoint(worldPosition, Time.time));
+                
+                // Keep only last N points
+                if (trajectoryPoints.Count > maxLinePoints)
+                {
+                    trajectoryPoints.RemoveAt(0);
+                }
+                
+                UpdateTrajectoryLine();
+            }
         }
         
         // Check if finger path crosses any connections
@@ -240,7 +329,74 @@ public class ConnectionCutManager : MonoBehaviour
             activeParticleSystem = null;
         }
         
+        // Don't clear points immediately here, let UpdateTrajectoryLifecycle handle it
+        // so the line fades out naturally
+        
         Debug.Log("Ended cutting");
+    }
+    
+    /// <summary>
+    /// Initialize the trajectory line renderer
+    /// </summary>
+    private void InitializeTrajectoryLine()
+    {
+        if (trajectoryLine == null)
+        {
+            GameObject lineObj = new GameObject("TrajectoryLine");
+            trajectoryLine = lineObj.AddComponent<LineRenderer>();
+            
+            // Set material
+            if (trajectoryMaterial != null)
+            {
+                trajectoryLine.material = trajectoryMaterial;
+            }
+            else
+            {
+                // Create a simple material if none provided
+                trajectoryLine.material = new Material(Shader.Find("Sprites/Default"));
+            }
+            
+            trajectoryLine.startColor = trajectoryColor;
+            trajectoryLine.endColor = trajectoryColor;
+            trajectoryLine.widthCurve = trajectoryWidthCurve;
+            trajectoryLine.widthMultiplier = trajectoryWidthMultiplier;
+            trajectoryLine.numCornerVertices = trajectoryCornerVertices;
+            trajectoryLine.numCapVertices = trajectoryEndCapVertices;
+            trajectoryLine.positionCount = 0;
+            trajectoryLine.useWorldSpace = true;
+            
+            // Use a higher sorting order to ensure it's visible over the ground
+            trajectoryLine.sortingOrder = 10;
+        }
+        
+        trajectoryLine.gameObject.SetActive(true);
+        trajectoryLine.positionCount = 0;
+        
+        // Update visual settings in case they changed in inspector
+        trajectoryLine.startColor = trajectoryColor;
+        trajectoryLine.endColor = trajectoryColor;
+        trajectoryLine.widthCurve = trajectoryWidthCurve;
+        trajectoryLine.widthMultiplier = trajectoryWidthMultiplier;
+        trajectoryLine.numCornerVertices = trajectoryCornerVertices;
+        trajectoryLine.numCapVertices = trajectoryEndCapVertices;
+    }
+    
+    /// <summary>
+    /// Update the line renderer positions from tracked points
+    /// </summary>
+    private void UpdateTrajectoryLine()
+    {
+        if (trajectoryLine == null) return;
+        
+        trajectoryLine.positionCount = trajectoryPoints.Count;
+        
+        Vector3[] positions = new Vector3[trajectoryPoints.Count];
+        for (int i = 0; i < trajectoryPoints.Count; i++)
+        {
+            positions[i] = trajectoryPoints[i].position;
+        }
+        
+        trajectoryLine.SetPositions(positions);
     }
     
     /// <summary>

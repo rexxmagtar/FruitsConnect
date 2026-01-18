@@ -6868,6 +6868,39 @@ MonoBehaviour:
   planeLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  useLineTrajectory: 1
+  maxLinePoints: 50
+  minPointDistance: 0.05
+  trajectoryPointLifetime: 0.5
+  trajectoryColor: {r: 0.2, g: 0.6, b: 1, a: 0.8}
+  trajectoryWidthMultiplier: 0.4
+  trajectoryWidthCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 2
+      outSlope: 2
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  trajectoryCornerVertices: 4
+  trajectoryEndCapVertices: 4
+  trajectoryMaterial: {fileID: 0}
 --- !u!1 &503358607
 GameObject:
   m_ObjectHideFlags: 0
