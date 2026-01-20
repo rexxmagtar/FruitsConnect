@@ -16,12 +16,12 @@ MonoBehaviour:
   fullImage: {fileID: 21300000, guid: ddd24f16712d2634fa1d0646e72302f6, type: 3}
   completionReward: 100
   pieces:
-  - {fileID: 21300000, guid: 90bfd70541430d5409f2426c57b9c1ab, type: 3}
-  - {fileID: 21300000, guid: 1c47834bf3a258846888422e4f49715f, type: 3}
-  - {fileID: 21300000, guid: 946d0580448cd994990735653143c094, type: 3}
-  - {fileID: 21300000, guid: f5f3013b741a7b24cb4e49e4b9a38bb8, type: 3}
-  - {fileID: 21300000, guid: 2929ca5ec2c10714d96ee801803da857, type: 3}
-  - {fileID: 21300000, guid: 87b16f956e3fbd14390656e7e4f729e8, type: 3}
-  - {fileID: 21300000, guid: 2e786e3388634c04f9a78b0597bd443d, type: 3}
-  - {fileID: 21300000, guid: ac905e3999c79c34bb5eb22518573b95, type: 3}
-  - {fileID: 21300000, guid: 173f7a050b8dab548b810866d2c7331a, type: 3}
+  - {fileID: 21300000, guid: d59326339a0c6d948a2510325b793fee, type: 3}
+  - {fileID: 21300000, guid: 2ce61e4f3ef62d2429e27247b15a2c42, type: 3}
+  - {fileID: 21300000, guid: 0f82d571ccf84864ca16562b7d195ffe, type: 3}
+  - {fileID: 21300000, guid: 603b23f5ed9fa6245a617600af1d2781, type: 3}
+  - {fileID: 21300000, guid: c1d49ffc7e8c3c54196f3755ea352ad9, type: 3}
+  - {fileID: 21300000, guid: c8fc5cb23472b87408b6581f0e6416b9, type: 3}
+  - {fileID: 21300000, guid: 120e349b3411b6f4c9ec12d87b3cdadc, type: 3}
+  - {fileID: 21300000, guid: 4f094ffdd713b9444bacdf87bb654562, type: 3}
+  - {fileID: 21300000, guid: 0817f57c13ef1e244b85089b107134d2, type: 3}

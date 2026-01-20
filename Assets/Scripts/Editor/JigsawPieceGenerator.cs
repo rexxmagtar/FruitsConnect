@@ -101,8 +101,8 @@ public class JigsawPieceGenerator : EditorWindow
             for (int c = 0; c < 3; c++)
                 vEdges[r, c] = Random.value > 0.5f ? 1 : -1;
 
-        // Padding to accommodate tabs
-        int padding = Mathf.CeilToInt(radius * 2);
+        // Uniform padding for all pieces to ensure same image sizes
+        int padding = Mathf.CeilToInt(radius + bulgeOffset + 2); // +2 for antialiasing safety
         int texWidth = pieceBaseWidth + padding * 2;
         int texHeight = pieceBaseHeight + padding * 2;
 
@@ -176,6 +176,10 @@ public class JigsawPieceGenerator : EditorWindow
             }
             pieceTex.Apply();
 
+            // Calculate pivot to maintain original center alignment (always 0.5, 0.5 for uniform size)
+            float pivotX = 0.5f;
+            float pivotY = 0.5f;
+
             byte[] bytes = pieceTex.EncodeToPNG();
             string fileName = $"{targetData.puzzleId}_piece_{i}.png";
             string fullPath = Path.Combine(savePath, fileName);
@@ -189,6 +193,13 @@ public class JigsawPieceGenerator : EditorWindow
             {
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
+                
+                TextureImporterSettings settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteAlignment = (int)SpriteAlignment.Custom;
+                settings.spritePivot = new Vector2(pivotX, pivotY);
+                importer.SetTextureSettings(settings);
+                
                 importer.alphaIsTransparency = true;
                 importer.SaveAndReimport();
             }
