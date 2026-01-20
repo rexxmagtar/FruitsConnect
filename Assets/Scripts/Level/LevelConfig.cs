@@ -29,6 +29,10 @@ public class LevelConfig : ScriptableObject
     [Tooltip("Time limit in seconds to defeat the boss")]
     [SerializeField] private float bossFightTimeLimit = 30f;
     
+    [Header("Jigsaw Puzzle Rewards")]
+    [Tooltip("List of puzzle piece IDs to reward. Use 'random' for a random missing piece. ID format: puzzleId_pieceIndex (e.g. puzzle1_0)")]
+    [SerializeField] private System.Collections.Generic.List<string> puzzlePieceRewards = new System.Collections.Generic.List<string> { "random" };
+    
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
     public string LevelName => levelName;
@@ -37,5 +41,6 @@ public class LevelConfig : ScriptableObject
     public bool IsBossFight => isBossFight;
     public int BossGoldReward => bossGoldReward;
     public float BossFightTimeLimit => bossFightTimeLimit;
+    public System.Collections.Generic.List<string> PuzzlePieceRewards => puzzlePieceRewards;
 }
 

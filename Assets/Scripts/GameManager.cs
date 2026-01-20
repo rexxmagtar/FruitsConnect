@@ -22,6 +22,11 @@ public class SaveData
     public int MonsterDamageLevel { get; set; }
     public int MonsterDamageSteps { get; set; }
     public int MonsterDamagePowerValue { get; set; }
+
+    // Jigsaw Puzzle Data
+    public System.Collections.Generic.List<string> CollectedPieces { get; set; } = new System.Collections.Generic.List<string>();
+    public System.Collections.Generic.List<string> SolvedPuzzles { get; set; } = new System.Collections.Generic.List<string>();
+    public System.Collections.Generic.List<JigsawSystem.PuzzleProgressData> PuzzleProgress { get; set; } = new System.Collections.Generic.List<JigsawSystem.PuzzleProgressData>();
 }
 
 public class GameManager : MonoBehaviour

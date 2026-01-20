@@ -5,6 +5,7 @@ using System.Collections;
 using TMPro;
 using DataRepository;
 using DG.Tweening;
+using JigsawSystem;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -13,6 +14,7 @@ public class MainMenuUI : MonoBehaviour
 
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button shopButton;
+    [SerializeField] private Button jigsawButton;
     [SerializeField] private TextMeshProUGUI startButtonText;
     [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI balanceText;
@@ -43,6 +45,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private AudioClip backgroundMusic;
     
     [SerializeField] private SettingsUI settingsUI;
+    [SerializeField] private JigsawPuzzleSelectScreen jigsawSelectScreen;
     // Events
     public static event System.Action OnStartButtonPressed;
     
@@ -77,6 +80,11 @@ public class MainMenuUI : MonoBehaviour
         if (shopButton != null)
         {
             shopButton.onClick.AddListener(OnShopButtonClick);
+        }
+        
+        if (jigsawButton != null)
+        {
+            jigsawButton.onClick.AddListener(OnJigsawButtonClick);
         }
         
 
@@ -305,6 +313,20 @@ public class MainMenuUI : MonoBehaviour
         }
         
     }
+
+    private void OnJigsawButtonClick()
+    {
+        if (buttonClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+
+        if (jigsawSelectScreen != null)
+        {
+            jigsawSelectScreen.gameObject.SetActive(true);
+            jigsawSelectScreen.RefreshList();
+        }
+    }
     
     /// <summary>
     /// Apply current skin to ball preview
@@ -467,6 +489,11 @@ public class MainMenuUI : MonoBehaviour
     public bool IsVisible()
     {
         return isVisible;
+    }
+
+    public RectTransform GetBalanceIconTransform()
+    {
+        return balanceText?.rectTransform;
     }
     
     /// <summary>

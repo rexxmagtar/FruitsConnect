@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using JigsawSystem;
 
 /// <summary>
 /// Main game controller - handles level loading, gameplay, and win conditions
@@ -575,6 +576,9 @@ public class GameController : MonoBehaviour
                 // Get next level number for display
                 nextLevel = levelsManager.GetCurrentLevelNumber();
                 
+                // Get earned puzzle pieces from current level config
+                System.Collections.Generic.List<string> puzzlePieces = config.PuzzlePieceRewards;
+
                 // Hide gameplay UI
                 if (gameplayUI != null)
                 {
@@ -583,7 +587,7 @@ public class GameController : MonoBehaviour
             
                 if (levelCompleteUI != null)
                 {
-                    levelCompleteUI.Show(coinsEarned, nextLevel, bossBaseReward, multiplier, bossDefeated);
+                    levelCompleteUI.Show(coinsEarned, nextLevel, bossBaseReward, multiplier, bossDefeated, puzzlePieces);
                 }
                 else
                 {

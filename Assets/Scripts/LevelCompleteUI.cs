@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
+using JigsawSystem;
 using DataRepository;
 
 
@@ -58,6 +60,7 @@ public class LevelCompleteUI : MonoBehaviour
     private int displayedBalance = 0;
     private int nextLevelNumber = 1;
     private bool isAnimating = false;
+    private System.Collections.Generic.List<string> earnedPuzzlePieces;
     
     // Boss Reward State
     private int bossBaseReward = 0;
@@ -104,7 +107,7 @@ public class LevelCompleteUI : MonoBehaviour
     /// <summary>
     /// Show the level complete UI
     /// </summary>
-    public void Show(int coinsEarned = 0, int nextLevel = 1, int bossBaseReward = 0, float bossMultiplier = 1f, bool bossDefeated = false)
+    public void Show(int coinsEarned = 0, int nextLevel = 1, int bossBaseReward = 0, float bossMultiplier = 1f, bool bossDefeated = false, System.Collections.Generic.List<string> puzzlePieces = null)
     {
         if (isVisible) return;
         
@@ -113,6 +116,7 @@ public class LevelCompleteUI : MonoBehaviour
         this.bossBaseReward = bossBaseReward;
         this.bossMultiplier = bossMultiplier;
         this.isBossDefeated = bossDefeated;
+        this.earnedPuzzlePieces = puzzlePieces;
         this.bossTotalReward = isBossDefeated ? (int)(bossBaseReward * bossMultiplier) : 0;
         
         gameObject.SetActive(true);
@@ -381,6 +385,12 @@ public class LevelCompleteUI : MonoBehaviour
         // Wait for fade-in to complete
         yield return new WaitForSeconds(buttonFadeInDuration);
         
+        // Show puzzle piece earned popups if any
+        if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
+        {
+            JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
+        }
+
         // Enable button
         isAnimating = false;
         if (returnToMenuButton != null)

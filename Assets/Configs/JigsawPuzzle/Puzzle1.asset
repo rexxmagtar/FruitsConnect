@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5217713212f13e045ab92e1e5342f42f, type: 3}
+  m_Name: Puzzle1
+  m_EditorClassIdentifier: 
+  puzzleId: puzzle1
+  fullImage: {fileID: 21300000, guid: ddd24f16712d2634fa1d0646e72302f6, type: 3}
+  completionReward: 100
+  pieces:
+  - {fileID: 21300000, guid: 90bfd70541430d5409f2426c57b9c1ab, type: 3}
+  - {fileID: 21300000, guid: 1c47834bf3a258846888422e4f49715f, type: 3}
+  - {fileID: 21300000, guid: 946d0580448cd994990735653143c094, type: 3}
+  - {fileID: 21300000, guid: f5f3013b741a7b24cb4e49e4b9a38bb8, type: 3}
+  - {fileID: 21300000, guid: 2929ca5ec2c10714d96ee801803da857, type: 3}
+  - {fileID: 21300000, guid: 87b16f956e3fbd14390656e7e4f729e8, type: 3}
+  - {fileID: 21300000, guid: 2e786e3388634c04f9a78b0597bd443d, type: 3}
+  - {fileID: 21300000, guid: ac905e3999c79c34bb5eb22518573b95, type: 3}
+  - {fileID: 21300000, guid: 173f7a050b8dab548b810866d2c7331a, type: 3}
