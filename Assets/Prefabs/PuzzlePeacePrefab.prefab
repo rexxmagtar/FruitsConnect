@@ -89,4 +89,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   image: {fileID: 6093832209802964583}
-  dragScale: 1.2
+  dragScale: 1.5

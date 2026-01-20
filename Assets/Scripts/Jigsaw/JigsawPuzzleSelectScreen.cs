@@ -11,6 +11,10 @@ namespace JigsawSystem
         [SerializeField] private PuzzleButtonUi puzzleButtonPrefab;
         [SerializeField] private Button backButton;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip buttonClickSound;
+
         [Header("Sub-Screens")]
         [SerializeField] private PuzzleSolveUI solveUI;
 
@@ -18,9 +22,25 @@ namespace JigsawSystem
 
         private void Awake()
         {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
             if (backButton != null)
             {
-                backButton.onClick.AddListener(() => gameObject.SetActive(false));
+                backButton.onClick.AddListener(() => 
+                {
+                    if (audioSource != null && buttonClickSound != null)
+                    {
+                        audioSource.PlayOneShot(buttonClickSound);
+                    }
+                    gameObject.SetActive(false);
+                });
             }
         }
 

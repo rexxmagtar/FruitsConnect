@@ -80,6 +80,7 @@ namespace JigsawSystem
     public void SetVisible(bool visible)
     {
         if (canvasGroup != null) canvasGroup.alpha = visible ? 1f : 0f;
+        image.enabled = visible;
     }
 
     public void ResetToOriginal()

@@ -21,6 +21,10 @@ namespace JigsawSystem
         [SerializeField] private float fadeDuration = 0.3f;
         [SerializeField] private float scaleDuration = 0.5f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip pieceEarnedSound;
+
         private bool isWaitingForClick = false;
         private List<string> pendingPieceIds = new List<string>();
 
@@ -31,6 +35,15 @@ namespace JigsawSystem
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
                 panel.SetActive(false);
+
+                if (audioSource == null)
+                {
+                    audioSource = GetComponent<AudioSource>();
+                    if (audioSource == null)
+                    {
+                        audioSource = gameObject.AddComponent<AudioSource>();
+                    }
+                }
             }
             else
             {
@@ -73,6 +86,10 @@ namespace JigsawSystem
                 
 
                 // Animate In
+                if (audioSource != null && pieceEarnedSound != null)
+                {
+                    audioSource.PlayOneShot(pieceEarnedSound);
+                }
                 yield return StartCoroutine(AnimateIn());
 
                 // Wait for click

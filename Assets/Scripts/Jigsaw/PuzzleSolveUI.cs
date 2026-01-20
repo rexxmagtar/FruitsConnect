@@ -23,6 +23,13 @@ namespace JigsawSystem
         [Header("Solve Popup")]
         [SerializeField] private PuzzleSolveUiPopup solvePopup;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip dragStartSound;
+        [SerializeField] private AudioClip placeInSlotSound;
+        [SerializeField] private AudioClip placeInStorageSound;
+        [SerializeField] private AudioClip buttonClickSound;
+
         private JigsawPuzzleData currentPuzzle;
         private List<PuzzlePieceItem> activePieces = new List<PuzzlePieceItem>();
         private int[] slotPieceIndices = new int[9]; // Stores piece index at each slot
@@ -33,6 +40,15 @@ namespace JigsawSystem
 
         private void Awake()
         {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
             if (backButton != null)
             {
                 backButton.onClick.AddListener(Close);
@@ -54,6 +70,10 @@ namespace JigsawSystem
 
         public void Close()
         {
+            if (audioSource != null && buttonClickSound != null)
+            {
+                audioSource.PlayOneShot(buttonClickSound);
+            }
             SaveProgress();
             gameObject.SetActive(false);
         }
@@ -122,6 +142,11 @@ namespace JigsawSystem
             {
                 var home = activePieces.FirstOrDefault(p => p.PieceIndex == dragPiece.PieceIndex);
                 if (home != null) home.SetVisible(true);
+
+                if (audioSource != null && placeInStorageSound != null)
+                {
+                    audioSource.PlayOneShot(placeInStorageSound);
+                }
             }
             
             // Drag piece is temporary and always destroyed
@@ -145,6 +170,11 @@ namespace JigsawSystem
             int slotIndex = slot.SlotIndex;
             int newPieceIndex = dragPiece.PieceIndex;
 
+            if (audioSource != null && placeInSlotSound != null)
+            {
+                audioSource.PlayOneShot(placeInSlotSound);
+            }
+
             // Handle Swap: If slot was occupied, find that piece's storage home and show it
             if (slotPieceIndices[slotIndex] != -1)
             {
@@ -165,6 +195,11 @@ namespace JigsawSystem
 
         public void OnStartDraggingFromStorage(PuzzlePieceItem storagePiece, PointerEventData eventData)
         {
+            if (audioSource != null && dragStartSound != null)
+            {
+                audioSource.PlayOneShot(dragStartSound);
+            }
+
             // Hide the permanent piece in the grid
             storagePiece.SetVisible(false);
             
@@ -183,6 +218,11 @@ namespace JigsawSystem
 
         public void OnStartDraggingFromSlot(PuzzleSlot slot, PointerEventData eventData)
         {
+            if (audioSource != null && dragStartSound != null)
+            {
+                audioSource.PlayOneShot(dragStartSound);
+            }
+
             int slotIndex = slot.SlotIndex;
             int pieceIndex = slotPieceIndices[slotIndex];
             
