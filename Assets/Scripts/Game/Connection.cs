@@ -263,7 +263,16 @@ public class Connection : MonoBehaviour
         while (isAnimating && fromNode != null && toNode != null)
         {
             SpawnAndAnimateObject();
-            yield return new WaitForSeconds(spawnInterval);
+            
+            // Get speed multiplier from PlayerProgressController to adjust spawn interval
+            float speedMultiplier = 1f;
+            if (PlayerProgressController.Instance != null)
+            {
+                speedMultiplier = PlayerProgressController.Instance.GetConnectionSpeed();
+            }
+            
+            // Reduce interval as speed increases (divide by multiplier)
+            yield return new WaitForSeconds(spawnInterval / speedMultiplier);
         }
     }
     

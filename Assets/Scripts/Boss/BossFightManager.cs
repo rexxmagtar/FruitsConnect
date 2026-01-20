@@ -270,6 +270,7 @@ public class BossFightManager : MonoBehaviour
         
         // Subscribe to boss events
         Boss.OnBossDied += OnBossDied;
+        Boss.OnBossDefeated += OnBossDefeated;
         Boss.OnBossEscaped += OnBossEscaped;
         
         // Start fight
@@ -615,24 +616,38 @@ public class BossFightManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Handle boss death
+    /// Handle boss reaching 0 HP - stop timer immediately
     /// </summary>
-    private void OnBossDied(Boss boss)
+    private void OnBossDefeated(Boss boss)
     {
         if (boss != currentBoss) return;
         
         isBossFightActive = false;
         bossDefeated = true;
         
-        // Calculate reward results
+        // Calculate reward results immediately when HP hits zero
         if (currentLevelConfig != null)
         {
             bossBaseReward = currentLevelConfig.BossGoldReward;
             // Linear interpolation between x1 (time out) and x3 (instant kill)
-            bossTimeMultiplier = 1f + 2f * Mathf.Clamp01(timeRemaining / timeLimit);
+            float multiplier = 1f + 2f * Mathf.Clamp01(timeRemaining / timeLimit);
+            // Round to 2 decimal places
+            bossTimeMultiplier = Mathf.Round(multiplier * 100f) / 100f;
             
-            Debug.Log($"Boss defeated! Base Reward: {bossBaseReward}, Multiplier: {bossTimeMultiplier:F2}");
+            Debug.Log($"Boss defeated (HP 0)! Timer stopped. Base Reward: {bossBaseReward}, Multiplier: {bossTimeMultiplier:F2}");
         }
+    }
+    
+    /// <summary>
+    /// Handle boss death animation completion
+    /// </summary>
+    private void OnBossDied(Boss boss)
+    {
+        if (boss != currentBoss) return;
+        
+        // Ensure state is set (in case OnBossDefeated wasn't called for some reason)
+        isBossFightActive = false;
+        bossDefeated = true;
         
         // Wait for death animation, then show level complete
         StartCoroutine(EndBossFightSequence(true));
@@ -679,6 +694,7 @@ public class BossFightManager : MonoBehaviour
         
         // Unsubscribe from boss events
         Boss.OnBossDied -= OnBossDied;
+        Boss.OnBossDefeated -= OnBossDefeated;
         Boss.OnBossEscaped -= OnBossEscaped;
         
         // Show level complete screen directly (no camera return, no map restoration)
@@ -755,6 +771,7 @@ public class BossFightManager : MonoBehaviour
     {
         // Unsubscribe from events
         Boss.OnBossDied -= OnBossDied;
+        Boss.OnBossDefeated -= OnBossDefeated;
         Boss.OnBossEscaped -= OnBossEscaped;
         
         // Stop fade coroutine if running

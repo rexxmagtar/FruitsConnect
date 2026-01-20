@@ -84,6 +84,7 @@ public class Boss : MonoBehaviour
     
     // Events
     public static event System.Action<Boss> OnBossDied;
+    public static event System.Action<Boss> OnBossDefeated;
     public static event System.Action<Boss> OnBossEscaped;
     
     private void Awake()
@@ -581,6 +582,9 @@ public class Boss : MonoBehaviour
         
         isDead = true;
         isFighting = false;
+        
+        // Notify that boss is defeated (HP reached zero) - used to stop timer immediately
+        OnBossDefeated?.Invoke(this);
         
         // Stop vulnerable zone spawning
         if (vulnerableZoneSpawnCoroutine != null)

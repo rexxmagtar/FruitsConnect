@@ -64,6 +64,17 @@ public abstract class UpgradableParam
     }
     
     /// <summary>
+    /// Get power increment for the next purchase
+    /// </summary>
+    public int GetNextPowerIncrement()
+    {
+        if (config == null || config.PowerConfig == null) return 0;
+        
+        bool isLevelCompletion = (currentLevelStep == 3);
+        return config.PowerConfig.GetPowerIncrement(level, isLevelCompletion);
+    }
+    
+    /// <summary>
     /// Purchase next upgrade step
     /// Calculates power increment and adds to stored power value
     /// </summary>

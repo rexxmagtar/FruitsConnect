@@ -292,7 +292,7 @@ public class LevelCompleteUI : MonoBehaviour
         if (bossBaseRewardText != null) bossBaseRewardText.text = "0";
         if (bossMultiplierText != null) 
         {
-            bossMultiplierText.text = $"Time multiplier \n x{bossMultiplier:F1}";
+            bossMultiplierText.text = $"Time multiplier \n x{bossMultiplier:F2}";
             bossMultiplierText.gameObject.SetActive(false);
             bossMultiplierText.transform.localScale = Vector3.zero;
         }

@@ -14,6 +14,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button shopButton;
     [SerializeField] private TextMeshProUGUI startButtonText;
+    [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI balanceText;
     [SerializeField] private LevelsProgressSlider levelsProgressSlider;
     
@@ -34,6 +35,7 @@ public class MainMenuUI : MonoBehaviour
     
     [Header("Text Settings")]
     [SerializeField] private string startButtonTextFormat = "Start Level {0}";
+    [SerializeField] private string levelNumberTextFormat = "Level {0}";
     
     [Header("Visual Effects")]
     [SerializeField] private ParticleSystem backgroundEffect;
@@ -400,6 +402,17 @@ public class MainMenuUI : MonoBehaviour
     /// </summary>
     private void UpdateUI()
     {
+        // Update level number display
+        if (levelNumberText != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelNumber = levelsManager.GetCurrentLevelNumber();
+                levelNumberText.text = string.Format(levelNumberTextFormat, levelNumber);
+            }
+        }
+
         // Update start button text with current level
         if (startButtonText != null)
         {

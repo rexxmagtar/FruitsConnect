@@ -9,7 +9,6 @@ using TMPro;
 public class GameplayUI : MonoBehaviour
 {
     [Header("UI Elements")]
-    [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI energyBalanceText;
     [SerializeField] private Slider energySlider;
     [SerializeField] private Button resetButton;
@@ -114,19 +113,7 @@ public class GameplayUI : MonoBehaviour
     /// </summary>
     public void UpdateDisplay()
     {
-        UpdateLevelDisplay();
         UpdateEnergyDisplay();
-    }
-    
-    /// <summary>
-    /// Update level number display
-    /// </summary>
-    private void UpdateLevelDisplay()
-    {
-        if (levelNumberText == null) return;
-        
-        var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
-        levelNumberText.text = $"Level {saveData.CurrentLevel + 1}";
     }
     
     /// <summary>

@@ -12,6 +12,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI powerText;
     [SerializeField] private TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI nextUpgradePowerImproveValue;
     [SerializeField] private Slider stepsProgressSlider;
     [SerializeField] private TextMeshProUGUI paramNameText;
     [SerializeField] private TextMeshProUGUI priceText;
@@ -21,6 +22,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
     [Header("Display Format")]
     [SerializeField] private string powerFormat = "Power: {0}";
     [SerializeField] private string levelFormat = "Level {0}";
+    [SerializeField] private string improveValueFormat = "+{0}";
     [SerializeField] private string priceFormat = "{0} coins";
     
     [Header("Audio")]
@@ -118,6 +120,9 @@ public class ProgressPurchaseContainer : MonoBehaviour
         {
             powerText.text = string.Format(powerFormat, currentParam.PowerValue);
         }
+
+        // Update power improvement text
+        UpdatePowerImprovementText();
         
         // Update level text
         if (levelText != null)
@@ -190,6 +195,18 @@ public class ProgressPurchaseContainer : MonoBehaviour
             }
         }
     }
+
+    /// <summary>
+    /// Update the text showing the power increase for the next upgrade
+    /// </summary>
+    private void UpdatePowerImprovementText()
+    {
+        if (nextUpgradePowerImproveValue != null && currentParam != null)
+        {
+            int nextIncrement = currentParam.GetNextPowerIncrement();
+            nextUpgradePowerImproveValue.text = string.Format(improveValueFormat, nextIncrement);
+        }
+    }
     
     /// <summary>
     /// Handle purchase button click
@@ -241,17 +258,14 @@ public class ProgressPurchaseContainer : MonoBehaviour
         {
             powerText.text = string.Format(powerFormat, currentParam.PowerValue);
         }
+
+        // Update power improvement text
+        UpdatePowerImprovementText();
         
         // Update level text
         if (levelText != null)
         {
             levelText.text = string.Format(levelFormat, currentParam.Level);
-        }
-        
-        // Animate slider smoothly to new step value
-        if (stepsProgressSlider != null)
-        {
-            AnimateSliderToValue(currentParam.CurrentLevelStep);
         }
         
         // Update price text
@@ -271,6 +285,12 @@ public class ProgressPurchaseContainer : MonoBehaviour
         // Update image colors based on affordability
         UpdateImageColors(canAfford);
         
+        // Animate slider smoothly to new step value
+        if (stepsProgressSlider != null)
+        {
+            AnimateSliderToValue(currentParam.CurrentLevelStep, isLevelCompletion);
+        }
+        
         // Play sound based on purchase type
         PlayPurchaseSound(isLevelCompletion);
         
@@ -284,7 +304,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
     /// <summary>
     /// Animate slider smoothly to target value
     /// </summary>
-    private void AnimateSliderToValue(float targetValue)
+    private void AnimateSliderToValue(float targetValue, bool isLevelCompletion = false)
     {
         if (stepsProgressSlider == null) return;
         
@@ -294,31 +314,63 @@ public class ProgressPurchaseContainer : MonoBehaviour
             StopCoroutine(sliderAnimationCoroutine);
         }
         
-        sliderAnimationCoroutine = StartCoroutine(AnimateSliderCoroutine(targetValue));
+        sliderAnimationCoroutine = StartCoroutine(AnimateSliderCoroutine(targetValue, isLevelCompletion));
     }
     
     /// <summary>
     /// Coroutine to animate slider smoothly
     /// </summary>
-    private IEnumerator AnimateSliderCoroutine(float targetValue)
+    private IEnumerator AnimateSliderCoroutine(float targetValue, bool isLevelCompletion)
     {
         float startValue = stepsProgressSlider.value;
         float elapsedTime = 0f;
         
-        while (elapsedTime < sliderAnimationDuration)
+        if (isLevelCompletion)
         {
-            elapsedTime += Time.deltaTime;
-            float t = elapsedTime / sliderAnimationDuration;
-            float curveValue = sliderAnimationCurve.Evaluate(t);
+            // Disable button during level completion animation
+            if (purchaseButton != null)
+            {
+                purchaseButton.interactable = false;
+            }
+
+            // Animate to max value first
+            float maxValue = stepsProgressSlider.maxValue;
+            while (elapsedTime < sliderAnimationDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / sliderAnimationDuration;
+                float curveValue = sliderAnimationCurve.Evaluate(t);
+                
+                float currentValue = Mathf.Lerp(startValue, maxValue, curveValue);
+                stepsProgressSlider.value = currentValue;
+                
+                yield return null;
+            }
             
-            float currentValue = Mathf.Lerp(startValue, targetValue, curveValue);
-            stepsProgressSlider.value = currentValue;
+            // Snap to zero (the new target value)
+            stepsProgressSlider.value = targetValue;
             
-            yield return null;
+            // Re-enable button based on current affordability after animation completes
+            UpdateAffordability();
+        }
+        else
+        {
+            while (elapsedTime < sliderAnimationDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / sliderAnimationDuration;
+                float curveValue = sliderAnimationCurve.Evaluate(t);
+                
+                float currentValue = Mathf.Lerp(startValue, targetValue, curveValue);
+                stepsProgressSlider.value = currentValue;
+                
+                yield return null;
+            }
+            
+            // Ensure final value is set
+            stepsProgressSlider.value = targetValue;
         }
         
-        // Ensure final value is set
-        stepsProgressSlider.value = targetValue;
         sliderAnimationCoroutine = null;
     }
     
