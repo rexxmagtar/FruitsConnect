@@ -33,6 +33,7 @@ namespace JigsawSystem
         /// <summary>
         /// Awards a puzzle piece to the player.
         /// If pieceId is "random", awards a random piece that the player doesn't already have.
+        /// If the specified pieceId is already owned by the player, awards a random missing piece instead.
         /// Returns the ID of the awarded piece (puzzleId_index)
         /// </summary>
         public string AwardPiece(string pieceId)
@@ -44,6 +45,15 @@ namespace JigsawSystem
             if (pieceId == "random")
             {
                 awardedId = GetRandomMissingPiece();
+            }
+            else
+            {
+                // If user already has this specific piece, give them a random one instead
+                if (saveData.CollectedPieces.Contains(pieceId))
+                {
+                    awardedId = GetRandomMissingPiece();
+                    Debug.Log($"Player already has piece {pieceId}, awarding random piece instead: {awardedId}");
+                }
             }
 
             if (string.IsNullOrEmpty(awardedId)) return null;

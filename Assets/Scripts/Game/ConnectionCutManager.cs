@@ -264,7 +264,7 @@ public class ConnectionCutManager : MonoBehaviour
         {
             InitializeTrajectoryLine();
             trajectoryPoints.Clear();
-            trajectoryPoints.Add(new TrajectoryPoint(worldPosition+Vector3.up*0.1f, Time.time));
+            trajectoryPoints.Add(new TrajectoryPoint(worldPosition+Vector3.up*0.3f, Time.time));
             UpdateTrajectoryLine();
         }
         
@@ -280,7 +280,7 @@ public class ConnectionCutManager : MonoBehaviour
         if (activeCutParticles != null)
         {
             // Smoothly move particles to new position
-            Vector3 targetPos = worldPosition;
+            Vector3 targetPos = worldPosition + Vector3.up*0.3f;
             activeCutParticles.transform.position = Vector3.Lerp(
                 activeCutParticles.transform.position,
                 targetPos,
@@ -294,7 +294,7 @@ public class ConnectionCutManager : MonoBehaviour
             // Only add point if it moved enough
             if (trajectoryPoints.Count == 0 || Vector3.Distance(worldPosition, trajectoryPoints[trajectoryPoints.Count - 1].position) > minPointDistance)
             {
-                trajectoryPoints.Add(new TrajectoryPoint(worldPosition, Time.time));
+                trajectoryPoints.Add(new TrajectoryPoint(worldPosition + Vector3.up*0.3f, Time.time));
                 
                 // Keep only last N points
                 if (trajectoryPoints.Count > maxLinePoints)

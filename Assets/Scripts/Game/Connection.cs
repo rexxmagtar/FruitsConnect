@@ -322,7 +322,9 @@ public class Connection : MonoBehaviour
             Vector3 endPos = toNode.transform.position;
             float currentDistance = Vector3.Distance(startPos, endPos);
             
-            if (currentDistance > 2f &&  (obj.transform.position - endPos).magnitude > 1f)
+            // Use the arrival detection distance from the destination node
+            float arrivalDistance = toNode.ArrivalDetectionDistance;
+            if (currentDistance > 2f &&  (obj.transform.position - endPos).magnitude > arrivalDistance)
             {
                 // Get speed multiplier from PlayerProgressController
                 float speedMultiplier = 1f;

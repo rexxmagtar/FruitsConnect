@@ -34,6 +34,7 @@ public abstract class BaseNode : MonoBehaviour
     
     [Header("Delivery System")]
     [SerializeField] private int requiredDeliveries = 3; // Number of animated objects needed to activate this node
+    [SerializeField] private float arrivalDetectionDistance = 1f; // Distance threshold for detecting when animation object reaches this node
     private int currentDeliveries = 0; // Current number of deliveries received
     
     // Connection tracking
@@ -96,6 +97,8 @@ public abstract class BaseNode : MonoBehaviour
     
     public List<Connection> OutgoingConnections => outgoingConnections;
     public List<Connection> IncomingConnections => incomingConnections;
+    
+    public float ArrivalDetectionDistance => arrivalDetectionDistance;
     
     // Capture state (blocks player interaction when captured by monster)
     private bool isCaptured = false;

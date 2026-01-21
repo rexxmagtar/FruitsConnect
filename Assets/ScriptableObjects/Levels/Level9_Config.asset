@@ -16,7 +16,7 @@ MonoBehaviour:
   coinReward: 10
   levelName: Level9
   startingEnergy: 5
-  connectionAnimationPrefab: {fileID: 536847310261410110, guid: 278f007cfdf2cd14395bb39525df674e, type: 3}
+  connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}
   isBossFight: 0
   bossGoldReward: 50
   bossFightTimeLimit: 30
