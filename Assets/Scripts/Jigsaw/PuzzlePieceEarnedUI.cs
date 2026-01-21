@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 namespace JigsawSystem
 {
@@ -20,6 +21,14 @@ namespace JigsawSystem
         [Header("Animation")]
         [SerializeField] private float fadeDuration = 0.3f;
         [SerializeField] private float scaleDuration = 0.5f;
+
+        [Header("Particle Effects")]
+        [SerializeField] private Sprite shinyCircleSprite;
+        [SerializeField] private int shinyCircleCount = 12;
+        [SerializeField] private float shinyCircleAnimationDuration = 1.2f;
+        [SerializeField] private float shinyCircleMinSize = 0.4f;
+        [SerializeField] private float shinyCircleMaxSize = 1.0f;
+        [SerializeField] private RectTransform particleParent;
 
         [Header("Audio")]
         [SerializeField] private AudioSource audioSource;
@@ -90,6 +99,10 @@ namespace JigsawSystem
                 {
                     audioSource.PlayOneShot(pieceEarnedSound);
                 }
+                
+                // Spawn shiny circle particles
+                StartCoroutine(SpawnShinyCircleParticles());
+                
                 yield return StartCoroutine(AnimateIn());
 
                 // Wait for click
@@ -139,6 +152,65 @@ namespace JigsawSystem
                 yield return null;
             }
             canvasGroup.alpha = 0;
+        }
+
+        private IEnumerator SpawnShinyCircleParticles()
+        {
+            if (shinyCircleSprite == null) yield break;
+
+            RectTransform parent = particleParent != null ? particleParent : panel.GetComponent<RectTransform>();
+            if (parent == null) yield break;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) yield break;
+
+            Vector2 centerPosition = pieceImage != null ? pieceImage.rectTransform.position : parent.position;
+
+            for (int i = 0; i < shinyCircleCount; i++)
+            {
+                // Create shiny circle GameObject
+                GameObject circleObj = new GameObject("ShinyCircleParticle");
+                RectTransform circleRect = circleObj.AddComponent<RectTransform>();
+                Image circleImage = circleObj.AddComponent<Image>();
+                
+                circleImage.sprite = shinyCircleSprite;
+                circleImage.SetNativeSize();
+                
+                circleRect.SetParent(parent, false);
+                circleRect.position = centerPosition;
+                circleRect.localScale = Vector3.zero;
+
+                // Random angle and distance
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float distance = Random.Range(80f, 250f);
+                Vector2 targetPosition = centerPosition + new Vector2(
+                    Mathf.Cos(angle) * distance,
+                    Mathf.Sin(angle) * distance
+                );
+
+                // Random size
+                float randomSize = Random.Range(shinyCircleMinSize, shinyCircleMaxSize);
+                Vector3 targetScale = Vector3.one * randomSize;
+
+                // Animate shiny circle
+                circleRect.DOScale(targetScale, 0.25f).SetEase(Ease.OutBack);
+                circleRect.DOMove(targetPosition, shinyCircleAnimationDuration).SetEase(Ease.OutQuad);
+                
+                // Fade out
+                CanvasGroup circleCanvasGroup = circleObj.AddComponent<CanvasGroup>();
+                circleCanvasGroup.alpha = 1f;
+                circleCanvasGroup.DOFade(0f, shinyCircleAnimationDuration).SetDelay(shinyCircleAnimationDuration * 0.4f);
+                
+                // Rotate
+                circleRect.DORotate(new Vector3(0, 0, Random.Range(-180f, 180f)), shinyCircleAnimationDuration, RotateMode.FastBeyond360);
+
+                // Destroy after animation
+                circleRect.DOScale(Vector3.zero, 0.2f).SetDelay(shinyCircleAnimationDuration).OnComplete(() => {
+                    Destroy(circleObj);
+                });
+
+                yield return new WaitForSeconds(Random.Range(0.03f, 0.07f));
+            }
         }
     }
 }

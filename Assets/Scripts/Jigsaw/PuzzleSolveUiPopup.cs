@@ -22,6 +22,14 @@ namespace JigsawSystem
         [SerializeField] private int coinCount = 10;
         [SerializeField] private float coinAnimationDuration = 1.0f;
         
+        [Header("Particle Effects")]
+        [SerializeField] private Sprite starSprite;
+        [SerializeField] private int starCount = 15;
+        [SerializeField] private float starAnimationDuration = 1.5f;
+        [SerializeField] private float starMinSize = 0.5f;
+        [SerializeField] private float starMaxSize = 1.2f;
+        [SerializeField] private RectTransform particleParent;
+        
         [Header("Sounds")]
         [SerializeField] private AudioClip solveSound;
         [SerializeField] private AudioClip coinSound;
@@ -57,6 +65,9 @@ namespace JigsawSystem
             
             // Return to normal scale
             fullImage.transform.DOScale(1f, 0.2f);
+            
+            // Spawn star particles
+            StartCoroutine(SpawnStarParticles());
             
             yield return new WaitForSeconds(0.5f);
 
@@ -101,6 +112,65 @@ namespace JigsawSystem
                 });
 
                 yield return new WaitForSeconds(0.05f);
+            }
+        }
+
+        private IEnumerator SpawnStarParticles()
+        {
+            if (starSprite == null) yield break;
+
+            RectTransform parent = particleParent != null ? particleParent : panel.GetComponent<RectTransform>();
+            if (parent == null) yield break;
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (canvas == null) yield break;
+
+            Vector2 centerPosition = fullImage != null ? fullImage.rectTransform.position : parent.position;
+
+            for (int i = 0; i < starCount; i++)
+            {
+                // Create star GameObject
+                GameObject starObj = new GameObject("StarParticle");
+                RectTransform starRect = starObj.AddComponent<RectTransform>();
+                Image starImage = starObj.AddComponent<Image>();
+                
+                starImage.sprite = starSprite;
+                starImage.SetNativeSize();
+                
+                starRect.SetParent(parent, false);
+                starRect.position = centerPosition;
+                starRect.localScale = Vector3.zero;
+
+                // Random angle and distance
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float distance = Random.Range(100f, 300f);
+                Vector2 targetPosition = centerPosition + new Vector2(
+                    Mathf.Cos(angle) * distance,
+                    Mathf.Sin(angle) * distance
+                );
+
+                // Random size
+                float randomSize = Random.Range(starMinSize, starMaxSize);
+                Vector3 targetScale = Vector3.one * randomSize;
+
+                // Animate star
+                starRect.DOScale(targetScale, 0.3f).SetEase(Ease.OutBack);
+                starRect.DOMove(targetPosition, starAnimationDuration).SetEase(Ease.OutQuad);
+                
+                // Fade out
+                CanvasGroup starCanvasGroup = starObj.AddComponent<CanvasGroup>();
+                starCanvasGroup.alpha = 1f;
+                starCanvasGroup.DOFade(0f, starAnimationDuration).SetDelay(starAnimationDuration * 0.5f);
+                
+                // Rotate
+                starRect.DORotate(new Vector3(0, 0, Random.Range(-360f, 360f)), starAnimationDuration, RotateMode.FastBeyond360);
+
+                // Destroy after animation
+                starRect.DOScale(Vector3.zero, 0.2f).SetDelay(starAnimationDuration).OnComplete(() => {
+                    Destroy(starObj);
+                });
+
+                yield return new WaitForSeconds(Random.Range(0.02f, 0.08f));
             }
         }
     }

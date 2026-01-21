@@ -40,6 +40,12 @@ namespace JigsawSystem
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        // Prevent dragging if puzzle is already solved
+        if (JigsawPuzzleManager.Instance.IsPuzzleSolved(PuzzleId))
+        {
+            return;
+        }
+        
         // If we are in storage, we don't drag ourselves, we spawn a copy
         if (transform.parent == solveUI.StorageParent && LinkedStoragePiece == null)
         {

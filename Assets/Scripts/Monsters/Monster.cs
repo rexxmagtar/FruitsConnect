@@ -550,6 +550,12 @@ public class Monster : MonoBehaviour
         
         isDead = true;
         
+        // Hide healthbar immediately when health reaches zero
+        if (healthBar != null)
+        {
+            healthBar.Hide();
+        }
+        
         // Stop movement
         canMove = false;
         

@@ -47,6 +47,17 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private AudioClip coinCollectSound;
     [SerializeField] private Vector2 coinParticleSize = new Vector2(30f, 30f);
     
+    [Header("Fruit Progress Indicator")]
+    [SerializeField] private FruitsProgressIndicatorConfig progressConfig;
+    [SerializeField] private List<Image> fruitImages = new List<Image>();
+    [SerializeField] private Image filledImage;
+    [SerializeField] private TextMeshProUGUI progressPercentText;
+    [SerializeField] private RectTransform progressContainer;
+    [SerializeField] private AudioClip progressCompleteSound;
+    [SerializeField] private float progressAnimationDuration = 1f;
+    [SerializeField] private float progressCompleteScaleDuration = 0.5f;
+    [SerializeField] private float progressCompleteScaleAmount = 1.2f;
+    
     // Events
     public static event System.Action OnContinueButtonPressed; // Deprecated - kept for backward compatibility
     public static event System.Action OnReturnToMenuButtonPressed;
@@ -67,6 +78,9 @@ public class LevelCompleteUI : MonoBehaviour
     private float bossMultiplier = 1f;
     private bool isBossDefeated = false;
     private int bossTotalReward = 0;
+    
+    // Fruit Progress State
+    private float currentProgressPercent = 0f;
     
     private void Awake()
     {
@@ -306,6 +320,9 @@ public class LevelCompleteUI : MonoBehaviour
         if (bossRewardContainer != null) bossRewardContainer.SetActive(isBossLevel);
         if (bossBountyLocker != null) bossBountyLocker.SetActive(isBossLevel && !isBossDefeated);
         
+        // Initialize fruit progress immediately (before any animations)
+        InitializeFruitProgress();
+        
         // Reset state
         canvasGroup.alpha = 0f;
         
@@ -385,7 +402,11 @@ public class LevelCompleteUI : MonoBehaviour
         // Wait for fade-in to complete
         yield return new WaitForSeconds(buttonFadeInDuration);
         
-        // Show puzzle piece earned popups if any
+        
+        // Animate fruit progress delta (initial progress was already set)
+        yield return StartCoroutine(AnimateFruitProgress());
+
+                // Show puzzle piece earned popups if any
         if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
         {
             JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
@@ -711,5 +732,219 @@ public class LevelCompleteUI : MonoBehaviour
             
             Destroy(coinParticle);
         }
+    }
+    
+    /// <summary>
+    /// Initialize fruit progress indicator immediately (called at start of ShowAnimation)
+    /// </summary>
+    private void InitializeFruitProgress()
+    {
+        if (progressConfig == null)
+        {
+            return; // Silently fail - config might not be assigned yet
+        }
+        
+        // Get the level that was just completed (1-indexed for display)
+        // Note: nextLevelNumber is the next level to play, so the completed level is nextLevelNumber - 1
+        int completedLevel = nextLevelNumber - 1;
+        
+        // Ensure we have a valid level (at least 1)
+        if (completedLevel < 1)
+        {
+            completedLevel = 1;
+        }
+        
+        // Calculate progress BEFORE completing the current level (previous level)
+        int previousLevel = completedLevel - 1;
+        if (previousLevel < 1)
+        {
+            previousLevel = 1;
+        }
+        
+        // Get active fruit data for the completed level
+        ProgressFruitData fruitData = progressConfig.GetActiveFruitData(completedLevel);
+        if (fruitData == null)
+        {
+            return; // Silently fail - might not have fruit data configured
+        }
+        
+        // Check if previous level and completed level are in the same fruit block
+        // Calculate fruit indices: Level 1-10 = fruit 0, Level 11-20 = fruit 1, etc.
+        int previousFruitIndex = (previousLevel - 1) / 10;
+        int completedFruitIndex = (completedLevel - 1) / 10;
+        bool isSameFruit = (previousFruitIndex == completedFruitIndex);
+        
+        // Calculate progress percentage BEFORE completing current level
+        float startProgress;
+        if (isSameFruit)
+        {
+            // Same fruit block - use previous level's progress
+            startProgress = progressConfig.GetProgressPercentage(previousLevel);
+            if (startProgress < 0f)
+            {
+                startProgress = 0f;
+            }
+        }
+        else
+        {
+            // Different fruit block - start at 0% for the new fruit
+            startProgress = 0f;
+        }
+        
+        // Set fruit sprite on all fruit images
+        if (fruitData.fruitSprite != null)
+        {
+            foreach (Image fruitImage in fruitImages)
+            {
+                if (fruitImage != null)
+                {
+                    fruitImage.sprite = fruitData.fruitSprite;
+                }
+            }
+        }
+        
+        // Initialize progress display with the previous progress value
+        if (filledImage != null)
+        {
+            // Ensure filled image is set to Filled type
+            filledImage.type = Image.Type.Filled;
+            filledImage.fillAmount = startProgress / 100f; // Convert percentage to 0-1 range
+        }
+        
+        if (progressPercentText != null)
+        {
+            progressPercentText.text = $"{Mathf.RoundToInt(startProgress)}%";
+        }
+        
+        // Update current progress state
+        currentProgressPercent = startProgress;
+    }
+    
+    /// <summary>
+    /// Animate fruit progress delta (initial progress should already be set)
+    /// </summary>
+    private IEnumerator AnimateFruitProgress()
+    {
+        if (progressConfig == null)
+        {
+            Debug.LogWarning("[LevelCompleteUI] FruitsProgressIndicatorConfig not assigned!");
+            yield break;
+        }
+        
+        // Get the level that was just completed (1-indexed for display)
+        int completedLevel = nextLevelNumber - 1;
+        
+        // Ensure we have a valid level (at least 1)
+        if (completedLevel < 1)
+        {
+            completedLevel = 1;
+        }
+        
+        // Calculate progress percentage AFTER completing current level
+        float targetProgress = progressConfig.GetProgressPercentage(completedLevel);
+        if (targetProgress < 0f)
+        {
+            Debug.LogWarning($"[LevelCompleteUI] Invalid progress percentage for level {completedLevel}");
+            yield break;
+        }
+        
+        // Animate progress fill and text simultaneously (in parallel)
+        StartCoroutine(AnimateProgressFill(targetProgress));
+        StartCoroutine(AnimateProgressText(targetProgress));
+        
+        // Wait for animations to complete (both have the same duration)
+        yield return new WaitForSeconds(progressAnimationDuration);
+        
+        // Check if we reached 100%
+        if (targetProgress >= 100f)
+        {
+            yield return StartCoroutine(PlayProgressCompleteAnimation());
+        }
+    }
+    
+    /// <summary>
+    /// Animate progress fill image from current to target percentage
+    /// </summary>
+    private IEnumerator AnimateProgressFill(float targetPercent)
+    {
+        if (filledImage == null) yield break;
+        
+        float startFill = filledImage.fillAmount;
+        float targetFill = targetPercent / 100f; // Convert percentage to 0-1 range
+        float elapsed = 0f;
+        
+        while (elapsed < progressAnimationDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / progressAnimationDuration;
+            filledImage.fillAmount = Mathf.Lerp(startFill, targetFill, t);
+            yield return null;
+        }
+        
+        filledImage.fillAmount = targetFill;
+        currentProgressPercent = targetPercent;
+    }
+    
+    /// <summary>
+    /// Animate progress percentage text from current to target
+    /// </summary>
+    private IEnumerator AnimateProgressText(float targetPercent)
+    {
+        if (progressPercentText == null) yield break;
+        
+        float startPercent = currentProgressPercent;
+        float elapsed = 0f;
+        
+        while (elapsed < progressAnimationDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / progressAnimationDuration;
+            float currentPercent = Mathf.Lerp(startPercent, targetPercent, t);
+            progressPercentText.text = $"{Mathf.RoundToInt(currentPercent)}%";
+            yield return null;
+        }
+        
+        progressPercentText.text = $"{Mathf.RoundToInt(targetPercent)}%";
+    }
+    
+    /// <summary>
+    /// Play scale animation and sound when progress reaches 100%
+    /// </summary>
+    private IEnumerator PlayProgressCompleteAnimation()
+    {
+        if (progressContainer == null) yield break;
+        
+        // Play sound
+        if (progressCompleteSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(progressCompleteSound);
+        }
+        
+        Vector3 originalScale = progressContainer.localScale;
+        float elapsed = 0f;
+        
+        // Scale up
+        while (elapsed < progressCompleteScaleDuration / 2f)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / (progressCompleteScaleDuration / 2f);
+            float scale = Mathf.Lerp(1f, progressCompleteScaleAmount, t);
+            progressContainer.localScale = originalScale * scale;
+            yield return null;
+        }
+        
+        // Scale back down
+        elapsed = 0f;
+        while (elapsed < progressCompleteScaleDuration / 2f)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / (progressCompleteScaleDuration / 2f);
+            float scale = Mathf.Lerp(progressCompleteScaleAmount, 1f, t);
+            progressContainer.localScale = originalScale * scale;
+            yield return null;
+        }
+        
+        // Ensure final scale is correct
+        progressContainer.localScale = originalScale;
     }
 }

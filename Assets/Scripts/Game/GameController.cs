@@ -521,8 +521,17 @@ public class GameController : MonoBehaviour
             currentLevel.ActivateLevelCompleteParticles();
         }
         
-        // Wait for animation to complete (5 seconds)
-        yield return new WaitForSeconds(3f);
+        // Safety check: Kill any monsters that might have spawned during the transition
+        // This ensures no monsters can spawn after level completion
+        yield return new WaitForSeconds(0.5f);
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.KillAllMonsters();
+        }
+        
+        // Wait for animation to complete (remaining time)
+        yield return new WaitForSeconds(2.5f);
         
         // Now proceed with boss fight or level complete screen
         if (currentLevelConfig != null && currentLevelConfig.IsBossFight)

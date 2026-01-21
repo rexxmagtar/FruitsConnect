@@ -583,6 +583,12 @@ public class Boss : MonoBehaviour
         isDead = true;
         isFighting = false;
         
+        // Hide healthbar immediately when health reaches zero
+        if (healthBar != null)
+        {
+            healthBar.Hide();
+        }
+        
         // Notify that boss is defeated (HP reached zero) - used to stop timer immediately
         OnBossDefeated?.Invoke(this);
         

@@ -147,6 +147,27 @@ public class MonsterHealthBar : MonoBehaviour
         
         float currentHealth = monster.CurrentHealth;
         healthSlider.value = currentHealth;
+        
+        // Hide healthbar when health reaches zero
+        if (currentHealth <= 0)
+        {
+            Hide();
+        }
+    }
+    
+    /// <summary>
+    /// Hide the healthbar
+    /// </summary>
+    public void Hide()
+    {
+        if (canvas != null)
+        {
+            canvas.enabled = false;
+        }
+        else if (gameObject != null)
+        {
+            gameObject.SetActive(false);
+        }
     }
     
     private void LateUpdate()

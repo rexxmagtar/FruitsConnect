@@ -460,7 +460,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   connectionParticles: {fileID: 4703336398679346077}
   requiredDeliveries: 3
-  arrivalDetectionDistance: 1.5
+  arrivalDetectionDistance: 0.8
   progressAnimationSpeed: 5
 --- !u!82 &2739971908266940658
 AudioSource:

@@ -7,6 +7,7 @@ namespace JigsawSystem
     {
         [Header("Basic Info")]
         public string puzzleId;
+        public string displayName;
         public Sprite fullImage;
         public int completionReward = 100;
 

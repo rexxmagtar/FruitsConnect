@@ -35,6 +35,12 @@ public class MonsterAiManager : MonoBehaviour
     // Spawn coroutine
     private Coroutine spawnCoroutine;
     
+    // Track all active individual spawn coroutines to ensure they can be stopped
+    private List<Coroutine> activeSpawnMonsterCoroutines = new List<Coroutine>();
+    
+    // Flag to prevent spawning when level is complete
+    private bool spawningEnabled = true;
+    
     private void Awake()
     {
         // Singleton setup
@@ -83,6 +89,8 @@ public class MonsterAiManager : MonoBehaviour
     /// </summary>
     public void StartSpawning()
     {
+        spawningEnabled = true;
+        
         if (spawnCoroutine != null)
         {
             StopCoroutine(spawnCoroutine);
@@ -92,15 +100,28 @@ public class MonsterAiManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Stop spawning monsters
+    /// Stop spawning monsters and cancel all active spawn coroutines
     /// </summary>
     public void StopSpawning()
     {
+        spawningEnabled = false;
+        
+        // Stop main spawn coroutine
         if (spawnCoroutine != null)
         {
             StopCoroutine(spawnCoroutine);
             spawnCoroutine = null;
         }
+        
+        // Stop all active individual spawn coroutines
+        foreach (Coroutine coroutine in activeSpawnMonsterCoroutines)
+        {
+            if (coroutine != null)
+            {
+                StopCoroutine(coroutine);
+            }
+        }
+        activeSpawnMonsterCoroutines.Clear();
     }
     
     /// <summary>
@@ -114,13 +135,16 @@ public class MonsterAiManager : MonoBehaviour
             float waitTime = Random.Range(minSpawnInterval, maxSpawnInterval);
             yield return new WaitForSeconds(waitTime);
             
-            // Check if we can spawn (gameplay enabled and under max limit)
+            // Check if we can spawn (gameplay enabled, spawning enabled, and under max limit)
             GameController gameController = GameController.Instance;
-            if (gameController != null && gameController.GameplayEnabled)
+            if (spawningEnabled && gameController != null && gameController.GameplayEnabled)
             {
                 if (activeMonsters.Count < maxActiveMonsters)
                 {
-                    yield return StartCoroutine(SpawnMonsterCoroutine());
+                    Coroutine spawnMonsterCoroutine = StartCoroutine(SpawnMonsterCoroutine());
+                    activeSpawnMonsterCoroutines.Add(spawnMonsterCoroutine);
+                    yield return spawnMonsterCoroutine;
+                    activeSpawnMonsterCoroutines.Remove(spawnMonsterCoroutine);
                 }
             }
         }
@@ -131,6 +155,12 @@ public class MonsterAiManager : MonoBehaviour
     /// </summary>
     private IEnumerator SpawnMonsterCoroutine()
     {
+        // Check if spawning is still enabled before starting
+        if (!spawningEnabled)
+        {
+            yield break;
+        }
+        
         if (monsterPrefab == null)
         {
             Debug.LogError("MonsterAiManager: Monster prefab not assigned!");
@@ -151,6 +181,13 @@ public class MonsterAiManager : MonoBehaviour
                 Debug.LogError("MonsterAiManager: No level reference available!");
                 yield break;
             }
+        }
+        
+        // Double-check spawning is enabled and gameplay is enabled
+        GameController gameControllerCheck = GameController.Instance;
+        if (!spawningEnabled || (gameControllerCheck != null && !gameControllerCheck.GameplayEnabled))
+        {
+            yield break;
         }
         
         // Get valid spawn position in grayscale zone
@@ -181,6 +218,25 @@ public class MonsterAiManager : MonoBehaviour
             {
                 yield return new WaitForSeconds(checkInterval);
                 elapsed += checkInterval;
+                
+                // Check if spawning is still enabled
+                GameController checkController = GameController.Instance;
+                if (!spawningEnabled || (checkController != null && !checkController.GameplayEnabled))
+                {
+                    spawnCancelled = true;
+                    if (portalObj != null)
+                    {
+                        // Stop portal animation and close it
+                        if (portalAnimationCoroutine != null)
+                        {
+                            StopCoroutine(portalAnimationCoroutine);
+                        }
+                        // Wait for portal to close before destroying
+                        yield return StartCoroutine(ClosePortalAnimation(portalObj));
+                        Destroy(portalObj);
+                    }
+                    yield break;
+                }
                 
                 // Check if spawn position is still valid
                 if (mapShaderController != null)
@@ -223,6 +279,18 @@ public class MonsterAiManager : MonoBehaviour
             yield break;
         }
         
+        // Final check before spawning - ensure spawning is still enabled and gameplay is enabled
+        GameController finalCheck = GameController.Instance;
+        if (!spawningEnabled || (finalCheck != null && !finalCheck.GameplayEnabled))
+        {
+            // Clean up portal if spawn was cancelled
+            if (portalObj != null)
+            {
+                Destroy(portalObj);
+            }
+            yield break;
+        }
+        
         // Clean up portal
         if (portalObj != null)
         {
@@ -236,6 +304,14 @@ public class MonsterAiManager : MonoBehaviour
         if (monster == null)
         {
             Debug.LogError("MonsterAiManager: Monster prefab doesn't have Monster component!");
+            Destroy(monsterObj);
+            yield break;
+        }
+        
+        // Final check before initializing monster - ensure spawning is still enabled
+        if (!spawningEnabled || (finalCheck != null && !finalCheck.GameplayEnabled))
+        {
+            // Spawning was disabled, destroy the monster immediately
             Destroy(monsterObj);
             yield break;
         }
@@ -528,6 +604,9 @@ public class MonsterAiManager : MonoBehaviour
     /// </summary>
     public void ClearAllMonsters()
     {
+        // Stop spawning first
+        StopSpawning();
+        
         foreach (Monster monster in activeMonsters)
         {
             if (monster != null)

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.EventSystems;
 using DataRepository;
+using TMPro;
 
 namespace JigsawSystem
 {
@@ -16,6 +17,7 @@ namespace JigsawSystem
         [SerializeField] private RectTransform dragLayer;
         [SerializeField] private Button backButton;
         [SerializeField] private Canvas mainCanvas;
+        [SerializeField] private TextMeshProUGUI puzzleNameText;
         
         [Header("Prefabs")]
         [SerializeField] private PuzzlePieceItem piecePrefab;
@@ -65,6 +67,13 @@ namespace JigsawSystem
         {
             currentPuzzle = data;
             gameObject.SetActive(true);
+            
+            // Set puzzle display name
+            if (puzzleNameText != null && !string.IsNullOrEmpty(data.displayName))
+            {
+                puzzleNameText.text = data.displayName;
+            }
+            
             Refresh();
         }
 
@@ -79,6 +88,12 @@ namespace JigsawSystem
         }
 
         public bool IsSlotOccupied(int slotIndex) => slotPieceIndices[slotIndex] != -1;
+        
+        public bool IsPuzzleSolved()
+        {
+            if (currentPuzzle == null) return false;
+            return JigsawPuzzleManager.Instance.IsPuzzleSolved(currentPuzzle.puzzleId);
+        }
 
         private void Refresh()
         {
@@ -167,6 +182,12 @@ namespace JigsawSystem
 
         public void OnPieceDroppedOnSlot(PuzzlePieceItem dragPiece, PuzzleSlot slot)
         {
+            // Prevent dropping if puzzle is already solved
+            if (IsPuzzleSolved())
+            {
+                return;
+            }
+            
             int slotIndex = slot.SlotIndex;
             int newPieceIndex = dragPiece.PieceIndex;
 
@@ -195,6 +216,12 @@ namespace JigsawSystem
 
         public void OnStartDraggingFromStorage(PuzzlePieceItem storagePiece, PointerEventData eventData)
         {
+            // Prevent dragging if puzzle is already solved
+            if (JigsawPuzzleManager.Instance.IsPuzzleSolved(currentPuzzle.puzzleId))
+            {
+                return;
+            }
+            
             if (audioSource != null && dragStartSound != null)
             {
                 audioSource.PlayOneShot(dragStartSound);
@@ -218,6 +245,12 @@ namespace JigsawSystem
 
         public void OnStartDraggingFromSlot(PuzzleSlot slot, PointerEventData eventData)
         {
+            // Prevent dragging if puzzle is already solved
+            if (JigsawPuzzleManager.Instance.IsPuzzleSolved(currentPuzzle.puzzleId))
+            {
+                return;
+            }
+            
             if (audioSource != null && dragStartSound != null)
             {
                 audioSource.PlayOneShot(dragStartSound);

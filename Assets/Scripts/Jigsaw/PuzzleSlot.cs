@@ -20,6 +20,12 @@ public class PuzzleSlot : MonoBehaviour, IDropHandler, IBeginDragHandler, IDragH
     public void OnDrop(PointerEventData eventData)
     {
         Debug.Log("OnDrop: " + HasPiece);
+        // Prevent dropping if puzzle is already solved
+        if (solveUI.IsPuzzleSolved())
+        {
+            return;
+        }
+        
         if (eventData.pointerDrag != null)
         {
             PuzzlePieceItem piece = eventData.pointerDrag.GetComponent<PuzzlePieceItem>();

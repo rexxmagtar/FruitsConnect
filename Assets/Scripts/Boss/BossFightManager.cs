@@ -692,6 +692,16 @@ public class BossFightManager : MonoBehaviour
             bossFightUI.HideFightUI();
         }
         
+        // Hide boss healthbar if it still exists
+        if (currentBoss != null)
+        {
+            BossHealthBar bossHealthBar = currentBoss.GetComponentInChildren<BossHealthBar>();
+            if (bossHealthBar != null)
+            {
+                bossHealthBar.Hide();
+            }
+        }
+        
         // Unsubscribe from boss events
         Boss.OnBossDied -= OnBossDied;
         Boss.OnBossDefeated -= OnBossDefeated;
