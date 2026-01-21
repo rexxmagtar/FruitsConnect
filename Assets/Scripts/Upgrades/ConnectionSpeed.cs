@@ -16,7 +16,7 @@ public class ConnectionSpeed : UpgradableParam
     /// </summary>
     public override float CalculatePhysicalValue()
     {
-        float multiplier = 1f + ((float)powerValue / 1000f);
+        float multiplier = 1f + ((float)powerValue / 3000f);
         return BASE_SPEED * multiplier;
     }
     
@@ -25,6 +25,6 @@ public class ConnectionSpeed : UpgradableParam
     /// </summary>
     public float GetSpeedMultiplier()
     {
-        return 1f + ((float)powerValue / 1000f);
+        return 1f + ((float)powerValue / 3000f);
     }
 }

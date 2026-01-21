@@ -278,7 +278,7 @@ public class LevelSkinSwap : EditorWindow
         else if (node is NeutralNode)
         {
             // Check if it's a double neutral by name
-            if (node.gameObject.name.StartsWith("NeutralDouble_"))
+            if (node.gameObject.name.Contains("_double_"))
             {
                 return NodeType.NeutralDouble;
             }

@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine.EventSystems;
 using DataRepository;
 using TMPro;
+using System;
 
 namespace JigsawSystem
 {
@@ -115,6 +116,9 @@ namespace JigsawSystem
                 .Where(p => p.StartsWith(currentPuzzle.puzzleId + "_"))
                 .Select(p => int.Parse(p.Split('_')[1]))
                 .ToList();
+
+            // 2.5. Shuffle the order based on puzzle ID seed to prevent easy solving
+            ShuffleList(collectedIndices, currentPuzzle.puzzleId);
 
             // 3. Create exactly one permanent storage item for every collected piece
             foreach (int pieceIndex in collectedIndices)
@@ -312,6 +316,29 @@ namespace JigsawSystem
                 {
                     solvePopup.Show(currentPuzzle);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Shuffles a list using a seeded random number generator based on puzzle ID.
+        /// This ensures the same puzzle always gets the same shuffle order.
+        /// </summary>
+        private void ShuffleList<T>(List<T> list, string seed)
+        {
+            if (list == null || list.Count <= 1) return;
+
+            // Generate a seed from the puzzle ID
+            int seedValue = seed.GetHashCode();
+            System.Random rng = new System.Random(seedValue);
+
+            // Fisher-Yates shuffle algorithm
+            int n = list.Count;
+            for (int i = n - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                T temp = list[i];
+                list[i] = list[j];
+                list[j] = temp;
             }
         }
     }

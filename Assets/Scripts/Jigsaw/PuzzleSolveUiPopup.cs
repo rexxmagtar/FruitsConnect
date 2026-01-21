@@ -125,10 +125,27 @@ namespace JigsawSystem
             Canvas canvas = GetComponentInParent<Canvas>();
             if (canvas == null) yield break;
 
-            Vector2 centerPosition = fullImage != null ? fullImage.rectTransform.position : parent.position;
+            if (fullImage == null) yield break;
+            RectTransform imageRect = fullImage.rectTransform;
+            
+            // Get world space corners of the image rect
+            Vector3[] corners = new Vector3[4];
+            imageRect.GetWorldCorners(corners);
+            
+            // Calculate rect bounds
+            float left = corners[0].x;
+            float right = corners[2].x;
+            float bottom = corners[0].y;
+            float top = corners[2].y;
+            float width = right - left;
+            float height = top - bottom;
+            Vector2 centerPosition = imageRect.position;
 
             for (int i = 0; i < starCount; i++)
             {
+                // Get random position along the rect edges
+                Vector2 spawnPosition = GetRandomPositionOnRectEdge(left, right, bottom, top, width, height);
+                
                 // Create star GameObject
                 GameObject starObj = new GameObject("StarParticle");
                 RectTransform starRect = starObj.AddComponent<RectTransform>();
@@ -138,16 +155,13 @@ namespace JigsawSystem
                 starImage.SetNativeSize();
                 
                 starRect.SetParent(parent, false);
-                starRect.position = centerPosition;
+                starRect.position = spawnPosition;
                 starRect.localScale = Vector3.zero;
 
-                // Random angle and distance
-                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                // Calculate direction outward from center
+                Vector2 direction = (spawnPosition - centerPosition).normalized;
                 float distance = Random.Range(100f, 300f);
-                Vector2 targetPosition = centerPosition + new Vector2(
-                    Mathf.Cos(angle) * distance,
-                    Mathf.Sin(angle) * distance
-                );
+                Vector2 targetPosition = spawnPosition + direction * distance;
 
                 // Random size
                 float randomSize = Random.Range(starMinSize, starMaxSize);
@@ -171,6 +185,26 @@ namespace JigsawSystem
                 });
 
                 yield return new WaitForSeconds(Random.Range(0.02f, 0.08f));
+            }
+        }
+
+        private Vector2 GetRandomPositionOnRectEdge(float left, float right, float bottom, float top, float width, float height)
+        {
+            // Randomly choose which edge (0=top, 1=right, 2=bottom, 3=left)
+            int edge = Random.Range(0, 4);
+            
+            switch (edge)
+            {
+                case 0: // Top edge
+                    return new Vector2(Random.Range(left, right), top);
+                case 1: // Right edge
+                    return new Vector2(right, Random.Range(bottom, top));
+                case 2: // Bottom edge
+                    return new Vector2(Random.Range(left, right), bottom);
+                case 3: // Left edge
+                    return new Vector2(left, Random.Range(bottom, top));
+                default:
+                    return new Vector2((left + right) * 0.5f, (bottom + top) * 0.5f);
             }
         }
     }

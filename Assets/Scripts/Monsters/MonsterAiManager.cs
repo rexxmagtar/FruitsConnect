@@ -38,6 +38,9 @@ public class MonsterAiManager : MonoBehaviour
     // Track all active individual spawn coroutines to ensure they can be stopped
     private List<Coroutine> activeSpawnMonsterCoroutines = new List<Coroutine>();
     
+    // Track all active portals to ensure they can be cleaned up
+    private List<GameObject> activePortals = new List<GameObject>();
+    
     // Flag to prevent spawning when level is complete
     private bool spawningEnabled = true;
     
@@ -77,11 +80,11 @@ public class MonsterAiManager : MonoBehaviour
         
         GameController.OnLevelWon -= StopSpawning;
         
-        // Stop spawning
-        if (spawnCoroutine != null)
-        {
-            StopCoroutine(spawnCoroutine);
-        }
+        // Stop spawning (this also destroys portals)
+        StopSpawning();
+        
+        // Ensure all portals are destroyed
+        DestroyAllPortals();
     }
     
     /// <summary>
@@ -122,6 +125,9 @@ public class MonsterAiManager : MonoBehaviour
             }
         }
         activeSpawnMonsterCoroutines.Clear();
+        
+        // Destroy all active portals immediately
+        DestroyAllPortals();
     }
     
     /// <summary>
@@ -207,6 +213,10 @@ public class MonsterAiManager : MonoBehaviour
         if (portalPrefab != null)
         {
             portalObj = ShowPortalAnimation(spawnPos);
+            if (portalObj != null)
+            {
+                activePortals.Add(portalObj);
+            }
             portalAnimationCoroutine = StartCoroutine(PortalAnimationCoroutine(portalObj, spawnPos, () => { spawnCancelled = true; }));
             
             // Wait for portal animation, but check periodically if spawn was cancelled
@@ -231,8 +241,8 @@ public class MonsterAiManager : MonoBehaviour
                         {
                             StopCoroutine(portalAnimationCoroutine);
                         }
-                        // Wait for portal to close before destroying
-                        yield return StartCoroutine(ClosePortalAnimation(portalObj));
+                        // Remove from tracking and destroy immediately (don't wait for animation)
+                        activePortals.Remove(portalObj);
                         Destroy(portalObj);
                     }
                     yield break;
@@ -253,8 +263,8 @@ public class MonsterAiManager : MonoBehaviour
                             {
                                 StopCoroutine(portalAnimationCoroutine);
                             }
-                            // Wait for portal to close before destroying
-                            yield return StartCoroutine(ClosePortalAnimation(portalObj));
+                            // Remove from tracking and destroy immediately (don't wait for animation)
+                            activePortals.Remove(portalObj);
                             Destroy(portalObj);
                         }
                         yield break;
@@ -274,6 +284,7 @@ public class MonsterAiManager : MonoBehaviour
         {
             if (portalObj != null)
             {
+                activePortals.Remove(portalObj);
                 Destroy(portalObj);
             }
             yield break;
@@ -286,14 +297,16 @@ public class MonsterAiManager : MonoBehaviour
             // Clean up portal if spawn was cancelled
             if (portalObj != null)
             {
+                activePortals.Remove(portalObj);
                 Destroy(portalObj);
             }
             yield break;
         }
         
-        // Clean up portal
+        // Clean up portal (monster is about to spawn)
         if (portalObj != null)
         {
+            activePortals.Remove(portalObj);
             Destroy(portalObj);
         }
         
@@ -604,7 +617,7 @@ public class MonsterAiManager : MonoBehaviour
     /// </summary>
     public void ClearAllMonsters()
     {
-        // Stop spawning first
+        // Stop spawning first (this also destroys all portals)
         StopSpawning();
         
         foreach (Monster monster in activeMonsters)
@@ -616,6 +629,45 @@ public class MonsterAiManager : MonoBehaviour
         }
         
         activeMonsters.Clear();
+        
+        // Ensure all portals are destroyed (safety check)
+        DestroyAllPortals();
+    }
+    
+    /// <summary>
+    /// Destroy all active portals immediately
+    /// </summary>
+    private void DestroyAllPortals()
+    {
+        // Create a copy to avoid modification during iteration
+        List<GameObject> portalsToDestroy = new List<GameObject>(activePortals);
+        
+        foreach (GameObject portal in portalsToDestroy)
+        {
+            if (portal != null)
+            {
+                Destroy(portal);
+            }
+        }
+        
+        activePortals.Clear();
+        
+        // Safety check: Find and destroy any orphaned portals in the scene
+        // This handles cases where portals might not have been tracked properly
+        // Find all GameObjects with "Portal" in the name (but exclude PortalBoss)
+        GameObject[] allGameObjects = FindObjectsOfType<GameObject>();
+        foreach (GameObject obj in allGameObjects)
+        {
+            if (obj != null && obj.name.Contains("Portal") && !obj.name.Contains("PortalBoss"))
+            {
+                // Additional check: verify it's likely a portal by checking if it has a Renderer
+                // (portals should have renderers)
+                if (obj.GetComponent<Renderer>() != null)
+                {
+                    Destroy(obj);
+                }
+            }
+        }
     }
     
     /// <summary>

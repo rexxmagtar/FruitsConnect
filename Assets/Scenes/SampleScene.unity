@@ -696,7 +696,7 @@ MonoBehaviour:
   imageScaleDuration: 0.6
   coinCount: 10
   coinAnimationDuration: 1
-  starSprite: {fileID: 21300000, guid: b13cd747901c24b43add6f54ac12a720, type: 3}
+  starSprite: {fileID: 21300000, guid: c41248f3c1807464cabd5736d956f276, type: 3}
   starCount: 15
   starAnimationDuration: 1.5
   starMinSize: 0.5
@@ -1170,19 +1170,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7718195621551643822, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7718195621551643822, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7718195621551643822, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 595
       objectReference: {fileID: 0}
     - target: {fileID: 7718195621551643822, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -182.5951
       objectReference: {fileID: 0}
     - target: {fileID: 8565594321864521990, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: audioSource
@@ -1206,18 +1206,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8760066619814971193, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8760066619814971193, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8760066619814971193, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 165
       objectReference: {fileID: 0}
     - target: {fileID: 8760066619814971193, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: -182.5951
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114744381488548880, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

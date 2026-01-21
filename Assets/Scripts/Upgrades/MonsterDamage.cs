@@ -16,7 +16,7 @@ public class MonsterDamage : UpgradableParam
     /// </summary>
     public override float CalculatePhysicalValue()
     {
-        float multiplier = 1f + ((float)powerValue / 1000f);
+        float multiplier = 1f + ((float)powerValue / 3000f);
         return BASE_DAMAGE * multiplier;
     }
     
@@ -25,6 +25,6 @@ public class MonsterDamage : UpgradableParam
     /// </summary>
     public float GetDamageMultiplier()
     {
-        return 1f + ((float)powerValue / 1000f);
+        return 1f + ((float)powerValue / 3000f);
     }
 }

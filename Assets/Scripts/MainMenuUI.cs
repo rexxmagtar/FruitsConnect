@@ -203,6 +203,9 @@ public class MainMenuUI : MonoBehaviour
         // Update balance when showing menu
         UpdateBalanceDisplay();
         
+        // Update UI elements (level number text, start button text, progress slider)
+        UpdateUI();
+        
         // Update upgrade visibility based on level completion
         UpdateUpgradeVisibility();
         
@@ -211,17 +214,6 @@ public class MainMenuUI : MonoBehaviour
         
         // Update boss alert visibility based on next level
         UpdateBossAlertVisibility();
-        
-        // Update progress slider
-        if (levelsProgressSlider != null)
-        {
-            LevelsManager levelsManager = LevelsManager.Instance;
-            if (levelsManager != null)
-            {
-                int levelNumber = levelsManager.GetCurrentLevelNumber();
-                levelsProgressSlider.UpdateProgress(levelNumber);
-            }
-        }
         
         // Fade in
         float elapsedTime = 0f;

@@ -746,7 +746,7 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Get the level that was just completed (1-indexed for display)
         // Note: nextLevelNumber is the next level to play, so the completed level is nextLevelNumber - 1
-        int completedLevel = nextLevelNumber - 1;
+        int completedLevel = nextLevelNumber-1;
         
         // Ensure we have a valid level (at least 1)
         if (completedLevel < 1)
@@ -769,26 +769,14 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         // Check if previous level and completed level are in the same fruit block
-        // Calculate fruit indices: Level 1-10 = fruit 0, Level 11-20 = fruit 1, etc.
-        int previousFruitIndex = (previousLevel - 1) / 10;
-        int completedFruitIndex = (completedLevel - 1) / 10;
-        bool isSameFruit = (previousFruitIndex == completedFruitIndex);
-        
         // Calculate progress percentage BEFORE completing current level
         float startProgress;
-        if (isSameFruit)
-        {
-            // Same fruit block - use previous level's progress
-            startProgress = progressConfig.GetProgressPercentage(previousLevel);
-            if (startProgress < 0f)
-            {
-                startProgress = 0f;
-            }
+
+        if(previousLevel % 10 == 0){
+        startProgress = 0f;
         }
-        else
-        {
-            // Different fruit block - start at 0% for the new fruit
-            startProgress = 0f;
+        else{
+            startProgress = progressConfig.GetProgressPercentage(previousLevel);
         }
         
         // Set fruit sprite on all fruit images

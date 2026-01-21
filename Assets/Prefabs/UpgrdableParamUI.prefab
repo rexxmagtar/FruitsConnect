@@ -1512,6 +1512,7 @@ GameObject:
   - component: {fileID: 1665801840832527022}
   - component: {fileID: 6341194125244554685}
   - component: {fileID: 5902168649030869316}
+  - component: {fileID: 1285973607639906128}
   m_Layer: 5
   m_Name: UpgrdableParamUI
   m_TagString: Untagged
@@ -1611,6 +1612,17 @@ MonoBehaviour:
   levelPurchaseSound: {fileID: 8300000, guid: f74a7b461b107684a8e774a19de148bb, type: 3}
   audioSource: {fileID: 0}
   levelUpParticles: {fileID: 0}
+  shinyCircleSprite: {fileID: 21300000, guid: c41248f3c1807464cabd5736d956f276, type: 3}
+  shinyCircleCount: 12
+  shinyCircleAnimationDuration: 1.2
+  shinyCircleMinSize: 0.2
+  shinyCircleMaxSize: 0.4
+  particleParent: {fileID: 0}
+  containerRectTransform: {fileID: 5488524262857196780}
+  containerCanvasGroup: {fileID: 1285973607639906128}
+  levelUpScaleDuration: 0.5
+  levelUpFadeDuration: 0.3
+  levelUpScaleAmount: 1.2
   sliderAnimationDuration: 0.5
   sliderAnimationCurve:
     serializedVersion: 2
@@ -1638,6 +1650,18 @@ MonoBehaviour:
     m_RotationOrder: 4
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   grayedOutColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+--- !u!225 &1285973607639906128
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8820055372054235869}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &985884157864457466
 PrefabInstance:
   m_ObjectHideFlags: 0

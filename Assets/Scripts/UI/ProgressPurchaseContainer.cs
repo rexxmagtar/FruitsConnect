@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using DG.Tweening;
 
 /// <summary>
 /// UI container for displaying and purchasing upgrades
@@ -32,6 +33,19 @@ public class ProgressPurchaseContainer : MonoBehaviour
     
     [Header("Particle Effects")]
     [SerializeField] private ParticleSystem levelUpParticles;
+    [SerializeField] private Sprite shinyCircleSprite;
+    [SerializeField] private int shinyCircleCount = 12;
+    [SerializeField] private float shinyCircleAnimationDuration = 1.2f;
+    [SerializeField] private float shinyCircleMinSize = 0.4f;
+    [SerializeField] private float shinyCircleMaxSize = 1.0f;
+    [SerializeField] private RectTransform particleParent;
+    
+    [Header("Level Up Animation")]
+    [SerializeField] private RectTransform containerRectTransform;
+    [SerializeField] private CanvasGroup containerCanvasGroup;
+    [SerializeField] private float levelUpScaleDuration = 0.5f;
+    [SerializeField] private float levelUpFadeDuration = 0.3f;
+    [SerializeField] private float levelUpScaleAmount = 1.2f;
     
     [Header("Animation Settings")]
     [SerializeField] private float sliderAnimationDuration = 0.5f;
@@ -44,6 +58,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
     private UpgradableParam currentParam;
     private Coroutine sliderAnimationCoroutine;
     private Color[] originalImageColors; // Store original colors for restoration
+    private Coroutine levelUpAnimationCoroutine;
     
     private void Awake()
     {
@@ -79,6 +94,27 @@ public class ProgressPurchaseContainer : MonoBehaviour
         
         // Store original colors of images before any modifications
         StoreOriginalImageColors();
+        
+        // Setup container references if not assigned
+        if (containerRectTransform == null)
+        {
+            containerRectTransform = GetComponent<RectTransform>();
+        }
+        
+        if (containerCanvasGroup == null)
+        {
+            containerCanvasGroup = GetComponent<CanvasGroup>();
+            if (containerCanvasGroup == null)
+            {
+                containerCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+        
+        // Setup particle parent if not assigned
+        if (particleParent == null)
+        {
+            particleParent = containerRectTransform;
+        }
     }
     
     /// <summary>
@@ -294,10 +330,10 @@ public class ProgressPurchaseContainer : MonoBehaviour
         // Play sound based on purchase type
         PlayPurchaseSound(isLevelCompletion);
         
-        // Play particles if level completion
+        // Play level up animation and particles if level completion
         if (isLevelCompletion)
         {
-            PlayLevelUpParticles();
+            PlayLevelUpAnimation();
         }
     }
     
@@ -390,13 +426,149 @@ public class ProgressPurchaseContainer : MonoBehaviour
     }
     
     /// <summary>
-    /// Play level up particle effect
+    /// Play level up animation with particles
     /// </summary>
-    private void PlayLevelUpParticles()
+    private void PlayLevelUpAnimation()
     {
+        // Stop any existing level up animation
+        if (levelUpAnimationCoroutine != null)
+        {
+            StopCoroutine(levelUpAnimationCoroutine);
+        }
+        
+        levelUpAnimationCoroutine = StartCoroutine(LevelUpAnimationCoroutine());
+    }
+    
+    /// <summary>
+    /// Coroutine for level up animation sequence
+    /// </summary>
+    private IEnumerator LevelUpAnimationCoroutine()
+    {
+        // Play particle system if available
         if (levelUpParticles != null)
         {
             levelUpParticles.Play();
+        }
+        
+        // Spawn shiny circle particles
+        StartCoroutine(SpawnShinyCircleParticles());
+        
+        // Animate container scale
+        if (containerRectTransform != null && containerCanvasGroup != null)
+        {
+            Vector3 originalScale = containerRectTransform.localScale;
+            
+            // Bring to front by setting sibling index
+            containerRectTransform.SetAsLastSibling();
+            
+            // Scale up with bounce effect
+            containerRectTransform.DOScale(originalScale * levelUpScaleAmount, levelUpScaleDuration * 0.5f)
+                .SetEase(Ease.OutBack);
+            
+            yield return new WaitForSeconds(levelUpScaleDuration * 0.5f);
+            
+            // Scale back to normal
+            containerRectTransform.DOScale(originalScale, levelUpScaleDuration * 0.5f)
+                .SetEase(Ease.InBack);
+        }
+        
+        levelUpAnimationCoroutine = null;
+    }
+    
+    /// <summary>
+    /// Spawn shiny circle particles around the container
+    /// </summary>
+    private IEnumerator SpawnShinyCircleParticles()
+    {
+        if (shinyCircleSprite == null) yield break;
+        if (containerRectTransform == null) yield break;
+        
+        RectTransform parent = particleParent != null ? particleParent : containerRectTransform;
+        if (parent == null) yield break;
+        
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) yield break;
+        
+        // Get world space corners of the container rect
+        Vector3[] corners = new Vector3[4];
+        containerRectTransform.GetWorldCorners(corners);
+        
+        // Calculate rect bounds
+        float left = corners[0].x;
+        float right = corners[2].x;
+        float bottom = corners[0].y;
+        float top = corners[2].y;
+        float width = right - left;
+        float height = top - bottom;
+        Vector2 centerPosition = containerRectTransform.position;
+        
+        for (int i = 0; i < shinyCircleCount; i++)
+        {
+            // Get random position along the rect edges
+            Vector2 spawnPosition = GetRandomPositionOnRectEdge(left, right, bottom, top, width, height);
+            
+            // Create shiny circle GameObject
+            GameObject circleObj = new GameObject("ShinyCircleParticle");
+            RectTransform circleRect = circleObj.AddComponent<RectTransform>();
+            Image circleImage = circleObj.AddComponent<Image>();
+            
+            circleImage.sprite = shinyCircleSprite;
+            circleImage.SetNativeSize();
+            
+            circleRect.SetParent(parent, false);
+            circleRect.position = spawnPosition;
+            circleRect.localScale = Vector3.zero;
+            
+            // Calculate direction outward from center
+            Vector2 direction = (spawnPosition - centerPosition).normalized;
+            float distance = Random.Range(80f, 250f);
+            Vector2 targetPosition = spawnPosition + direction * distance;
+            
+            // Random size
+            float randomSize = Random.Range(shinyCircleMinSize, shinyCircleMaxSize);
+            Vector3 targetScale = Vector3.one * randomSize;
+            
+            // Animate shiny circle
+            circleRect.DOScale(targetScale, 0.25f).SetEase(Ease.OutBack);
+            circleRect.DOMove(targetPosition, shinyCircleAnimationDuration).SetEase(Ease.OutQuad);
+            
+            // Fade out
+            CanvasGroup circleCanvasGroup = circleObj.AddComponent<CanvasGroup>();
+            circleCanvasGroup.alpha = 1f;
+            circleCanvasGroup.DOFade(0f, shinyCircleAnimationDuration).SetDelay(shinyCircleAnimationDuration * 0.4f);
+            
+            // Rotate
+            circleRect.DORotate(new Vector3(0, 0, Random.Range(-180f, 180f)), shinyCircleAnimationDuration, RotateMode.FastBeyond360);
+            
+            // Destroy after animation
+            circleRect.DOScale(Vector3.zero, 0.2f).SetDelay(shinyCircleAnimationDuration).OnComplete(() => {
+                Destroy(circleObj);
+            });
+            
+            yield return new WaitForSeconds(Random.Range(0.03f, 0.07f));
+        }
+    }
+    
+    /// <summary>
+    /// Get random position on rect edge
+    /// </summary>
+    private Vector2 GetRandomPositionOnRectEdge(float left, float right, float bottom, float top, float width, float height)
+    {
+        // Randomly choose which edge (0=top, 1=right, 2=bottom, 3=left)
+        int edge = Random.Range(0, 4);
+        
+        switch (edge)
+        {
+            case 0: // Top edge
+                return new Vector2(Random.Range(left, right), top);
+            case 1: // Right edge
+                return new Vector2(right, Random.Range(bottom, top));
+            case 2: // Bottom edge
+                return new Vector2(Random.Range(left, right), bottom);
+            case 3: // Left edge
+                return new Vector2(left, Random.Range(bottom, top));
+            default:
+                return new Vector2((left + right) * 0.5f, (bottom + top) * 0.5f);
         }
     }
     
