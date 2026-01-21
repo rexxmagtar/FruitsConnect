@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5217713212f13e045ab92e1e5342f42f, type: 3}
+  m_Name: PuzzleCherryHouse1
+  m_EditorClassIdentifier: 
+  puzzleId: cherryHouse1
+  fullImage: {fileID: 21300000, guid: b47c3d247f6a1374bb13dbc296099153, type: 3}
+  completionReward: 400
+  pieces:
+  - {fileID: 21300000, guid: 2c2d7679df5bc5f43bc8da52174f73df, type: 3}
+  - {fileID: 21300000, guid: f02099c40eb2bfa43bc897a7d5ab030c, type: 3}
+  - {fileID: 21300000, guid: 2807f7e3f6300384fa230b272d501cad, type: 3}
+  - {fileID: 21300000, guid: efaf65c857a3fec4fb8e03e8deec38ff, type: 3}
+  - {fileID: 21300000, guid: 01769d5584bd6af4391d9400c3305051, type: 3}
+  - {fileID: 21300000, guid: 35f2498fcc5fe6346be9de63c43f1749, type: 3}
+  - {fileID: 21300000, guid: 1f5dde8370b9a3c4797358e13d6e2ba4, type: 3}
+  - {fileID: 21300000, guid: a07001ec66d7ea74fb14c8cf7cc6f1f1, type: 3}
+  - {fileID: 21300000, guid: f0d4918c331725e48b9b013847112fa2, type: 3}

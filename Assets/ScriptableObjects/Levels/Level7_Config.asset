@@ -17,3 +17,8 @@ MonoBehaviour:
   levelName: Level7
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 2141506787181539334, guid: 657599acedf7b3e48b27cee3f2ea2ca8, type: 3}
+  isBossFight: 0
+  bossGoldReward: 50
+  bossFightTimeLimit: 30
+  puzzlePieceRewards:
+  - cake1_6

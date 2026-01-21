@@ -20,3 +20,6 @@ MonoBehaviour:
   isBossFight: 1
   bossGoldReward: 50
   bossFightTimeLimit: 30
+  puzzlePieceRewards:
+  - cake1_3
+  - cake1_4

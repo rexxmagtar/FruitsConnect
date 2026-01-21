@@ -1,0 +1,98 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: puzzle1_Atlas
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 0
+      compressionQuality: 0
+      maxTextureSize: 0
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 2
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 0
+      enableTightPacking: 0
+      enableAlphaDilation: 0
+    secondaryTextureSettings: {}
+    variantMultiplier: 1
+    packables:
+    - {fileID: 21300000, guid: d131e8a520b5fa44a8c641684aa3f8d7, type: 3}
+    - {fileID: 21300000, guid: f69a315aa2e299749b6d69c357777b34, type: 3}
+    - {fileID: 21300000, guid: ddd0eb521c7c00740b789814f474eae8, type: 3}
+    - {fileID: 21300000, guid: 6caf52522e6d81d4da61a9d3b1f6bb12, type: 3}
+    - {fileID: 21300000, guid: 9494e7f6ab8d84e45b940223edf8f59f, type: 3}
+    - {fileID: 21300000, guid: 781c9e35deadbc54498573c6fc46cab8, type: 3}
+    - {fileID: 21300000, guid: a6df550fc491a23428bcc85cb3447a9f, type: 3}
+    - {fileID: 21300000, guid: f0019a3b225b8d147a9844469169f5ad, type: 3}
+    - {fileID: 21300000, guid: 40004e8531b35ac48ac017cdbccd5a6b, type: 3}
+    - {fileID: 21300000, guid: d131e8a520b5fa44a8c641684aa3f8d7, type: 3}
+    - {fileID: 21300000, guid: f69a315aa2e299749b6d69c357777b34, type: 3}
+    - {fileID: 21300000, guid: ddd0eb521c7c00740b789814f474eae8, type: 3}
+    - {fileID: 21300000, guid: 6caf52522e6d81d4da61a9d3b1f6bb12, type: 3}
+    - {fileID: 21300000, guid: 9494e7f6ab8d84e45b940223edf8f59f, type: 3}
+    - {fileID: 21300000, guid: 781c9e35deadbc54498573c6fc46cab8, type: 3}
+    - {fileID: 21300000, guid: a6df550fc491a23428bcc85cb3447a9f, type: 3}
+    - {fileID: 21300000, guid: f0019a3b225b8d147a9844469169f5ad, type: 3}
+    - {fileID: 21300000, guid: 40004e8531b35ac48ac017cdbccd5a6b, type: 3}
+    - {fileID: 21300000, guid: d131e8a520b5fa44a8c641684aa3f8d7, type: 3}
+    - {fileID: 21300000, guid: f69a315aa2e299749b6d69c357777b34, type: 3}
+    - {fileID: 21300000, guid: ddd0eb521c7c00740b789814f474eae8, type: 3}
+    - {fileID: 21300000, guid: 6caf52522e6d81d4da61a9d3b1f6bb12, type: 3}
+    - {fileID: 21300000, guid: 9494e7f6ab8d84e45b940223edf8f59f, type: 3}
+    - {fileID: 21300000, guid: 781c9e35deadbc54498573c6fc46cab8, type: 3}
+    - {fileID: 21300000, guid: a6df550fc491a23428bcc85cb3447a9f, type: 3}
+    - {fileID: 21300000, guid: f0019a3b225b8d147a9844469169f5ad, type: 3}
+    - {fileID: 21300000, guid: 40004e8531b35ac48ac017cdbccd5a6b, type: 3}
+    bindAsDefault: 1
+    isAtlasV2: 0
+    cachedData: {fileID: 0}
+    packedSpriteRenderDataKeys:
+    - 6caf52522e6d81d4da61a9d3b1f6bb12: 21300000
+    - ddd0eb521c7c00740b789814f474eae8: 21300000
+    - 781c9e35deadbc54498573c6fc46cab8: 21300000
+    - 40004e8531b35ac48ac017cdbccd5a6b: 21300000
+    - d131e8a520b5fa44a8c641684aa3f8d7: 21300000
+    - 9494e7f6ab8d84e45b940223edf8f59f: 21300000
+    - f69a315aa2e299749b6d69c357777b34: 21300000
+    - f0019a3b225b8d147a9844469169f5ad: 21300000
+    - a6df550fc491a23428bcc85cb3447a9f: 21300000
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 6caf52522e6d81d4da61a9d3b1f6bb12, type: 3}
+  - {fileID: 21300000, guid: ddd0eb521c7c00740b789814f474eae8, type: 3}
+  - {fileID: 21300000, guid: 781c9e35deadbc54498573c6fc46cab8, type: 3}
+  - {fileID: 21300000, guid: 40004e8531b35ac48ac017cdbccd5a6b, type: 3}
+  - {fileID: 21300000, guid: d131e8a520b5fa44a8c641684aa3f8d7, type: 3}
+  - {fileID: 21300000, guid: 9494e7f6ab8d84e45b940223edf8f59f, type: 3}
+  - {fileID: 21300000, guid: f69a315aa2e299749b6d69c357777b34, type: 3}
+  - {fileID: 21300000, guid: f0019a3b225b8d147a9844469169f5ad, type: 3}
+  - {fileID: 21300000, guid: a6df550fc491a23428bcc85cb3447a9f, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - puzzle1_piece_3
+  - puzzle1_piece_2
+  - puzzle1_piece_5
+  - puzzle1_piece_8
+  - puzzle1_piece_0
+  - puzzle1_piece_4
+  - puzzle1_piece_1
+  - puzzle1_piece_7
+  - puzzle1_piece_6
+  m_RenderDataMap: {}
+  m_Tag: puzzle1_Atlas
+  m_IsVariant: 0

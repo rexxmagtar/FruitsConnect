@@ -1,12 +1,16 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Collections.Generic;
 using JigsawSystem;
+using UnityEditor.U2D;
+using UnityEngine.U2D;
+using UnityEngine.UI;
 
 public class JigsawPieceGenerator : EditorWindow
 {
     private Object sourceObject;
-    private JigsawSystem.JigsawPuzzleData targetData;
+    private JigsawPuzzleData targetData;
     private string savePath = "Assets/Sprites/JigsawPieces";
     
     [Header("Generator Settings")]
@@ -26,7 +30,7 @@ public class JigsawPieceGenerator : EditorWindow
         GUILayout.Label("Jigsaw Piece Generator", EditorStyles.boldLabel);
 
         sourceObject = EditorGUILayout.ObjectField("Source Image/Sprite", sourceObject, typeof(Object), false);
-        targetData = (JigsawSystem.JigsawPuzzleData)EditorGUILayout.ObjectField("Target JigsawPuzzleData", targetData, typeof(JigsawSystem.JigsawPuzzleData), false);
+        targetData = (JigsawPuzzleData)EditorGUILayout.ObjectField("Target JigsawPuzzleData", targetData, typeof(JigsawPuzzleData), false);
         savePath = EditorGUILayout.TextField("Save Path", savePath);
         
         GUILayout.Space(10);
@@ -69,9 +73,29 @@ public class JigsawPieceGenerator : EditorWindow
             return;
         }
 
-        if (!Directory.Exists(savePath))
+        // Folder logic: check if occupied
+        string finalSavePath = savePath;
+        if (Directory.Exists(finalSavePath) && Directory.GetFileSystemEntries(finalSavePath).Length > 0)
         {
-            Directory.CreateDirectory(savePath);
+            int choice = EditorUtility.DisplayDialogComplex("Folder Occupied", 
+                $"The folder '{savePath}' is not empty. Do you want to override existing files or create a new subfolder?", 
+                "Override", "Create New Subfolder", "Cancel");
+
+            if (choice == 2) return; // Cancel
+            
+            if (choice == 1) // Create New Subfolder
+            {
+                finalSavePath = Path.Combine(finalSavePath, targetData.puzzleId);
+                if (!Directory.Exists(finalSavePath))
+                {
+                    Directory.CreateDirectory(finalSavePath);
+                }
+            }
+            // choice == 0 is Override, so we stick with finalSavePath = savePath
+        }
+        else if (!Directory.Exists(finalSavePath))
+        {
+            Directory.CreateDirectory(finalSavePath);
         }
 
         // If sourceObject is a sprite, we should use its rect for slicing
@@ -106,6 +130,8 @@ public class JigsawPieceGenerator : EditorWindow
         int texWidth = pieceBaseWidth + padding * 2;
         int texHeight = pieceBaseHeight + padding * 2;
 
+        List<Sprite> generatedSprites = new List<Sprite>();
+
         for (int i = 0; i < 9; i++)
         {
             int row = i / 3;
@@ -123,45 +149,74 @@ public class JigsawPieceGenerator : EditorWindow
             int sourceStartX = Mathf.RoundToInt(sourceRect.x + col * pieceBaseWidth - padding);
             int sourceStartY = Mathf.RoundToInt(sourceRect.y + (2 - row) * pieceBaseHeight - padding);
 
+            // Super-sampling for antialiasing
+            int ssFactor = 3; // 3x3 sampling
+            float ssStep = 1f / ssFactor;
+            float bleed = 1.0f; // 1 pixel overlap to prevent alpha seams at connections
+
             for (int y = 0; y < texHeight; y++)
             {
                 for (int x = 0; x < texWidth; x++)
                 {
-                    float px = x - padding;
-                    float py = y - padding;
-
-                    bool inside = px >= 0 && px < pieceBaseWidth && py >= 0 && py < pieceBaseHeight;
+                    float coverage = 0;
                     
-                    // Check Left
-                    if (left != 0) {
-                        float dist = Vector2.Distance(new Vector2(px, py), new Vector2(-left * bulgeOffset, pieceBaseHeight / 2f));
-                        if (dist < radius) inside = (left == 1);
-                    }
-                    // Check Right
-                    if (right != 0) {
-                        float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth + right * bulgeOffset, pieceBaseHeight / 2f));
-                        if (dist < radius) inside = (right == 1);
-                    }
-                    // Check Top
-                    if (top != 0) {
-                        float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth / 2f, pieceBaseHeight + top * bulgeOffset));
-                        if (dist < radius) inside = (top == 1);
-                    }
-                    // Check Bottom
-                    if (bottom != 0) {
-                        float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth / 2f, -bottom * bulgeOffset));
-                        if (dist < radius) inside = (bottom == 1);
+                    for (int sy = 0; sy < ssFactor; sy++)
+                    {
+                        for (int sx = 0; sx < ssFactor; sx++)
+                        {
+                            float px = (x - padding) + (sx + 0.5f) * ssStep;
+                            float py = (y - padding) + (sy + 0.5f) * ssStep;
+
+                            // Expand the base rect for connections to ensure overlap
+                            float minX = (col > 0) ? -bleed : 0;
+                            float maxX = (col < 2) ? pieceBaseWidth + bleed : pieceBaseWidth;
+                            float minY = (row < 2) ? -bleed : 0; // row 2 is bottom in our logic
+                            float maxY = (row > 0) ? pieceBaseHeight + bleed : pieceBaseHeight; // row 0 is top
+
+                            bool subInside = px >= minX && px < maxX && py >= minY && py < maxY;
+                            
+                            // Check Left
+                            if (left != 0) {
+                                float dist = Vector2.Distance(new Vector2(px, py), new Vector2(-left * bulgeOffset, pieceBaseHeight / 2f));
+                                // Expand piece: increase tab radius, decrease hole radius
+                                float r = radius + (left == 1 ? bleed : -bleed);
+                                if (dist < r) subInside = (left == 1);
+                            }
+                            // Check Right
+                            if (right != 0) {
+                                float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth + right * bulgeOffset, pieceBaseHeight / 2f));
+                                float r = radius + (right == 1 ? bleed : -bleed);
+                                if (dist < r) subInside = (right == 1);
+                            }
+                            // Check Top
+                            if (top != 0) {
+                                float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth / 2f, pieceBaseHeight + top * bulgeOffset));
+                                float r = radius + (top == 1 ? bleed : -bleed);
+                                if (dist < r) subInside = (top == 1);
+                            }
+                            // Check Bottom
+                            if (bottom != 0) {
+                                float dist = Vector2.Distance(new Vector2(px, py), new Vector2(pieceBaseWidth / 2f, -bottom * bulgeOffset));
+                                float r = radius + (bottom == 1 ? bleed : -bleed);
+                                if (dist < r) subInside = (bottom == 1);
+                            }
+
+                            if (subInside) coverage += 1;
+                        }
                     }
 
-                    if (inside)
+                    float alpha = coverage / (ssFactor * ssFactor);
+
+                    if (alpha > 0)
                     {
                         int sx = sourceStartX + x;
                         int sy = sourceStartY + y;
                         
-                        // Handle source image bounds
                         if (sx >= 0 && sx < sourceImage.width && sy >= 0 && sy < sourceImage.height)
                         {
-                            pieceTex.SetPixel(x, y, sourceImage.GetPixel(sx, sy));
+                            Color c = sourceImage.GetPixel(sx, sy);
+                            c.a *= alpha;
+                            pieceTex.SetPixel(x, y, c);
                         }
                         else
                         {
@@ -182,7 +237,7 @@ public class JigsawPieceGenerator : EditorWindow
 
             byte[] bytes = pieceTex.EncodeToPNG();
             string fileName = $"{targetData.puzzleId}_piece_{i}.png";
-            string fullPath = Path.Combine(savePath, fileName);
+            string fullPath = Path.Combine(finalSavePath, fileName);
             File.WriteAllBytes(fullPath, bytes);
             
             AssetDatabase.ImportAsset(fullPath);
@@ -206,10 +261,89 @@ public class JigsawPieceGenerator : EditorWindow
 
             Sprite pieceSprite = AssetDatabase.LoadAssetAtPath<Sprite>(fullPath);
             targetData.pieces[i] = pieceSprite;
+            generatedSprites.Add(pieceSprite);
         }
 
+        // Pack in Atlas
+        string atlasPath = Path.Combine(finalSavePath, $"{targetData.puzzleId}_Atlas.spriteatlas");
+        SpriteAtlas atlas = AssetDatabase.LoadAssetAtPath<SpriteAtlas>(atlasPath);
+        if (atlas == null)
+        {
+            atlas = new SpriteAtlas();
+            AssetDatabase.CreateAsset(atlas, atlasPath);
+        }
+
+        // Configure Atlas
+        SpriteAtlasPackingSettings packingSettings = new SpriteAtlasPackingSettings()
+        {
+            blockOffset = 1,
+            enableRotation = false,
+            enableTightPacking = false,
+            padding = 2
+        };
+        atlas.SetPackingSettings(packingSettings);
+
+        SpriteAtlasTextureSettings textureSettings = new SpriteAtlasTextureSettings()
+        {
+            readable = false,
+            generateMipMaps = false,
+            sRGB = true,
+            filterMode = FilterMode.Bilinear
+        };
+        atlas.SetTextureSettings(textureSettings);
+
+        // Add sprites to atlas
+        SpriteAtlasExtensions.Add(atlas, generatedSprites.ToArray());
+
         EditorUtility.SetDirty(targetData);
+        EditorUtility.SetDirty(atlas);
         AssetDatabase.SaveAssets();
-        EditorUtility.DisplayDialog("Success", "Generated 9 programmatic pieces and assigned to JigsawPuzzleData.", "OK");
+
+        CreateDebugCanvas(generatedSprites, pieceBaseWidth, pieceBaseHeight);
+
+        EditorUtility.DisplayDialog("Success", "Generated 9 programmatic pieces, packed into atlas, and assigned to JigsawPuzzleData.", "OK");
+    }
+
+    private void CreateDebugCanvas(List<Sprite> sprites, int baseWidth, int baseHeight)
+    {
+        string canvasName = "JigsawDebugCanvas";
+        GameObject existing = GameObject.Find(canvasName);
+        if (existing != null) DestroyImmediate(existing);
+
+        GameObject canvasGo = new GameObject(canvasName);
+        Canvas canvas = canvasGo.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvasGo.AddComponent<CanvasScaler>();
+        canvasGo.AddComponent<GraphicRaycaster>();
+
+        GameObject rootGo = new GameObject("Puzzle_Preview_" + targetData.puzzleId);
+        rootGo.transform.SetParent(canvasGo.transform, false);
+        RectTransform rootRect = rootGo.AddComponent<RectTransform>();
+        rootRect.sizeDelta = new Vector2(baseWidth * 3, baseHeight * 3);
+        rootRect.anchoredPosition = Vector2.zero;
+
+        for (int i = 0; i < sprites.Count; i++)
+        {
+            int row = i / 3;
+            int col = i % 3;
+
+            GameObject pieceGo = new GameObject($"Piece_{i}");
+            pieceGo.transform.SetParent(rootGo.transform, false);
+            Image img = pieceGo.AddComponent<Image>();
+            img.sprite = sprites[i];
+            img.SetNativeSize();
+
+            RectTransform rt = pieceGo.GetComponent<RectTransform>();
+            // Position relative to top-left of the 3x3 grid
+            // Grid center is (0,0). 
+            // col 0 -> -baseWidth, col 1 -> 0, col 2 -> baseWidth
+            // row 0 -> baseHeight, row 1 -> 0, row 2 -> -baseHeight
+            float xPos = (col - 1) * baseWidth;
+            float yPos = (1 - row) * baseHeight;
+            rt.anchoredPosition = new Vector2(xPos, yPos);
+        }
+
+        Selection.activeGameObject = canvasGo;
+        EditorGUIUtility.PingObject(canvasGo);
     }
 }

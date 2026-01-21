@@ -20,13 +20,4 @@ MonoBehaviour:
   isBossFight: 0
   bossGoldReward: 50
   bossFightTimeLimit: 20
-  puzzlePieceRewards:
-  - random
-  - random
-  - random
-  - random
-  - random
-  - random
-  - random
-  - random
-  - random
+  puzzlePieceRewards: []

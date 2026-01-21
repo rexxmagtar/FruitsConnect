@@ -13,4 +13,8 @@ MonoBehaviour:
   m_Name: JigsawPuzzlesConfig
   m_EditorClassIdentifier: 
   puzzles:
-  - {fileID: 11400000, guid: 81d56e8bcb7ac064197d939f06444e53, type: 2}
+  - {fileID: 11400000, guid: 7c7eaee670f6b8f45a95bb531d18fe11, type: 2}
+  - {fileID: 11400000, guid: f846587dc00ec7d45a0cbdec0510cbb0, type: 2}
+  - {fileID: 11400000, guid: 41f7660f2bfaabc468e08df25fe84750, type: 2}
+  - {fileID: 11400000, guid: 55f0bbc35828a5c49b98231fc9130c9e, type: 2}
+  - {fileID: 11400000, guid: dd4bb6fc805501d4989bf7ffe55a272c, type: 2}

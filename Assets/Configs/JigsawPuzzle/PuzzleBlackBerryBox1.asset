@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5217713212f13e045ab92e1e5342f42f, type: 3}
+  m_Name: PuzzleBlackBerryBox1
+  m_EditorClassIdentifier: 
+  puzzleId: blackberryBox1
+  fullImage: {fileID: 21300000, guid: 85154539f3787564c86115b94ad733b2, type: 3}
+  completionReward: 400
+  pieces:
+  - {fileID: 21300000, guid: e531f9370a857ef45aa6aabae470c636, type: 3}
+  - {fileID: 21300000, guid: 3a4b205d721710f4699b25754105946e, type: 3}
+  - {fileID: 21300000, guid: de2bc3260c6d91c4d89b906b67ce4be8, type: 3}
+  - {fileID: 21300000, guid: 2e862897e2e527446a5b4cc6ae149498, type: 3}
+  - {fileID: 21300000, guid: 5fb846b46555ab44dad370aaba7f00b0, type: 3}
+  - {fileID: 21300000, guid: 444425864c3132e4daf5803ab2362815, type: 3}
+  - {fileID: 21300000, guid: 654c3dc48be5bfe4b8971a0a55ff401c, type: 3}
+  - {fileID: 21300000, guid: 5c24303a3c4ed824ca3221d74eacef20, type: 3}
+  - {fileID: 21300000, guid: ece2fb45c99ab724d914cb5c029d525b, type: 3}
