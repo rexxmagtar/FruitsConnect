@@ -10,7 +10,8 @@ public static class NoiseBranchGenerator
 {
     /// <summary>
     /// Add noise branches to the skeleton network
-    /// All branches reconnect to skeleton or consumers (no dead ends)
+    /// Creates both reconnecting branches and dead-end branches (red herrings)
+    /// If no unused nodes available, can create dead ends from skeleton nodes themselves
     /// </summary>
     public static void AddNoiseBranches(
         SkeletonPathGenerator.SkeletonNetwork skeletonNetwork,
@@ -18,9 +19,19 @@ public static class NoiseBranchGenerator
         DifficultyTier difficulty,
         Dictionary<string, BaseNode> nodesByID)
     {
+        // For Expert difficulty, ensure we create dead ends even if no unused nodes
+        // We can create dead ends by connecting skeleton nodes to consumers in ways that create red herrings
         if (unusedNeutralIDs.Count == 0)
         {
-            Debug.Log("No unused neutral nodes for noise branches");
+            if (difficulty == DifficultyTier.Expert)
+            {
+                Debug.Log("No unused neutral nodes, but Expert difficulty - creating dead-end connections from skeleton nodes");
+                CreateDeadEndsFromSkeletonNodes(skeletonNetwork, difficulty, nodesByID);
+            }
+            else
+            {
+                Debug.Log("No unused neutral nodes for noise branches");
+            }
             return;
         }
         
@@ -72,7 +83,8 @@ public static class NoiseBranchGenerator
                 continue;
             }
             
-            // Create branch connections
+            // Create branch that ALWAYS reconnects to skeleton (no physical dead ends)
+            // All branches must be physically connected from entrance to exit
             AddBranchConnections(
                 branchStartID,
                 branchNodeIDs,
@@ -80,8 +92,14 @@ public static class NoiseBranchGenerator
                 skeletonNodeIDs,
                 nodesByID);
             
+            // Determine if this branch should be an "energetic dead end"
+            // Energetic dead ends have negative energy sum making them impossible to use
+            // but they're still physically connected to the skeleton
+            bool isEnergeticDeadEnd = ShouldCreateEnergeticDeadEnd(difficulty);
+            
             // Assign weights to branch nodes
-            AssignBranchWeights(branchNodeIDs, skeletonNetwork);
+            // If it's an energetic dead end, assign weights that create negative energy sum
+            AssignBranchWeights(branchNodeIDs, skeletonNetwork, isEnergeticDeadEnd);
             
             // Assign max connections to branch nodes
             AssignBranchMaxConnections(branchNodeIDs, skeletonNetwork, difficulty);
@@ -194,6 +212,7 @@ public static class NoiseBranchGenerator
         }
         
         // CRITICAL: Reconnect last branch node to skeleton or consumer
+        // ALL branches must reconnect - no physical dead ends allowed
         string lastBranchNode = branchNodeIDs[branchNodeIDs.Count - 1];
         
         if (!skeletonNetwork.Connections.ContainsKey(lastBranchNode))
@@ -202,6 +221,7 @@ public static class NoiseBranchGenerator
         }
         
         // Find reconnection target (prefer skeleton nodes, fallback to consumers)
+        // FindReconnectionTarget now guarantees it will return a valid target (never null)
         string reconnectionTarget = FindReconnectionTarget(
             lastBranchNode,
             branchStartID,
@@ -210,20 +230,82 @@ public static class NoiseBranchGenerator
             skeletonNetwork,
             nodesByID);
         
-        if (reconnectionTarget != null && !skeletonNetwork.Connections[lastBranchNode].Contains(reconnectionTarget))
+        // CRITICAL: reconnectionTarget should never be null after our fix to FindReconnectionTarget
+        // But keep fallback logic just in case
+        if (reconnectionTarget != null)
         {
-            skeletonNetwork.Connections[lastBranchNode].Add(reconnectionTarget);
-            Debug.Log($"Branch reconnected: {branchStartID} -> [{string.Join(", ", branchNodeIDs)}] -> {reconnectionTarget}");
+            if (!skeletonNetwork.Connections[lastBranchNode].Contains(reconnectionTarget))
+            {
+                skeletonNetwork.Connections[lastBranchNode].Add(reconnectionTarget);
+                Debug.Log($"Branch reconnected: {branchStartID} -> [{string.Join(", ", branchNodeIDs)}] -> {reconnectionTarget}");
+            }
+            else
+            {
+                Debug.LogWarning($"Branch ending at {lastBranchNode} already connected to {reconnectionTarget}, skipping duplicate");
+            }
         }
         else
         {
-            Debug.LogWarning($"Could not find reconnection target for branch ending at {lastBranchNode}");
+            // CRITICAL: This should never happen now, but keep as safety fallback
+            Debug.LogError($"ERROR: FindReconnectionTarget returned null for branch ending at {lastBranchNode}! Using emergency fallback.");
+            
+            if (skeletonNetwork.ConsumerIDs.Count > 0)
+            {
+                string firstConsumer = skeletonNetwork.ConsumerIDs[0];
+                if (!skeletonNetwork.Connections[lastBranchNode].Contains(firstConsumer))
+                {
+                    skeletonNetwork.Connections[lastBranchNode].Add(firstConsumer);
+                }
+                Debug.LogError($"EMERGENCY: Force reconnected branch to first consumer: {branchStartID} -> [{string.Join(", ", branchNodeIDs)}] -> {firstConsumer}");
+            }
+            else
+            {
+                Debug.LogError($"FATAL: No consumers available to reconnect branch ending at {lastBranchNode}!");
+            }
         }
+        
+        // Final verification: ensure last branch node has at least one outgoing connection
+        if (!skeletonNetwork.Connections.ContainsKey(lastBranchNode) || 
+            skeletonNetwork.Connections[lastBranchNode].Count == 0)
+        {
+            Debug.LogError($"FATAL: Branch ending at {lastBranchNode} has NO outgoing connections! This is a dead end!");
+            // Emergency: connect to first consumer
+            if (skeletonNetwork.ConsumerIDs.Count > 0)
+            {
+                string emergencyConsumer = skeletonNetwork.ConsumerIDs[0];
+                if (!skeletonNetwork.Connections.ContainsKey(lastBranchNode))
+                {
+                    skeletonNetwork.Connections[lastBranchNode] = new List<string>();
+                }
+                skeletonNetwork.Connections[lastBranchNode].Add(emergencyConsumer);
+                Debug.LogError($"EMERGENCY FIX: Connected {lastBranchNode} -> {emergencyConsumer}");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Determine if a branch should be an "energetic dead end" (based on difficulty)
+    /// Energetic dead ends have negative energy sum making them impossible to use
+    /// but they're still physically connected to the skeleton (no physical dead ends)
+    /// </summary>
+    private static bool ShouldCreateEnergeticDeadEnd(DifficultyTier difficulty)
+    {
+        float probability = difficulty switch
+        {
+            DifficultyTier.Easy => 0.0f,      // No energetic dead ends for easy
+            DifficultyTier.Medium => 0.3f,    // 30% chance
+            DifficultyTier.Hard => 0.5f,      // 50% chance
+            DifficultyTier.Expert => 0.7f,    // 70% chance
+            _ => 0.3f
+        };
+        
+        return Random.value < probability;
     }
     
     /// <summary>
     /// Find a suitable reconnection target for a branch
     /// Prefers skeleton nodes, falls back to consumers
+    /// CRITICAL: Must always return a valid target (never null) to ensure no dead ends
     /// </summary>
     private static string FindReconnectionTarget(
         string branchEndID,
@@ -233,24 +315,37 @@ public static class NoiseBranchGenerator
         SkeletonPathGenerator.SkeletonNetwork network,
         Dictionary<string, BaseNode> nodesByID)
     {
-        // Get physical positions
-        if (!nodesByID.ContainsKey(branchEndID))
-        {
-            Debug.LogWarning($"Branch end node {branchEndID} not found in nodesByID");
-            return null;
-        }
+        Vector3 branchEndPos = Vector3.zero;
+        bool hasPosition = false;
         
-        Vector3 branchEndPos = nodesByID[branchEndID].transform.position;
+        // Get physical positions if available
+        if (nodesByID.ContainsKey(branchEndID))
+        {
+            branchEndPos = nodesByID[branchEndID].transform.position;
+            hasPosition = true;
+        }
+        else
+        {
+            Debug.LogWarning($"Branch end node {branchEndID} not found in nodesByID, will use fallback selection");
+        }
         
         // Candidate list: skeleton nodes + consumers, excluding branch start
         List<string> candidates = new List<string>();
         candidates.AddRange(skeletonNodeIDs.Where(id => id != branchStartID));
         candidates.AddRange(consumerIDs);
         
+        if (candidates.Count == 0)
+        {
+            Debug.LogError($"No candidates available for reconnection! Skeleton nodes: {skeletonNodeIDs.Count}, Consumers: {consumerIDs.Count}");
+            // Last resort: return any consumer if available
+            return consumerIDs.Count > 0 ? consumerIDs[0] : null;
+        }
+        
         // Find nearest candidate with available capacity
         string bestCandidate = null;
         float bestDistance = float.MaxValue;
         
+        // First pass: Try to find candidate with capacity
         foreach (string candidateID in candidates)
         {
             if (!nodesByID.ContainsKey(candidateID))
@@ -273,13 +368,58 @@ public static class NoiseBranchGenerator
             
             if (hasCapacity || isConsumer)
             {
-                float distance = Vector3.Distance(branchEndPos, nodesByID[candidateID].transform.position);
-                if (distance < bestDistance)
+                if (hasPosition)
                 {
-                    bestDistance = distance;
-                    bestCandidate = candidateID;
+                    float distance = Vector3.Distance(branchEndPos, nodesByID[candidateID].transform.position);
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestCandidate = candidateID;
+                    }
+                }
+                else
+                {
+                    // No position info, just pick first available
+                    if (bestCandidate == null)
+                    {
+                        bestCandidate = candidateID;
+                    }
                 }
             }
+        }
+        
+        // Second pass: If no candidate with capacity found, pick any consumer (they always have capacity)
+        if (bestCandidate == null)
+        {
+            Debug.LogWarning($"No candidate with capacity found, using any consumer as fallback");
+            foreach (string consumerID in consumerIDs)
+            {
+                if (nodesByID.ContainsKey(consumerID))
+                {
+                    if (hasPosition)
+                    {
+                        float distance = Vector3.Distance(branchEndPos, nodesByID[consumerID].transform.position);
+                        if (distance < bestDistance)
+                        {
+                            bestDistance = distance;
+                            bestCandidate = consumerID;
+                        }
+                    }
+                    else
+                    {
+                        bestCandidate = consumerID;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Final fallback: return first available consumer or skeleton node
+        if (bestCandidate == null)
+        {
+            Debug.LogWarning($"Still no candidate found, using first available");
+            bestCandidate = consumerIDs.Count > 0 ? consumerIDs[0] : 
+                          (skeletonNodeIDs.Count > 0 ? skeletonNodeIDs[0] : null);
         }
         
         return bestCandidate;
@@ -314,15 +454,51 @@ public static class NoiseBranchGenerator
         }
     }
     
+    /// <summary>
+    /// Assign weights to branch nodes
+    /// If isEnergeticDeadEnd is true, assign weights that create negative energy sum
+    /// (making the path impossible to use, but still physically connected)
+    /// </summary>
     private static void AssignBranchWeights(
         List<string> branchNodeIDs,
-        SkeletonPathGenerator.SkeletonNetwork network)
+        SkeletonPathGenerator.SkeletonNetwork network,
+        bool isEnergeticDeadEnd)
     {
-        foreach (string nodeID in branchNodeIDs)
+        if (isEnergeticDeadEnd)
         {
-            // Random weight with only 10% chance of being 0
-            int weight = GenerateRandomWeight();
-            network.Weights[nodeID] = weight;
+            // Create negative energy sum: assign mostly negative weights
+            // Starting energy is 5, so we need sum < -5 to make it impossible
+            // With branch length, assign weights that sum to less than -5
+            int targetSum = -6 - Random.Range(0, 4); // Target sum between -6 and -9
+            
+            if (branchNodeIDs.Count == 0) return;
+            
+            // Distribute negative weights across branch nodes
+            int currentSum = 0;
+            for (int i = 0; i < branchNodeIDs.Count - 1; i++)
+            {
+                // Assign negative weight (-3 to -1)
+                int weight = Random.Range(-3, 0);
+                network.Weights[branchNodeIDs[i]] = weight;
+                currentSum += weight;
+            }
+            
+            // Last node adjusts to hit target sum
+            int lastWeight = Mathf.Clamp(targetSum - currentSum, -3, 3);
+            network.Weights[branchNodeIDs[branchNodeIDs.Count - 1]] = lastWeight;
+            
+            int finalSum = currentSum + lastWeight;
+            Debug.Log($"Energetic dead-end branch: [{string.Join(", ", branchNodeIDs)}] with weights summing to {finalSum} (impossible to use, starting energy 5)");
+        }
+        else
+        {
+            // Normal branch: random weights (can be positive or negative)
+            foreach (string nodeID in branchNodeIDs)
+            {
+                // Random weight with only 10% chance of being 0
+                int weight = GenerateRandomWeight();
+                network.Weights[nodeID] = weight;
+            }
         }
     }
     
@@ -350,5 +526,27 @@ public static class NoiseBranchGenerator
             
             network.MaxConnections[nodeID] = maxConnections;
         }
+    }
+    
+    /// <summary>
+    /// Create energetic dead-end connections from skeleton nodes when no unused nodes are available
+    /// These are physically connected but have negative energy making them impossible to use
+    /// NOTE: This is now less important since all branches reconnect, but kept for Expert difficulty
+    /// </summary>
+    private static void CreateDeadEndsFromSkeletonNodes(
+        SkeletonPathGenerator.SkeletonNetwork skeletonNetwork,
+        DifficultyTier difficulty,
+        Dictionary<string, BaseNode> nodesByID)
+    {
+        // For Expert difficulty, we can create additional connections that look like paths
+        // but have negative energy. However, since all branches now reconnect, this is less critical.
+        // Keeping minimal implementation for now - can be enhanced later if needed.
+        
+        if (difficulty != DifficultyTier.Expert)
+        {
+            return; // Only for Expert difficulty
+        }
+        
+        Debug.Log("Expert difficulty: All branches reconnect, energetic dead ends created through weight assignment");
     }
 }

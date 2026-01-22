@@ -395,22 +395,28 @@ public class LevelCompleteUI : MonoBehaviour
             yield return StartCoroutine(AnimateCoins(totalToAnimate, startBalance));
         }
         
-        // All animations complete, fade in menu button (images and texts simultaneously)
-        StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
-        StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
-        
-        // Wait for fade-in to complete
-        yield return new WaitForSeconds(buttonFadeInDuration);
         
         
         // Animate fruit progress delta (initial progress was already set)
         yield return StartCoroutine(AnimateFruitProgress());
+
+        yield return new WaitForSeconds(1f);
+        
 
                 // Show puzzle piece earned popups if any
         if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
         {
             JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
         }
+
+                // All animations complete, fade in menu button (images and texts simultaneously)
+        StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
+        StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
+        
+        // Wait for fade-in to complete
+        yield return new WaitForSeconds(buttonFadeInDuration);
+
+        
 
         // Enable button
         isAnimating = false;

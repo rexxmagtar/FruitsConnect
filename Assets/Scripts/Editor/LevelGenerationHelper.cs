@@ -64,6 +64,44 @@ public static class LevelGenerationHelper
         return mappings.Count < node.MaxOutgoingConnections;
     }
     
+    /// <summary>
+    /// Validate and fix that maxOutgoingConnections doesn't exceed total possible connections
+    /// For each node, checks if maxOutgoingConnections > connectionMapping.Count and adjusts it
+    /// </summary>
+    public static void ValidateAndFixMaxOutgoingConnections(List<BaseNode> nodes, LevelController level)
+    {
+        int fixedCount = 0;
+        
+        foreach (var node in nodes)
+        {
+            if (node == null) continue;
+            
+            // Skip consumers as they have 0 max outgoing connections
+            if (node is ConsumerNode) continue;
+            
+            var mappings = level.GetConnectionMapping(node.NodeID);
+            int possibleConnections = mappings.Count;
+            
+            // If maxOutgoingConnections exceeds possible connections, fix it
+            if (node.MaxOutgoingConnections > possibleConnections)
+            {
+                int oldMax = node.MaxOutgoingConnections;
+                node.MaxOutgoingConnections = possibleConnections;
+                fixedCount++;
+                Debug.LogWarning($"Fixed node {node.NodeID}: MaxOutgoingConnections reduced from {oldMax} to {possibleConnections} (only {possibleConnections} possible connections in mapping)");
+            }
+        }
+        
+        if (fixedCount > 0)
+        {
+            Debug.Log($"✓ Fixed {fixedCount} node(s) with MaxOutgoingConnections exceeding possible connections");
+        }
+        else
+        {
+            Debug.Log($"✓ All nodes have valid MaxOutgoingConnections (not exceeding possible connections)");
+        }
+    }
+    
 
     /// <summary>
     /// Create a node at a random valid position within bounds

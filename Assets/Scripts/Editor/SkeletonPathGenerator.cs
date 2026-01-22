@@ -48,11 +48,12 @@ public static class SkeletonPathGenerator
             return null;
         }
         
-        // Step 1: Determine network structure based on difficulty
-        int layerCount = GetLayerCount(difficulty);
+        // Step 1: Determine network structure based on difficulty and node count
+        // Ensure last layer has enough nodes to distribute consumers
+        int layerCount = GetLayerCount(difficulty, neutralIDs.Count, consumerIDs.Count);
         
-        // Step 2: Divide neutral IDs into layers
-        List<List<string>> layers = DivideIDsIntoLayers(neutralIDs, layerCount);
+        // Step 2: Divide neutral IDs into layers (ensuring last layer has enough nodes)
+        List<List<string>> layers = DivideIDsIntoLayers(neutralIDs, layerCount, consumerIDs.Count);
         
         SkeletonNetwork network = new SkeletonNetwork
         {
@@ -78,6 +79,9 @@ public static class SkeletonPathGenerator
         
         ConnectLastLayerToConsumers(network);
         
+        // Step 4.5: Verify all consumers are reachable from producers
+        VerifyAllConsumersReachable(network);
+        
         // Step 5: Adjust max connections to match actual connections made
         // This ensures nodes have enough capacity for the connections we created
         AdjustMaxConnectionsToActual(network);
@@ -94,28 +98,58 @@ public static class SkeletonPathGenerator
     }
     
     /// <summary>
-    /// Determine number of layers based on difficulty
-    /// With 6-10 neutrals, we need fewer layers to ensure each layer has nodes
+    /// Determine number of layers based on difficulty, neutral count, and consumer count
+    /// Ensures last layer has enough nodes to distribute consumers across different nodes
     /// </summary>
-    private static int GetLayerCount(DifficultyTier difficulty)
+    private static int GetLayerCount(DifficultyTier difficulty, int neutralCount, int consumerCount)
     {
-        return difficulty switch
+        // Base layer count from difficulty
+        int baseLayerCount = difficulty switch
         {
-            DifficultyTier.Easy => 2,           // 2 layers (simple path)
-            DifficultyTier.Medium => 3,         // 3 layers
-            DifficultyTier.Hard => 4,           // 4 layers
-            DifficultyTier.Expert => 5,         // 5 layers (with 6-10 nodes, ~1-2 per layer)
+            DifficultyTier.Easy => 2,
+            DifficultyTier.Medium => 3,
+            DifficultyTier.Hard => 4,
+            DifficultyTier.Expert => 5,
             _ => 3
         };
+        
+        // Ensure we have enough nodes in last layer to distribute consumers
+        // Last layer should have at least as many nodes as consumers (or close to it)
+        // With round-robin: last layer gets nodes at indices: (layerCount-1), (2*layerCount-1), ...
+        // So with neutralCount nodes and layerCount layers, last layer gets roughly neutralCount/layerCount nodes
+        
+        // Calculate minimum nodes needed in last layer (at least consumerCount, or at least 2)
+        int minNodesInLastLayer = Mathf.Max(consumerCount, 2);
+        
+        // Adjust layer count to ensure last layer has enough nodes
+        // If baseLayerCount would give too few nodes in last layer, reduce layer count
+        int estimatedNodesInLastLayer = Mathf.CeilToInt((float)neutralCount / baseLayerCount);
+        
+        if (estimatedNodesInLastLayer < minNodesInLastLayer)
+        {
+            // Reduce layer count to ensure last layer has enough nodes
+            // We want: neutralCount / layerCount >= minNodesInLastLayer
+            // So: layerCount <= neutralCount / minNodesInLastLayer
+            int originalLayerCount = baseLayerCount;
+            int maxLayers = Mathf.Max(2, neutralCount / minNodesInLastLayer);
+            baseLayerCount = Mathf.Min(baseLayerCount, maxLayers);
+            
+            int newEstimatedNodes = Mathf.CeilToInt((float)neutralCount / baseLayerCount);
+            Debug.Log($"Adjusted layer count from {originalLayerCount} to {baseLayerCount} to ensure last layer has enough nodes for {consumerCount} consumers (estimated {estimatedNodesInLastLayer} -> {newEstimatedNodes} nodes per layer)");
+        }
+        
+        return baseLayerCount;
     }
     
     /// <summary>
     /// Divide neutral IDs into layers
-    /// Simple round-robin distribution
+    /// Ensures last layer has enough nodes for consumer distribution
+    /// Uses weighted distribution: last layer gets more nodes if needed
     /// </summary>
     private static List<List<string>> DivideIDsIntoLayers(
         List<string> neutralIDs,
-        int layerCount)
+        int layerCount,
+        int consumerCount)
     {
         List<List<string>> layers = new List<List<string>>();
         
@@ -124,12 +158,57 @@ public static class SkeletonPathGenerator
             layers.Add(new List<string>());
         }
         
-        // Round-robin distribution
-        for (int i = 0; i < neutralIDs.Count; i++)
+        if (neutralIDs.Count == 0)
+            return layers;
+        
+        // Calculate target nodes per layer
+        // Last layer should have at least as many nodes as consumers (or at least 2)
+        int minLastLayerNodes = Mathf.Max(consumerCount, 2);
+        int remainingNodes = neutralIDs.Count;
+        
+        // Distribute nodes: give last layer priority to ensure it has enough nodes
+        // Then distribute remaining nodes evenly across other layers
+        
+        // First, ensure last layer has enough nodes
+        int lastLayerIndex = layerCount - 1;
+        int nodesForLastLayer = Mathf.Min(minLastLayerNodes, remainingNodes);
+        
+        // If we have enough nodes, use weighted distribution
+        // Otherwise, use simple round-robin
+        if (neutralIDs.Count >= minLastLayerNodes + (layerCount - 1))
         {
-            int layerIndex = i % layerCount;
-            layers[layerIndex].Add(neutralIDs[i]);
+            // We have enough nodes: give last layer priority, then distribute rest
+            int nodesDistributed = 0;
+            
+            // Fill last layer first
+            for (int i = 0; i < nodesForLastLayer; i++)
+            {
+                layers[lastLayerIndex].Add(neutralIDs[nodesDistributed]);
+                nodesDistributed++;
+            }
+            
+            // Distribute remaining nodes evenly across all layers (including last layer)
+            remainingNodes = neutralIDs.Count - nodesDistributed;
+            for (int i = 0; i < remainingNodes; i++)
+            {
+                int layerIndex = nodesDistributed % layerCount;
+                layers[layerIndex].Add(neutralIDs[nodesDistributed]);
+                nodesDistributed++;
+            }
         }
+        else
+        {
+            // Not enough nodes: use round-robin but ensure last layer gets at least 1
+            for (int i = 0; i < neutralIDs.Count; i++)
+            {
+                int layerIndex = i % layerCount;
+                layers[layerIndex].Add(neutralIDs[i]);
+            }
+        }
+        
+        // Log distribution
+        Debug.Log($"Layer distribution: {string.Join(", ", layers.Select((layer, idx) => $"Layer{idx}:{layer.Count}"))}");
+        Debug.Log($"Last layer has {layers[lastLayerIndex].Count} node(s) for {consumerCount} consumer(s)");
         
         return layers;
     }
@@ -342,66 +421,143 @@ public static class SkeletonPathGenerator
     /// <summary>
     /// Connect last neutral layer to consumers
     /// GUARANTEES that every consumer gets at least one connection
+    /// DISTRIBUTES consumers across different nodes to avoid all connecting to same node
+    /// CRITICAL: Only uses last layer nodes to ensure all consumers are reachable from producers
     /// </summary>
     private static void ConnectLastLayerToConsumers(SkeletonNetwork network)
     {
         var lastLayer = network.NeutralLayerIDs[network.NeutralLayerIDs.Count - 1];
         
+        // CRITICAL: Only use last layer nodes for consumer connections
+        // This ensures all consumers are reachable from producers through the skeleton path
+        // Using earlier layers could create unreachable consumers if those nodes aren't properly connected
+        List<string> candidateNodes = new List<string>();
+        candidateNodes.AddRange(lastLayer);
+        
+        // Verify last layer has enough nodes
+        if (lastLayer.Count < network.ConsumerIDs.Count)
+        {
+            Debug.LogWarning($"Last layer has {lastLayer.Count} nodes but {network.ConsumerIDs.Count} consumers. Some nodes will connect to multiple consumers.");
+        }
+        
         // Track which consumers have been connected
         HashSet<string> connectedConsumers = new HashSet<string>();
+        // Track which nodes have been used for consumers (to avoid overloading single node)
+        Dictionary<string, int> nodeConsumerCount = new Dictionary<string, int>();
         
-        // First pass: Try to connect each consumer to dedicated nodes
+        // Initialize node consumer counts
+        foreach (string neutralID in candidateNodes)
+        {
+            nodeConsumerCount[neutralID] = 0;
+        }
+        
+        // First pass: Distribute consumers across different nodes
+        // Try to give each consumer a dedicated node, or at least minimize overlap
         for (int i = 0; i < network.ConsumerIDs.Count; i++)
         {
             string consumerID = network.ConsumerIDs[i];
+            bool connected = false;
             
-            // Try to find a node in last layer with capacity
-            for (int j = 0; j < lastLayer.Count; j++)
+            // Sort nodes by: 1) least consumer connections, 2) available capacity
+            // All candidate nodes are from last layer, so no need to check layer priority
+            var sortedNodes = candidateNodes
+                .OrderBy(nid => 
+                {
+                    int consumerConnections = nodeConsumerCount.ContainsKey(nid) ? nodeConsumerCount[nid] : 0;
+                    int currentConnections = network.Connections.ContainsKey(nid) ? 
+                        network.Connections[nid].Count : 0;
+                    int maxConnections = network.MaxConnections.ContainsKey(nid) ? network.MaxConnections[nid] : 1;
+                    bool hasCapacity = currentConnections < maxConnections;
+                    
+                    // Prefer nodes with fewer consumer connections and available capacity
+                    if (!hasCapacity) return int.MaxValue; // No capacity = lowest priority
+                    return consumerConnections * 100 + currentConnections; // Prefer fewer consumer connections
+                })
+                .ToList();
+            
+            // Try to connect to a node with no or few consumer connections
+            foreach (string neutralID in sortedNodes)
             {
-                int nodeIdx = (i + j) % lastLayer.Count;
-                string neutralID = lastLayer[nodeIdx];
-                
                 if (!network.Connections.ContainsKey(neutralID))
                 {
                     network.Connections[neutralID] = new List<string>();
                 }
                 
+                int currentConnections = network.Connections[neutralID].Count;
+                int maxConnections = network.MaxConnections[neutralID];
+                
                 // Check if this node has capacity
-                if (network.Connections[neutralID].Count < network.MaxConnections[neutralID])
+                if (currentConnections < maxConnections)
                 {
                     if (!network.Connections[neutralID].Contains(consumerID))
                     {
                         network.Connections[neutralID].Add(consumerID);
                         connectedConsumers.Add(consumerID);
-                        Debug.Log($"Connected consumer {i} ({consumerID}) to last layer node {nodeIdx} ({neutralID})");
-                        break; // This consumer is connected, move to next
+                        nodeConsumerCount[neutralID]++;
+                        Debug.Log($"Connected consumer {i} ({consumerID}) to last layer node ({neutralID}) - node now has {nodeConsumerCount[neutralID]} consumer(s)");
+                        connected = true;
+                        break;
+                    }
+                }
+            }
+            
+            // If still not connected, try any node with capacity (even if it already has consumers)
+            if (!connected)
+            {
+                foreach (string neutralID in sortedNodes)
+                {
+                    if (!network.Connections.ContainsKey(neutralID))
+                    {
+                        network.Connections[neutralID] = new List<string>();
+                    }
+                    
+                    int currentConnections = network.Connections[neutralID].Count;
+                    int maxConnections = network.MaxConnections[neutralID];
+                    
+                    if (currentConnections < maxConnections)
+                    {
+                        if (!network.Connections[neutralID].Contains(consumerID))
+                        {
+                            network.Connections[neutralID].Add(consumerID);
+                            connectedConsumers.Add(consumerID);
+                            nodeConsumerCount[neutralID]++;
+                            Debug.LogWarning($"Connected consumer {consumerID} to last layer node {neutralID} (node already has {nodeConsumerCount[neutralID] - 1} other consumer(s))");
+                            connected = true;
+                            break;
+                        }
                     }
                 }
             }
         }
         
         // Second pass: Ensure ALL consumers are connected (force connection if needed)
+        // Increase max connections if necessary to ensure distribution
         foreach (string consumerID in network.ConsumerIDs)
         {
             if (!connectedConsumers.Contains(consumerID))
             {
-                // This consumer has no connection! Force add to any node in last layer
                 Debug.LogWarning($"Consumer {consumerID} had no connection! Force connecting...");
                 
-                // Find the node with the least connections
-                string bestNodeID = lastLayer[0];
-                int minConnections = network.Connections.ContainsKey(bestNodeID) ? 
-                    network.Connections[bestNodeID].Count : 0;
-                
-                foreach (string neutralID in lastLayer)
-                {
-                    int connCount = network.Connections.ContainsKey(neutralID) ? 
-                        network.Connections[neutralID].Count : 0;
-                    
-                    if (connCount < minConnections)
+                // Find the node with the least consumer connections (even if at capacity)
+                // All candidate nodes are from last layer
+                string bestNodeID = candidateNodes
+                    .OrderBy(nid => nodeConsumerCount.ContainsKey(nid) ? nodeConsumerCount[nid] : 0)
+                    .ThenBy(nid => 
                     {
-                        minConnections = connCount;
-                        bestNodeID = neutralID;
+                        int currentConnections = network.Connections.ContainsKey(nid) ? 
+                            network.Connections[nid].Count : 0;
+                        return currentConnections;
+                    })
+                    .First();
+                
+                // Increase max connections if needed
+                if (network.Connections.ContainsKey(bestNodeID))
+                {
+                    int currentConnections = network.Connections[bestNodeID].Count;
+                    if (currentConnections >= network.MaxConnections[bestNodeID])
+                    {
+                        network.MaxConnections[bestNodeID] = currentConnections + 1;
+                        Debug.Log($"Increased max connections for {bestNodeID} to {network.MaxConnections[bestNodeID]} to accommodate consumer");
                     }
                 }
                 
@@ -414,9 +570,111 @@ public static class SkeletonPathGenerator
                 if (!network.Connections[bestNodeID].Contains(consumerID))
                 {
                     network.Connections[bestNodeID].Add(consumerID);
+                    if (!nodeConsumerCount.ContainsKey(bestNodeID))
+                        nodeConsumerCount[bestNodeID] = 0;
+                    nodeConsumerCount[bestNodeID]++;
                     Debug.Log($"Force connected consumer {consumerID} to node {bestNodeID}");
                 }
             }
+        }
+        
+        // Log final distribution
+        Debug.Log("=== Consumer Distribution Across Last Layer ===");
+        foreach (string neutralID in candidateNodes)
+        {
+            int consumerConnections = nodeConsumerCount.ContainsKey(neutralID) ? nodeConsumerCount[neutralID] : 0;
+            int totalConnections = network.Connections.ContainsKey(neutralID) ? 
+                network.Connections[neutralID].Count : 0;
+            Debug.Log($"Last layer Node {neutralID}: {consumerConnections} consumer(s), {totalConnections} total connection(s)");
+        }
+        
+        // Verify all consumers are connected
+        if (connectedConsumers.Count != network.ConsumerIDs.Count)
+        {
+            Debug.LogError($"ERROR: Only {connectedConsumers.Count}/{network.ConsumerIDs.Count} consumers are connected!");
+        }
+        else
+        {
+            Debug.Log($"SUCCESS: All {network.ConsumerIDs.Count} consumers are connected to last layer nodes");
+        }
+    }
+    
+    /// <summary>
+    /// Verify that all consumers are reachable from producers through the skeleton network
+    /// Uses BFS to check connectivity
+    /// </summary>
+    private static void VerifyAllConsumersReachable(SkeletonNetwork network)
+    {
+        Debug.Log("=== Verifying All Consumers Are Reachable from Producers ===");
+        
+        // For each consumer, check if it's reachable from any producer using BFS
+        HashSet<string> reachableFromProducers = new HashSet<string>();
+        Queue<string> queue = new Queue<string>();
+        
+        // Start BFS from all producers
+        foreach (string producerID in network.ProducerIDs)
+        {
+            queue.Enqueue(producerID);
+            reachableFromProducers.Add(producerID);
+        }
+        
+        // BFS to find all nodes reachable from producers
+        while (queue.Count > 0)
+        {
+            string currentID = queue.Dequeue();
+            
+            // Check all nodes this node connects to
+            if (network.Connections.ContainsKey(currentID))
+            {
+                foreach (string targetID in network.Connections[currentID])
+                {
+                    if (!reachableFromProducers.Contains(targetID))
+                    {
+                        reachableFromProducers.Add(targetID);
+                        queue.Enqueue(targetID);
+                    }
+                }
+            }
+        }
+        
+        // Check each consumer
+        int unreachableCount = 0;
+        foreach (string consumerID in network.ConsumerIDs)
+        {
+            if (!reachableFromProducers.Contains(consumerID))
+            {
+                unreachableCount++;
+                Debug.LogError($"ERROR: Consumer {consumerID} is NOT reachable from any producer!");
+                
+                // Find which node connects to this consumer
+                string connectingNode = null;
+                foreach (var kvp in network.Connections)
+                {
+                    if (kvp.Value.Contains(consumerID))
+                    {
+                        connectingNode = kvp.Key;
+                        break;
+                    }
+                }
+                
+                if (connectingNode != null)
+                {
+                    Debug.LogError($"  Consumer {consumerID} is connected from node {connectingNode}, but that node is not reachable from producers!");
+                }
+                else
+                {
+                    Debug.LogError($"  Consumer {consumerID} has no incoming connections!");
+                }
+            }
+        }
+        
+        if (unreachableCount == 0)
+        {
+            Debug.Log($"SUCCESS: All {network.ConsumerIDs.Count} consumers are reachable from producers");
+        }
+        else
+        {
+            Debug.LogError($"FAILED: {unreachableCount} consumer(s) are NOT reachable from producers!");
         }
     }
     

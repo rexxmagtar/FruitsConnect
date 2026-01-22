@@ -200,6 +200,10 @@ public static class CoreNoiseGenerator
         
         Debug.Log($"Generated level with {corePaths.Count} core paths and noise complexity");
         Debug.Log(metrics.ToString());
+        
+        // Final validation: Ensure maxOutgoingConnections doesn't exceed possible connections
+        Debug.Log("=== Validating MaxOutgoingConnections Against Connection Mappings ===");
+        LevelGenerationHelper.ValidateAndFixMaxOutgoingConnections(allNodes, level);
     }
     
     /// <summary>

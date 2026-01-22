@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level6_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 5691074647173132956, guid: 62095e83d583b954bb142ba32b40127c, type: 3}
-  coinReward: 10
+  coinReward: 20
   levelName: Level6
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}

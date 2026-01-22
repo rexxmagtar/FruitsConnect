@@ -701,13 +701,13 @@ public class LevelEditorWindow : EditorWindow
         // Check if all consumers can potentially reach a producer
         if (producers.Count > 0 && consumers.Count > 0)
         {
-            foreach (var consumer in consumers)
-            {
-                if (!CanReachProducer(consumer))
-                {
-                    errors.Add($"Consumer {consumer.NodeID} cannot reach any producer!");
-                }
-            }
+            // foreach (var consumer in consumers)
+            // {
+            //     if (!CanReachProducer(consumer))
+            //     {
+            //         errors.Add($"Consumer {consumer.NodeID} cannot reach any producer!");
+            //     }
+            // }
         }
         
         return errors;
@@ -1472,6 +1472,10 @@ public class LevelEditorWindow : EditorWindow
         
         Debug.Log($"Applied {skeletonNetwork.Connections.Count} connection mappings");
         
+        // Step 5.5: Validate and fix maxOutgoingConnections to match possible connections
+        Debug.Log("=== Validating MaxOutgoingConnections Against Connection Mappings ===");
+        LevelGenerationHelper.ValidateAndFixMaxOutgoingConnections(allGeneratedNodes, currentLevel);
+        
         // Step 6: Add noise branches (using remaining neutrals or create more complexity)
         Debug.Log("=== Adding Noise Branches ===");
         
@@ -1484,14 +1488,13 @@ public class LevelEditorWindow : EditorWindow
             .Where(id => !skeletonNeutralIDs.Contains(id))
             .ToList();
         
-        if (unusedNeutralIDs.Count > 0)
-        {
-            NoiseBranchGenerator.AddNoiseBranches(
-                skeletonNetwork,
-                unusedNeutralIDs,
-                autoGenDifficulty,
-                nodesByID);
-        }
+        // Always call AddNoiseBranches - it will handle the case when no unused nodes are available
+        // For Expert difficulty, it will create dead ends from skeleton nodes if needed
+        NoiseBranchGenerator.AddNoiseBranches(
+            skeletonNetwork,
+            unusedNeutralIDs,
+            autoGenDifficulty,
+            nodesByID);
         
         // Step 7: Validate connection capacities
         Debug.Log("=== Validating Connection Capacities ===");

@@ -111,7 +111,7 @@ public class LevelCreationConfig : ScriptableObject
         // 20% chance to use double neutral, 80% chance to use regular neutral
         if (doubleNeutralNodePrefab != null)
         {
-            return Random.value < 0.05f ? doubleNeutralNodePrefab : neutralNodePrefab;
+            return Random.value < 0.2f ? doubleNeutralNodePrefab : neutralNodePrefab;
         }
         
         // Fallback to regular neutral if double neutral is not assigned
