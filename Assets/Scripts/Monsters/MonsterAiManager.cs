@@ -10,8 +10,6 @@ using System.Linq;
 public class MonsterAiManager : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    [FormerlySerializedAs("monsterPrefab")]
-    [SerializeField] private List<GameObject> monsterPrefabs;
     [SerializeField] private int maxSpawnAttempts = 20; // Maximum attempts to find valid spawn position
     
     [Header("Manual Spawn Zone")]
@@ -382,31 +380,28 @@ public class MonsterAiManager : MonoBehaviour
             yield break;
         }
         
-        if (monsterPrefabs == null || monsterPrefabs.Count == 0)
+        // Get level and config
+        GameController gameController = GameController.Instance;
+        if (currentLevel == null && gameController != null)
         {
-            Debug.LogError("MonsterAiManager: No monster prefabs assigned!");
-            yield break;
+            currentLevel = gameController.CurrentLevel;
         }
         
         if (currentLevel == null)
         {
-            // Try to get level from GameController
-            GameController gameController = GameController.Instance;
-            if (gameController != null)
-            {
-                currentLevel = gameController.CurrentLevel;
-            }
-            
-            if (currentLevel == null)
-            {
-                Debug.LogError("MonsterAiManager: No level reference available!");
-                yield break;
-            }
+            Debug.LogError("MonsterAiManager: No level reference available!");
+            yield break;
+        }
+
+        LevelConfig config = (gameController != null) ? gameController.CurrentLevelConfig : null;
+        if (config == null || config.MonsterPrefabs == null || config.MonsterPrefabs.Count == 0)
+        {
+            Debug.LogError("MonsterAiManager: No monster prefabs assigned in LevelConfig!");
+            yield break;
         }
         
         // Double-check spawning is enabled and gameplay is enabled
-        GameController gameControllerCheck = GameController.Instance;
-        if (!spawningEnabled || (gameControllerCheck != null && !gameControllerCheck.GameplayEnabled))
+        if (!spawningEnabled || (gameController != null && !gameController.GameplayEnabled))
         {
             yield break;
         }
@@ -484,7 +479,7 @@ public class MonsterAiManager : MonoBehaviour
         }
         
         // Instantiate monster
-        GameObject prefabToSpawn = monsterPrefabs[Random.Range(0, monsterPrefabs.Count)];
+        GameObject prefabToSpawn = config.MonsterPrefabs[Random.Range(0, config.MonsterPrefabs.Count)];
         
         if (prefabToSpawn == null)
         {

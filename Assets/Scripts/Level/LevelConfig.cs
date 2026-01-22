@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "LevelConfig", menuName = "Fruit Connect/Level Config")]
 public class LevelConfig : ScriptableObject
@@ -34,6 +35,7 @@ public class LevelConfig : ScriptableObject
     [SerializeField] private System.Collections.Generic.List<string> puzzlePieceRewards = new System.Collections.Generic.List<string> { "random" };
     
     [Header("Monster Spawn Settings")]
+    [SerializeField] private List<GameObject> monsterPrefabs;
     [SerializeField] private float minSpawnInterval = 10f;
     [SerializeField] private float maxSpawnInterval = 30f;
     [SerializeField] private int maxActiveMonsters = 3;
@@ -50,6 +52,7 @@ public class LevelConfig : ScriptableObject
     public System.Collections.Generic.List<string> PuzzlePieceRewards => puzzlePieceRewards;
     
     // Monster Spawn Properties
+    public List<GameObject> MonsterPrefabs => monsterPrefabs;
     public float MinSpawnInterval => minSpawnInterval;
     public float MaxSpawnInterval => maxSpawnInterval;
     public int MaxActiveMonsters => maxActiveMonsters;

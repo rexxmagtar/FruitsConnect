@@ -378,6 +378,21 @@ public class LevelCompleteUI : MonoBehaviour
             yield return StartCoroutine(AnimateTextCount(coinsEarnedText, 0, coinsEarned, 0.5f, "+"));
         }
 
+        
+        
+        // Sequence: Money Animations
+        int totalCollectedSoFar = 0;
+        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
+
+        // Basic money fly
+        if (coinsEarned > 0)
+        {
+            yield return new WaitForSeconds(0.3f);
+            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, coinsEarnedText));
+            totalCollectedSoFar += coinsEarned;
+        }
+
         // Sequence: Boss Reward
         if (isBossLevel)
         {
@@ -406,19 +421,6 @@ public class LevelCompleteUI : MonoBehaviour
                 // Increase base text amount to total boss reward
                 yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, bossBaseReward, bossTotalReward, 0.5f));
             }
-        }
-        
-        // Sequence: Money Animations
-        int totalCollectedSoFar = 0;
-        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
-        int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
-
-        // Basic money fly
-        if (coinsEarned > 0)
-        {
-            yield return new WaitForSeconds(0.3f);
-            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, coinsEarnedText));
-            totalCollectedSoFar += coinsEarned;
         }
 
         // Boss money fly

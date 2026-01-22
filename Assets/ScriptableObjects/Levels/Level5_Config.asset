@@ -23,7 +23,9 @@ MonoBehaviour:
   puzzlePieceRewards:
   - cake1_3
   - cake1_4
+  monsterPrefabs:
+  - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   minSpawnInterval: 10
-  maxSpawnInterval: 300
+  maxSpawnInterval: 250
   maxActiveMonsters: 10
   safeTimeOffset: 0

@@ -35,7 +35,6 @@ namespace JigsawSystem
                 }
             }
 
-            if (puzzleImage != null) puzzleImage.sprite = data.fullImage;
             if (rewardText != null) rewardText.text = data.completionReward.ToString();
 
             Refresh();
@@ -57,6 +56,18 @@ namespace JigsawSystem
         {
             int collected = JigsawPuzzleManager.Instance.GetCollectedPieceCount(data.puzzleId);
             bool isSolved = JigsawPuzzleManager.Instance.IsPuzzleSolved(data.puzzleId);
+
+            if (puzzleImage != null)
+            {
+                if (isSolved)
+                {
+                    puzzleImage.sprite = data.fullImage;
+                }
+                else
+                {
+                    puzzleImage.sprite = data.fullBlurredImage != null ? data.fullBlurredImage : data.fullImage;
+                }
+            }
 
             if (progressText != null) progressText.text = $"{collected}/9";
             if (solvedCheckbox != null) solvedCheckbox.SetActive(isSolved);

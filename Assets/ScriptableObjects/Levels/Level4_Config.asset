@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 007da7f034193494ca19714500eded31, type: 3}
   m_Name: Level4_Config
   m_EditorClassIdentifier: 
-  levelPrefab: {fileID: 3925253141872612432, guid: 2afd9fab0ec61db48b9cbb63fc4b38f2, type: 3}
+  levelPrefab: {fileID: 2515307383914181970, guid: 2a8a1b7c92bd922488fb099c51583149, type: 3}
   coinReward: 20
   levelName: Level4
   startingEnergy: 5
@@ -22,6 +22,8 @@ MonoBehaviour:
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - cake1_2
+  monsterPrefabs:
+  - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   minSpawnInterval: 2
   maxSpawnInterval: 5
   maxActiveMonsters: 1

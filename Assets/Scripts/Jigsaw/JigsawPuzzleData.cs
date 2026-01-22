@@ -9,6 +9,7 @@ namespace JigsawSystem
         public string puzzleId;
         public string displayName;
         public Sprite fullImage;
+        public Sprite fullBlurredImage;
         public int completionReward = 100;
 
         [Header("Pieces (3x3 - 9 pieces total)")]

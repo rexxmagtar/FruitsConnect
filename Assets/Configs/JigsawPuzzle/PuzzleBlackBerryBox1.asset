@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: PuzzleBlackBerryBox1
   m_EditorClassIdentifier: 
   puzzleId: blackberryBox1
+  displayName: 
   fullImage: {fileID: 21300000, guid: 85154539f3787564c86115b94ad733b2, type: 3}
+  fullBlurredImage: {fileID: 21300000, guid: 230b9bcd35376cd4c8643ea6949be673, type: 3}
   completionReward: 400
   pieces:
   - {fileID: 21300000, guid: e531f9370a857ef45aa6aabae470c636, type: 3}
