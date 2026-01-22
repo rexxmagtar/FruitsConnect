@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b77da50761b67484ea1b44e313b23f2e
+guid: f549949882301c2448dbd7529bfc20ac
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Armature|Armature|Idle_9|baselayer
-      takeName: Armature|Armature|Idle_9|baselayer
-      internalID: -2429047684007715505
+      name: Armature|Armature|Sleep_Normally|baselayer
+      takeName: Armature|Armature|Sleep_Normally|baselayer
+      internalID: 7790681248970726077
       firstFrame: 0
-      lastFrame: 60
+      lastFrame: 52
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,8 @@ using System.Linq;
 public class MonsterAiManager : MonoBehaviour
 {
     [Header("Spawn Settings")]
-    [SerializeField] private GameObject monsterPrefab;
+    [FormerlySerializedAs("monsterPrefab")]
+    [SerializeField] private List<GameObject> monsterPrefabs;
     [SerializeField] private float minSpawnInterval = 10f;
     [SerializeField] private float maxSpawnInterval = 30f;
     [SerializeField] private int maxActiveMonsters = 3;
@@ -167,9 +169,9 @@ public class MonsterAiManager : MonoBehaviour
             yield break;
         }
         
-        if (monsterPrefab == null)
+        if (monsterPrefabs == null || monsterPrefabs.Count == 0)
         {
-            Debug.LogError("MonsterAiManager: Monster prefab not assigned!");
+            Debug.LogError("MonsterAiManager: No monster prefabs assigned!");
             yield break;
         }
         
@@ -311,7 +313,15 @@ public class MonsterAiManager : MonoBehaviour
         }
         
         // Instantiate monster
-        GameObject monsterObj = Instantiate(monsterPrefab, spawnPos, Quaternion.identity);
+        GameObject prefabToSpawn = monsterPrefabs[Random.Range(0, monsterPrefabs.Count)];
+        
+        if (prefabToSpawn == null)
+        {
+            Debug.LogError("MonsterAiManager: Selected monster prefab is null!");
+            yield break;
+        }
+        
+        GameObject monsterObj = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
         Monster monster = monsterObj.GetComponent<Monster>();
         
         if (monster == null)

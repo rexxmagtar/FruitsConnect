@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b77da50761b67484ea1b44e313b23f2e
+guid: c02de1fe2f77f7f4380d8de939034b41
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Armature|Armature|Idle_9|baselayer
-      takeName: Armature|Armature|Idle_9|baselayer
-      internalID: -2429047684007715505
+      name: Armature|Armature|walking_man|baselayer
+      takeName: Armature|Armature|walking_man|baselayer
+      internalID: -2901233246522174405
       firstFrame: 0
-      lastFrame: 60
+      lastFrame: 31
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
