@@ -415,13 +415,38 @@ public class Monster : MonoBehaviour
             damageMultiplier = PlayerProgressController.Instance.GetMonsterDamage();
         }
         
-        TakeDamage(damageMultiplier);
+        // Calculate touch position
+        Vector3 hitPosition = GetTouchPosition();
+        
+        TakeDamage(damageMultiplier, hitPosition);
+    }
+    
+    /// <summary>
+    /// Get the world position where the monster was touched
+    /// </summary>
+    private Vector3 GetTouchPosition()
+    {
+        // Get mouse/touch position
+        Vector3 inputPosition = Input.mousePosition;
+        
+        // Use raycast to find hit point on monster collider
+        Ray ray = Camera.main.ScreenPointToRay(inputPosition);
+        RaycastHit hit;
+        
+        Collider monsterCollider = GetComponent<Collider>();
+        if (monsterCollider != null && monsterCollider.Raycast(ray, out hit, 1000f))
+        {
+            return hit.point;
+        }
+        
+        // Fallback: use monster position
+        return transform.position;
     }
     
     /// <summary>
     /// Take damage from player tap
     /// </summary>
-    public void TakeDamage(float damage)
+    public void TakeDamage(float damage, Vector3? hitPosition = null)
     {
         if (isDead) return;
         
@@ -444,7 +469,7 @@ public class Monster : MonoBehaviour
         PlayHitSound();
         
         // Play hit particle effect
-        PlayHitParticleEffect();
+        PlayHitParticleEffect(hitPosition);
         
         // Play hit scale animation for better UX
         PlayHitScaleAnimation();
@@ -556,9 +581,14 @@ public class Monster : MonoBehaviour
     /// <summary>
     /// Play hit particle effect
     /// </summary>
-    private void PlayHitParticleEffect()
+    private void PlayHitParticleEffect(Vector3? hitPosition = null)
     {
-        if (hitParticleEffect != null)
+        if (HitParticlesManager.Instance != null)
+        {
+            Vector3 spawnPos = hitPosition ?? transform.position;
+            HitParticlesManager.Instance.SpawnHitParticle(spawnPos);
+        }
+        else if (hitParticleEffect != null)
         {
             hitParticleEffect.Play();
         }
@@ -576,7 +606,7 @@ public class Monster : MonoBehaviour
         // Hide healthbar immediately when health reaches zero
         if (healthBar != null)
         {
-            healthBar.Hide();
+            healthBar.gameObject.SetActive(false);
         }
         
         // Stop movement

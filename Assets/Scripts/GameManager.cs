@@ -23,6 +23,10 @@ public class SaveData
     public int MonsterDamageSteps { get; set; }
     public int MonsterDamagePowerValue { get; set; }
 
+    // Hit Particles Data
+    public string SelectedHitParticleId { get; set; }
+    public System.Collections.Generic.List<string> UnlockedHitParticleIds { get; set; } = new System.Collections.Generic.List<string>();
+
     // Jigsaw Puzzle Data
     public System.Collections.Generic.List<string> CollectedPieces { get; set; } = new System.Collections.Generic.List<string>();
     public System.Collections.Generic.List<string> SolvedPuzzles { get; set; } = new System.Collections.Generic.List<string>();
@@ -119,6 +123,9 @@ public class GameManager : MonoBehaviour
 
             // 6. Player Progress - Initialize after save progress
             await InitializePlayerProgress();
+
+            // 7. Hit Particles - Initialize after player progress
+            await InitializeHitParticles();
 
             // ProgressSaveManager<SaveData>.Instance.SyncWithCloud();
             
@@ -323,6 +330,15 @@ public class GameManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Initialize Hit Particles
+    /// </summary>
+    private async Task InitializeHitParticles()
+    {
+        LogDebug("Initializing Hit Particles...");
+        OnInitializationProgress?.Invoke(0.8f);
+        HitParticlesManager.Instance.Initialize();
+    }
+    /// <summary>
     /// Restart the game initialization process
     /// </summary>
     public async Task RestartInitialization()
@@ -368,11 +384,11 @@ public class GameManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Add coins to player's total
+    /// Add or remove coins from player's total
     /// </summary>
     public void AddCoins(int amount)
     {
-        if (amount <= 0) return;
+        if (amount == 0) return;
         
         var progressManager = ProgressSaveManager<SaveData>.Instance;
         var saveData = progressManager.GetGameData();
@@ -380,7 +396,7 @@ public class GameManager : MonoBehaviour
         saveData.TotalCoins += amount;
         progressManager.SaveGameData();
         
-        LogDebug($"Added {amount} coins. Total: {saveData.TotalCoins}");
+        LogDebug($"Modified coins by {amount}. Total: {saveData.TotalCoins}");
     }
     
     /// <summary>

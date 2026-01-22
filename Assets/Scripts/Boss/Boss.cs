@@ -312,7 +312,7 @@ public class Boss : MonoBehaviour
         }
         
         // Play hit particle effect
-        PlayHitParticleEffect();
+        PlayHitParticleEffect(hitPosition);
         
         // Spawn hit effect prefab at touch position (only for regular hits, not vulnerable zones)
         // Vulnerable zones already have their own specific prefab (perfect hit sprite)
@@ -586,7 +586,7 @@ public class Boss : MonoBehaviour
         // Hide healthbar immediately when health reaches zero
         if (healthBar != null)
         {
-            healthBar.Hide();
+            healthBar.gameObject.SetActive(false);
         }
         
         // Notify that boss is defeated (HP reached zero) - used to stop timer immediately
@@ -876,9 +876,14 @@ public class Boss : MonoBehaviour
     /// <summary>
     /// Play hit particle effect
     /// </summary>
-    private void PlayHitParticleEffect()
+    private void PlayHitParticleEffect(Vector3? hitPosition = null)
     {
-        if (hitParticleEffect != null)
+        if (HitParticlesManager.Instance != null)
+        {
+            Vector3 spawnPos = hitPosition ?? transform.position;
+            HitParticlesManager.Instance.SpawnHitParticle(spawnPos);
+        }
+        else if (hitParticleEffect != null)
         {
             hitParticleEffect.Play();
         }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 
 namespace JigsawSystem
 {
@@ -17,6 +18,8 @@ namespace JigsawSystem
 
         [Header("Sub-Screens")]
         [SerializeField] private PuzzleSolveUI solveUI;
+
+        public event Action OnClosed;
 
         private List<PuzzleButtonUi> activeButtons = new List<PuzzleButtonUi>();
 
@@ -40,6 +43,7 @@ namespace JigsawSystem
                         audioSource.PlayOneShot(buttonClickSound);
                     }
                     gameObject.SetActive(false);
+                    OnClosed?.Invoke();
                 });
             }
         }

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bab1e41cd1834f47b6d8c689f6257f9, type: 3}
+  m_Name: HitParticlesDataDefault
+  m_EditorClassIdentifier: 
+  id: default
+  particlePrefab: {fileID: 6499725632659285678, guid: 8a9c26537c9fb684db1136e7324b44ed, type: 3}
+  stage: 0
+  effectSprite: {fileID: 21300000, guid: c420e8118cc22a9489e8b575114a8e5d, type: 3}
+  price: 0

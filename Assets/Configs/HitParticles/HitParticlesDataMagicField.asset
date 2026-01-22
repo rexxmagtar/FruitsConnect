@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bab1e41cd1834f47b6d8c689f6257f9, type: 3}
+  m_Name: HitParticlesDataMagicField
+  m_EditorClassIdentifier: 
+  id: magic_field
+  particlePrefab: {fileID: 5009813809563322685, guid: 421610d58bb38d44d812d8a561b5cadc, type: 3}
+  stage: 0
+  effectSprite: {fileID: -702928828, guid: 215687feeab0b7445b4a1cd86c82c2e1, type: 3}
+  price: 200

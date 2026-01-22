@@ -345,6 +345,11 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Initialize fruit progress immediately (before any animations)
         InitializeFruitProgress();
+
+        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
+
+        totalCoinsText.text = initialBalance.ToString();
         
         // Reset state
         canvasGroup.alpha = 0f;
@@ -382,9 +387,7 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Sequence: Money Animations
         int totalCollectedSoFar = 0;
-        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
-        int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
-
+        
         // Basic money fly
         if (coinsEarned > 0)
         {

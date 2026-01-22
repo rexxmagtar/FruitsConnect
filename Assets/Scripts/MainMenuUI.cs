@@ -6,6 +6,7 @@ using TMPro;
 using DataRepository;
 using DG.Tweening;
 using JigsawSystem;
+using UI;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button shopButton;
     [SerializeField] private Button jigsawButton;
+    [SerializeField] private Button skinSelectButton;
     [SerializeField] private TextMeshProUGUI startButtonText;
     [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI balanceText;
@@ -46,6 +48,7 @@ public class MainMenuUI : MonoBehaviour
     
     [SerializeField] private SettingsUI settingsUI;
     [SerializeField] private JigsawPuzzleSelectScreen jigsawSelectScreen;
+    [SerializeField] private HitParticlesSelectUI hitParticlesSelectUI;
     // Events
     public static event System.Action OnStartButtonPressed;
     
@@ -87,6 +90,11 @@ public class MainMenuUI : MonoBehaviour
             jigsawButton.onClick.AddListener(OnJigsawButtonClick);
         }
         
+        if (skinSelectButton != null)
+        {
+            skinSelectButton.onClick.AddListener(OnSkinSelectButtonClick);
+        }
+        
 
 
     }
@@ -97,6 +105,16 @@ public class MainMenuUI : MonoBehaviour
         
         // Subscribe to upgrade purchased event to update balance
         PlayerProgressController.OnUpgradePurchased += OnUpgradePurchased;
+
+        // Subscribe to screen closed events to refresh balance
+        if (jigsawSelectScreen != null)
+        {
+            jigsawSelectScreen.OnClosed += Refresh;
+        }
+        if (hitParticlesSelectUI != null)
+        {
+            hitParticlesSelectUI.OnClosed += Refresh;
+        }
 
         gameObject.SetActive(false);
     }
@@ -253,6 +271,18 @@ public class MainMenuUI : MonoBehaviour
     }
     
     /// <summary>
+    /// Refresh the main menu UI (balance, upgrades, etc.)
+    /// </summary>
+    public void Refresh()
+    {
+        UpdateBalanceDisplay();
+        UpdateUpgradeAffordability();
+        UpdateUpgradeVisibility();
+        UpdateUI();
+        UpdateBossAlertVisibility();
+    }
+    
+    /// <summary>
     /// Handle start button click
     /// </summary>
     private void OnStartButtonClick()
@@ -317,6 +347,20 @@ public class MainMenuUI : MonoBehaviour
         {
             jigsawSelectScreen.gameObject.SetActive(true);
             jigsawSelectScreen.RefreshList();
+        }
+    }
+
+    private void OnSkinSelectButtonClick()
+    {
+        if (buttonClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+
+        if (hitParticlesSelectUI != null)
+        {
+            hitParticlesSelectUI.gameObject.SetActive(true);
+            hitParticlesSelectUI.RefreshUI();
         }
     }
     
@@ -676,5 +720,14 @@ public class MainMenuUI : MonoBehaviour
         // }
         GameManager.OnGameInitialized -= OnGameInitialized;
         PlayerProgressController.OnUpgradePurchased -= OnUpgradePurchased;
+
+        if (jigsawSelectScreen != null)
+        {
+            jigsawSelectScreen.OnClosed -= Refresh;
+        }
+        if (hitParticlesSelectUI != null)
+        {
+            hitParticlesSelectUI.OnClosed -= Refresh;
+        }
     }
 }
