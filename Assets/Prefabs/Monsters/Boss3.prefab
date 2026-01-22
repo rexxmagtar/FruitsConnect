@@ -1611,6 +1611,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3474107658073191623, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.90808
+      objectReference: {fileID: 0}
+    - target: {fileID: 3474107658073191623, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.90808
+      objectReference: {fileID: 0}
+    - target: {fileID: 3474107658073191623, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.90808
+      objectReference: {fileID: 0}
     - target: {fileID: 4960008600991099466, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: m_Controller
       value: 
@@ -1634,7 +1646,7 @@ PrefabInstance:
     - target: {fileID: 9109983900351290604, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: ShapeModule.m_SkinnedMeshRenderer
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 7578790664911273356}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 7985772631460852593, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}

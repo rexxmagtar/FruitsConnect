@@ -21,3 +21,7 @@ MonoBehaviour:
   bossGoldReward: 50
   bossFightTimeLimit: 20
   puzzlePieceRewards: []
+  minSpawnInterval: 10
+  maxSpawnInterval: 30
+  maxActiveMonsters: 0
+  safeTimeOffset: 20

@@ -12,10 +12,11 @@ public class MonsterAiManager : MonoBehaviour
     [Header("Spawn Settings")]
     [FormerlySerializedAs("monsterPrefab")]
     [SerializeField] private List<GameObject> monsterPrefabs;
-    [SerializeField] private float minSpawnInterval = 10f;
-    [SerializeField] private float maxSpawnInterval = 30f;
-    [SerializeField] private int maxActiveMonsters = 3;
     [SerializeField] private int maxSpawnAttempts = 20; // Maximum attempts to find valid spawn position
+    
+    [Header("Manual Spawn Zone")]
+    [SerializeField] private float spawnZoneWidth = 20f;
+    [SerializeField] private float spawnZoneHeight = 20f;
     
     [Header("Portal Animation")]
     [SerializeField] private GameObject portalPrefab; // Portal sprite prefab
@@ -45,6 +46,20 @@ public class MonsterAiManager : MonoBehaviour
     
     // Flag to prevent spawning when level is complete
     private bool spawningEnabled = true;
+    
+    // Grid spawning
+    [System.Serializable]
+    private class SpawnCell
+    {
+        public Vector2Int gridPos;
+        public Vector3 worldPos;
+        public float nextSpawnTime;
+        public bool isSpawning; // Currently performing a spawn animation
+    }
+    
+    private List<SpawnCell> spawnGrid = new List<SpawnCell>();
+    private const int GRID_SIZE = 10;
+    private float levelStartTime;
     
     private void Awake()
     {
@@ -95,6 +110,13 @@ public class MonsterAiManager : MonoBehaviour
     public void StartSpawning()
     {
         spawningEnabled = true;
+        levelStartTime = Time.time;
+        
+        GameController gameController = GameController.Instance;
+        LevelConfig config = (gameController != null) ? gameController.CurrentLevelConfig : null;
+        
+        // Initialize grid
+        InitializeSpawnGrid(config);
         
         if (spawnCoroutine != null)
         {
@@ -102,6 +124,119 @@ public class MonsterAiManager : MonoBehaviour
         }
         
         spawnCoroutine = StartCoroutine(SpawnMonstersCoroutine());
+    }
+    
+    /// <summary>
+    /// Initialize the 10x10 spawn grid based on manual dimensions centered on level
+    /// </summary>
+    private void InitializeSpawnGrid(LevelConfig config)
+    {
+        spawnGrid.Clear();
+        
+        Vector3 center = Vector3.zero;
+        if (currentLevel != null)
+        {
+            if (currentLevel.TerrainMeshRenderer != null)
+            {
+                center = currentLevel.TerrainMeshRenderer.bounds.center;
+            }
+            else
+            {
+                // Fallback: calculate center from nodes
+                var allNodes = currentLevel.GetAllNodes();
+                if (allNodes.Count > 0)
+                {
+                    Vector3 sum = Vector3.zero;
+                    foreach (var node in allNodes) sum += node.transform.position;
+                    center = sum / allNodes.Count;
+                }
+            }
+        }
+        
+        float startX = center.x - spawnZoneWidth / 2f;
+        float startZ = center.z - spawnZoneHeight / 2f;
+        float cellWidth = spawnZoneWidth / GRID_SIZE;
+        float cellHeight = spawnZoneHeight / GRID_SIZE;
+        
+        float minInterval = config != null ? config.MinSpawnInterval : 10f;
+        float maxInterval = config != null ? config.MaxSpawnInterval : 30f;
+        float safeOffset = config != null ? config.SafeTimeOffset : 20f;
+
+        for (int x = 0; x < GRID_SIZE; x++)
+        {
+            for (int z = 0; z < GRID_SIZE; z++)
+            {
+                Vector3 cellPos = new Vector3(
+                    startX + (x + 0.5f) * cellWidth,
+                    center.y+0.02f,
+                    startZ + (z + 0.5f) * cellHeight
+                );
+                
+                spawnGrid.Add(new SpawnCell
+                {
+                    gridPos = new Vector2Int(x, z),
+                    worldPos = cellPos,
+                    nextSpawnTime = levelStartTime + safeOffset + Random.Range(minInterval, maxInterval)
+                });
+            }
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Vector3 center = Vector3.zero;
+        if (currentLevel != null)
+        {
+            if (currentLevel.TerrainMeshRenderer != null)
+            {
+                center = currentLevel.TerrainMeshRenderer.bounds.center;
+            }
+            else
+            {
+                var allNodes = currentLevel.GetAllNodes();
+                if (allNodes.Count > 0)
+                {
+                    Vector3 sum = Vector3.zero;
+                    foreach (var node in allNodes) sum += node.transform.position;
+                    center = sum / allNodes.Count;
+                }
+            }
+        }
+
+        // Draw main boundary
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(center, new Vector3(spawnZoneWidth, 0.1f, spawnZoneHeight));
+
+        // Draw grid lines
+        Gizmos.color = new Color(1f, 0f, 0f, 0.3f);
+        float startX = center.x - spawnZoneWidth / 2f;
+        float startZ = center.z - spawnZoneHeight / 2f;
+        float cellWidth = spawnZoneWidth / GRID_SIZE;
+        float cellHeight = spawnZoneHeight / GRID_SIZE;
+
+        for (int i = 0; i <= GRID_SIZE; i++)
+        {
+            // Vertical lines
+            float x = startX + i * cellWidth;
+            Gizmos.DrawLine(new Vector3(x, center.y, startZ), new Vector3(x, center.y, startZ + spawnZoneHeight));
+
+            // Horizontal lines
+            float z = startZ + i * cellHeight;
+            Gizmos.DrawLine(new Vector3(startX, center.y, z), new Vector3(startX + spawnZoneWidth, center.y, z));
+        }
+        
+        // Draw individual cells if they exist (runtime)
+        if (Application.isPlaying && spawnGrid != null)
+        {
+            foreach (var cell in spawnGrid)
+            {
+                if (cell.isSpawning)
+                {
+                    Gizmos.color = Color.yellow;
+                    Gizmos.DrawSphere(cell.worldPos, 0.3f);
+                }
+            }
+        }
     }
     
     /// <summary>
@@ -133,35 +268,113 @@ public class MonsterAiManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Coroutine that spawns monsters at random intervals
+    /// Coroutine that spawns monsters using independent grid cell timers
     /// </summary>
     private IEnumerator SpawnMonstersCoroutine()
     {
         while (true)
         {
-            // Wait for random interval
-            float waitTime = Random.Range(minSpawnInterval, maxSpawnInterval);
-            yield return new WaitForSeconds(waitTime);
+            yield return new WaitForSeconds(0.5f); // Check grid more frequently
             
-            // Check if we can spawn (gameplay enabled, spawning enabled, and under max limit)
             GameController gameController = GameController.Instance;
-            if (spawningEnabled && gameController != null && gameController.GameplayEnabled)
+            if (gameController == null || gameController.CurrentLevelConfig == null) continue;
+            
+            LevelConfig config = gameController.CurrentLevelConfig;
+            
+            if (spawningEnabled && gameController.GameplayEnabled)
             {
-                if (activeMonsters.Count < maxActiveMonsters)
+                // Calculate current total (active + in-progress) once per check
+                int spawningCount = 0;
+                foreach (var c in spawnGrid) if (c.isSpawning) spawningCount++;
+                int totalPotentialMonsters = activeMonsters.Count + spawningCount;
+
+                // To avoid bias (always checking cell 0 first), we shuffle a temporary list
+                List<SpawnCell> shuffledGrid = new List<SpawnCell>(spawnGrid);
+                for (int i = 0; i < shuffledGrid.Count; i++)
                 {
-                    Coroutine spawnMonsterCoroutine = StartCoroutine(SpawnMonsterCoroutine());
-                    activeSpawnMonsterCoroutines.Add(spawnMonsterCoroutine);
-                    yield return spawnMonsterCoroutine;
-                    activeSpawnMonsterCoroutines.Remove(spawnMonsterCoroutine);
+                    int rnd = Random.Range(i, shuffledGrid.Count);
+                    SpawnCell temp = shuffledGrid[i];
+                    shuffledGrid[i] = shuffledGrid[rnd];
+                    shuffledGrid[rnd] = temp;
+                }
+
+                // Check each cell in the shuffled grid
+                foreach (var cell in shuffledGrid)
+                {
+                    // If cell is ready to spawn and under max limit
+                    if (Time.time >= cell.nextSpawnTime && totalPotentialMonsters < config.MaxActiveMonsters && !cell.isSpawning)
+                    {
+                        // Check if neighbors are currently spawning
+                        if (!IsNeighborSpawning(cell))
+                        {
+                            // Start spawn for this cell
+                            StartCoroutine(SpawnMonsterAtCell(cell));
+                            
+                            // Increment potential count immediately to prevent other cells from spawning in this same frame
+                            totalPotentialMonsters++;
+                        }
+                    }
+                    
+                    // If nextSpawnTime is not set yet, initialize it
+                    if (cell.nextSpawnTime <= 0)
+                    {
+                        cell.nextSpawnTime = Time.time + Random.Range(config.MinSpawnInterval, config.MaxSpawnInterval);
+                    }
                 }
             }
         }
     }
     
     /// <summary>
-    /// Coroutine to spawn a new monster with portal animation
+    /// Check if any neighbor cell is currently performing a spawn animation
     /// </summary>
-    private IEnumerator SpawnMonsterCoroutine()
+    private bool IsNeighborSpawning(SpawnCell cell)
+    {
+        foreach (var other in spawnGrid)
+        {
+            if (other == cell) continue;
+            
+            // If other is neighbor (including diagonal) and is spawning
+            if (Mathf.Abs(other.gridPos.x - cell.gridPos.x) <= 1 && 
+                Mathf.Abs(other.gridPos.y - cell.gridPos.y) <= 1)
+            {
+                if (other.isSpawning) return true;
+            }
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Coroutine to spawn a monster at a specific grid cell
+    /// </summary>
+    private IEnumerator SpawnMonsterAtCell(SpawnCell cell)
+    {
+        cell.isSpawning = true;
+        
+        // Use the old SpawnMonsterCoroutine logic but for this specific cell
+        Coroutine spawnCoroutine = StartCoroutine(SpawnMonsterCoroutine(cell));
+        activeSpawnMonsterCoroutines.Add(spawnCoroutine);
+        
+        yield return spawnCoroutine;
+        
+        activeSpawnMonsterCoroutines.Remove(spawnCoroutine);
+        cell.isSpawning = false;
+        
+        // Set next spawn time for this cell
+        GameController gameController = GameController.Instance;
+        if (gameController != null && gameController.CurrentLevelConfig != null)
+        {
+            cell.nextSpawnTime = Time.time + Random.Range(
+                gameController.CurrentLevelConfig.MinSpawnInterval, 
+                gameController.CurrentLevelConfig.MaxSpawnInterval
+            );
+        }
+    }
+    
+    /// <summary>
+    /// Coroutine to spawn a new monster with portal animation (updated for grid)
+    /// </summary>
+    private IEnumerator SpawnMonsterCoroutine(SpawnCell cell)
     {
         // Check if spawning is still enabled before starting
         if (!spawningEnabled)
@@ -198,18 +411,39 @@ public class MonsterAiManager : MonoBehaviour
             yield break;
         }
         
-        // Get valid spawn position in grayscale zone
-        Vector3 spawnPos = GetValidGrayscaleSpawnPosition();
+        // Use cell position
+        Vector3 spawnPos = cell.worldPos;
         
-        if (spawnPos == Vector3.zero)
+        // Check if spawn position is in grayscale zone
+        if (mapShaderController == null) mapShaderController = FindFirstObjectByType<MapShaderController>();
+        if (mapShaderController != null)
         {
-            Debug.LogWarning("MonsterAiManager: Could not find valid grayscale spawn position!");
-            yield break;
+            float minSpawnAreaRadius = mapShaderController.GetMinSpawnAreaRadius();
+            if (!mapShaderController.HasMinimumGrayscaleArea(spawnPos, minSpawnAreaRadius))
+            {
+                // If cell center is not valid, try to find a valid spot near it
+                bool foundValidSpot = false;
+                for (int i = 0; i < 5; i++)
+                {
+                    Vector3 randomOffset = new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
+                    if (mapShaderController.HasMinimumGrayscaleArea(spawnPos + randomOffset, minSpawnAreaRadius))
+                    {
+                        spawnPos += randomOffset;
+                        foundValidSpot = true;
+                        break;
+                    }
+                }
+                
+                if (!foundValidSpot)
+                {
+                    // If no valid spot in this cell, skip this spawn attempt
+                    yield break;
+                }
+            }
         }
         
         // Show portal animation
         GameObject portalObj = null;
-        Coroutine portalAnimationCoroutine = null;
         bool spawnCancelled = false;
         
         if (portalPrefab != null)
@@ -218,83 +452,20 @@ public class MonsterAiManager : MonoBehaviour
             if (portalObj != null)
             {
                 activePortals.Add(portalObj);
-            }
-            portalAnimationCoroutine = StartCoroutine(PortalAnimationCoroutine(portalObj, spawnPos, () => { spawnCancelled = true; }));
-            
-            // Wait for portal animation, but check periodically if spawn was cancelled
-            float totalDuration = portalAppearDuration + portalStayDuration + portalDisappearDuration;
-            float elapsed = 0f;
-            float checkInterval = 0.1f; // Check every 0.1 seconds
-            
-            while (elapsed < totalDuration && !spawnCancelled)
-            {
-                yield return new WaitForSeconds(checkInterval);
-                elapsed += checkInterval;
                 
-                // Check if spawning is still enabled
-                GameController checkController = GameController.Instance;
-                if (!spawningEnabled || (checkController != null && !checkController.GameplayEnabled))
-                {
+                // Start portal animation coroutine
+                StartCoroutine(PortalAnimationCoroutine(portalObj, spawnPos, () => {
                     spawnCancelled = true;
-                    if (portalObj != null)
-                    {
-                        // Stop portal animation and close it
-                        if (portalAnimationCoroutine != null)
-                        {
-                            StopCoroutine(portalAnimationCoroutine);
-                        }
-                        // Remove from tracking and destroy immediately (don't wait for animation)
-                        activePortals.Remove(portalObj);
-                        Destroy(portalObj);
-                    }
-                    yield break;
-                }
+                }));
                 
-                // Check if spawn position is still valid
-                if (mapShaderController != null)
-                {
-                    float minSpawnAreaRadius = mapShaderController.GetMinSpawnAreaRadius();
-                    if (!mapShaderController.HasMinimumGrayscaleArea(spawnPos, minSpawnAreaRadius))
-                    {
-                        // Position is no longer valid, cancel spawn
-                        spawnCancelled = true;
-                        if (portalObj != null)
-                        {
-                            // Stop portal animation and close it
-                            if (portalAnimationCoroutine != null)
-                            {
-                                StopCoroutine(portalAnimationCoroutine);
-                            }
-                            // Remove from tracking and destroy immediately (don't wait for animation)
-                            activePortals.Remove(portalObj);
-                            Destroy(portalObj);
-                        }
-                        yield break;
-                    }
-                }
-            }
-            
-            // Wait for any remaining time
-            if (!spawnCancelled && elapsed < totalDuration)
-            {
-                yield return new WaitForSeconds(totalDuration - elapsed);
+                // Wait for portal animation to complete
+                yield return new WaitForSeconds(portalAppearDuration + portalStayDuration + portalDisappearDuration);
             }
         }
         
-        // If spawn was cancelled, don't spawn monster
-        if (spawnCancelled)
-        {
-            if (portalObj != null)
-            {
-                activePortals.Remove(portalObj);
-                Destroy(portalObj);
-            }
-            yield break;
-        }
-        
-        // Final check before spawning - ensure spawning is still enabled and gameplay is enabled
+        // Final check before spawning monster
         GameController finalCheck = GameController.Instance;
-        if (!spawningEnabled || (finalCheck != null && !finalCheck.GameplayEnabled))
+        if (!spawningEnabled || (finalCheck != null && !finalCheck.GameplayEnabled) || spawnCancelled)
         {
             // Clean up portal if spawn was cancelled
             if (portalObj != null)
@@ -331,16 +502,8 @@ public class MonsterAiManager : MonoBehaviour
             yield break;
         }
         
-        // Final check before initializing monster - ensure spawning is still enabled
-        if (!spawningEnabled || (finalCheck != null && !finalCheck.GameplayEnabled))
-        {
-            // Spawning was disabled, destroy the monster immediately
-            Destroy(monsterObj);
-            yield break;
-        }
-        
-        // Assign random goal
-        MonsterGoal goal = GetRandomGoal();
+        // Assign closest goal
+        MonsterGoal goal = GetClosestGoal(spawnPos);
         if (goal != null && goal.IsValid())
         {
             monster.Initialize(goal);
@@ -355,54 +518,67 @@ public class MonsterAiManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Get a valid spawn position in a grayscale zone with minimum area
+    /// Get the closest valid goal for a monster at a given position
     /// </summary>
-    private Vector3 GetValidGrayscaleSpawnPosition()
+    public MonsterGoal GetClosestGoal(Vector3 position)
     {
-        if (currentLevel == null)
+        if (currentLevel == null) return null;
+        
+        ConnectionManager connectionManager = ConnectionManager.Instance;
+        if (connectionManager == null) return null;
+        
+        MonsterGoal closestGoal = null;
+        float minDistance = float.MaxValue;
+        
+        // Check all active connections
+        List<Connection> activeConnections = connectionManager.GetActiveConnections();
+        foreach (var conn in activeConnections)
         {
-            GameController gameController = GameController.Instance;
-            if (gameController != null)
+            if (conn != null && !conn.IsCaptured)
             {
-                currentLevel = gameController.CurrentLevel;
-            }
-            
-            if (currentLevel == null)
-            {
-                return Vector3.zero;
-            }
-        }
-        
-        // Get MapShaderController if not assigned
-        if (mapShaderController == null)
-        {
-            mapShaderController = FindFirstObjectByType<MapShaderController>();
-        }
-        
-        if (mapShaderController == null)
-        {
-            // Fallback to old method if MapShaderController not found
-            Debug.LogWarning("MonsterAiManager: MapShaderController not found, using fallback spawn position!");
-            return Monster.GetRandomSpawnPosition(currentLevel);
-        }
-        
-        float minSpawnAreaRadius = mapShaderController.GetMinSpawnAreaRadius();
-        
-        // Try to find valid spawn position
-        for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
-        {
-            // Get random spawn position
-            Vector3 candidatePos = Monster.GetRandomSpawnPosition(currentLevel);
-            
-            // Check if position has minimum grayscale area
-            if (mapShaderController.HasMinimumGrayscaleArea(candidatePos, minSpawnAreaRadius))
-            {
-                return candidatePos;
+                Vector3 targetPos = (conn.FromNode.transform.position + conn.ToNode.transform.position) / 2f;
+                float dist = Vector3.Distance(position, targetPos);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closestGoal = new MonsterGoal { goalType = MonsterGoalType.DestroyConnection, targetConnection = conn };
+                }
             }
         }
         
-        // Could not find valid position
-        return Vector3.zero;
+        // Check all nodes with connections
+        List<BaseNode> allNodes = currentLevel.GetAllNodes();
+        foreach (var node in allNodes)
+        {
+            if (node != null && !node.IsCaptured && (node.OutgoingConnections.Count > 0 || node.IncomingConnections.Count > 0))
+            {
+                float dist = Vector3.Distance(position, node.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closestGoal = new MonsterGoal { goalType = MonsterGoalType.DestroyNodeConnections, targetNode = node };
+                }
+            }
+        }
+        
+        // Fallback to producer nodes if no connections found
+        if (closestGoal == null)
+        {
+            foreach (var node in allNodes)
+            {
+                if (node != null && !node.IsCaptured && node is ProducerNode)
+                {
+                    float dist = Vector3.Distance(position, node.transform.position);
+                    if (dist < minDistance)
+                    {
+                        minDistance = dist;
+                        closestGoal = new MonsterGoal { goalType = MonsterGoalType.DestroyNodeConnections, targetNode = node };
+                    }
+                }
+            }
+        }
+        
+        return closestGoal;
     }
     
     /// <summary>
@@ -485,112 +661,6 @@ public class MonsterAiManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Get a random goal for a monster
-    /// </summary>
-    private MonsterGoal GetRandomGoal()
-    {
-        if (currentLevel == null) return null;
-        
-        ConnectionManager connectionManager = ConnectionManager.Instance;
-        if (connectionManager == null) return null;
-        
-        // Randomly choose goal type
-        MonsterGoalType goalType = (Random.Range(0, 2) == 0) 
-            ? MonsterGoalType.DestroyConnection 
-            : MonsterGoalType.DestroyNodeConnections;
-        
-        MonsterGoal goal = new MonsterGoal();
-        goal.goalType = goalType;
-        
-        switch (goalType)
-        {
-            case MonsterGoalType.DestroyConnection:
-                // Get a random active connection
-                List<Connection> activeConnections = connectionManager.GetActiveConnections();
-                
-                // Filter out captured connections
-                activeConnections = activeConnections.Where(c => c != null && !c.IsCaptured).ToList();
-                
-                if (activeConnections.Count > 0)
-                {
-                    Connection randomConnection = activeConnections[Random.Range(0, activeConnections.Count)];
-                    goal.targetConnection = randomConnection;
-                    return goal;
-                }
-                break;
-            
-            case MonsterGoalType.DestroyNodeConnections:
-                // Get a random node with connections
-                List<BaseNode> allNodes = currentLevel.GetAllNodes();
-                
-                // Filter nodes that have connections and are not captured
-                List<BaseNode> nodesWithConnections = allNodes.Where(n => 
-                    n != null && 
-                    !n.IsCaptured && 
-                    (n.OutgoingConnections.Count > 0 || n.IncomingConnections.Count > 0)
-                ).ToList();
-                
-                if (nodesWithConnections.Count > 0)
-                {
-                    BaseNode randomNode = nodesWithConnections[Random.Range(0, nodesWithConnections.Count)];
-                    goal.targetNode = randomNode;
-                    return goal;
-                }
-                break;
-        }
-        
-        // If no valid target found for chosen type, try the other type
-        if (goalType == MonsterGoalType.DestroyConnection)
-        {
-            // Try node goal instead
-            List<BaseNode> allNodesFallback = currentLevel.GetAllNodes();
-            List<BaseNode> nodesWithConnections = allNodesFallback.Where(n => 
-                n != null && 
-                !n.IsCaptured && 
-                (n.OutgoingConnections.Count > 0 || n.IncomingConnections.Count > 0)
-            ).ToList();
-            
-            if (nodesWithConnections.Count > 0)
-            {
-                goal.goalType = MonsterGoalType.DestroyNodeConnections;
-                goal.targetNode = nodesWithConnections[Random.Range(0, nodesWithConnections.Count)];
-                return goal;
-            }
-        }
-        else
-        {
-            // Try connection goal instead
-            List<Connection> activeConnectionsFallback = connectionManager.GetActiveConnections();
-            activeConnectionsFallback = activeConnectionsFallback.Where(c => c != null && !c.IsCaptured).ToList();
-            
-            if (activeConnectionsFallback.Count > 0)
-            {
-                goal.goalType = MonsterGoalType.DestroyConnection;
-                goal.targetConnection = activeConnectionsFallback[Random.Range(0, activeConnectionsFallback.Count)];
-                return goal;
-            }
-        }
-        
-        // If still no valid goals, fall back to producer nodes (even if they don't have connections)
-        List<BaseNode> allNodesForProducerFallback = currentLevel.GetAllNodes();
-        List<BaseNode> producerNodes = allNodesForProducerFallback.Where(n => 
-            n != null && 
-            !n.IsCaptured && 
-            n is ProducerNode
-        ).ToList();
-        
-        if (producerNodes.Count > 0)
-        {
-            goal.goalType = MonsterGoalType.DestroyNodeConnections;
-            goal.targetNode = producerNodes[Random.Range(0, producerNodes.Count)];
-            return goal;
-        }
-        
-        // No valid goals available
-        return null;
-    }
-    
-    /// <summary>
     /// Called when a monster dies
     /// </summary>
     public void OnMonsterDied(Monster monster)
@@ -665,7 +735,7 @@ public class MonsterAiManager : MonoBehaviour
         // Safety check: Find and destroy any orphaned portals in the scene
         // This handles cases where portals might not have been tracked properly
         // Find all GameObjects with "Portal" in the name (but exclude PortalBoss)
-        GameObject[] allGameObjects = FindObjectsOfType<GameObject>();
+        GameObject[] allGameObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None);
         foreach (GameObject obj in allGameObjects)
         {
             if (obj != null && obj.name.Contains("Portal") && !obj.name.Contains("PortalBoss"))

@@ -23,3 +23,7 @@ MonoBehaviour:
   puzzlePieceRewards:
   - cake1_3
   - cake1_4
+  minSpawnInterval: 10
+  maxSpawnInterval: 300
+  maxActiveMonsters: 10
+  safeTimeOffset: 0

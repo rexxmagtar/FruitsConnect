@@ -24,6 +24,7 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossBaseRewardText;
     [SerializeField] private TextMeshProUGUI bossMultiplierText;
     [SerializeField] private GameObject bossBountyLocker;
+    [SerializeField] private RectTransform bossRewardIconTransform;
     
     [Header("Animation Settings")]
     [SerializeField] private float fadeInDuration = 0.5f;
@@ -111,6 +112,28 @@ public class LevelCompleteUI : MonoBehaviour
         if (returnToMenuButton != null)
         {
             returnToMenuButton.onClick.AddListener(OnReturnToMenuButtonClick);
+        }
+
+        // Try to find bossRewardIconTransform if not assigned
+        if (bossRewardIconTransform == null && bossRewardContainer != null)
+        {
+            Transform bossIcon = bossRewardContainer.transform.Find("BossIcon");
+            if (bossIcon != null)
+            {
+                bossRewardIconTransform = bossIcon.GetComponent<RectTransform>();
+            }
+            else
+            {
+                // Fallback: look for anything with "Icon" or "Coin" in name
+                foreach (Transform child in bossRewardContainer.transform)
+                {
+                    if (child.name.Contains("Icon") || child.name.Contains("Coin"))
+                    {
+                        bossRewardIconTransform = child.GetComponent<RectTransform>();
+                        break;
+                    }
+                }
+            }
         }
     }
     
@@ -385,14 +408,24 @@ public class LevelCompleteUI : MonoBehaviour
             }
         }
         
-        // Start coin animation for total earned
-        int totalToAnimate = coinsEarned + bossTotalReward;
-        if (totalToAnimate > 0)
+        // Sequence: Money Animations
+        int totalCollectedSoFar = 0;
+        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
+
+        // Basic money fly
+        if (coinsEarned > 0)
         {
             yield return new WaitForSeconds(0.3f);
-            int finalBalance = ProgressSaveManager<SaveData>.Instance.GetCoins();
-            int startBalance = finalBalance - totalToAnimate;
-            yield return StartCoroutine(AnimateCoins(totalToAnimate, startBalance));
+            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, coinsEarnedText));
+            totalCollectedSoFar += coinsEarned;
+        }
+
+        // Boss money fly
+        if (isBossLevel && bossTotalReward > 0)
+        {
+            yield return new WaitForSeconds(0.5f); // Wait a bit more between animations
+            yield return StartCoroutine(AnimateCoins(bossTotalReward, initialBalance + totalCollectedSoFar, bossRewardIconTransform, bossBaseRewardText));
         }
         
         
@@ -584,12 +617,13 @@ public class LevelCompleteUI : MonoBehaviour
     /// <summary>
     /// Animate coins flying from earned position to balance position
     /// </summary>
-    private IEnumerator AnimateCoins(int coinsEarned, int currentBalance)
+    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform startIcon = null, TextMeshProUGUI earnedText = null)
     {
         // Display coins earned text
-        if (coinsEarnedText != null)
+        if (earnedText != null)
         {
-            coinsEarnedText.text = $"+{coinsEarned}";
+            string prefix = (earnedText == coinsEarnedText) ? "+" : "";
+            earnedText.text = prefix + coinsToAnimate.ToString();
         }
         
         // Display current balance before addition
@@ -598,25 +632,28 @@ public class LevelCompleteUI : MonoBehaviour
             totalCoinsText.text = currentBalance.ToString();
         }
         
+        // Use default icon if none provided
+        RectTransform sourceIcon = startIcon != null ? startIcon : coinIconTransform;
+
         // Check if we have required references
-        if (coinIconTransform == null || balanceIconTransform == null)
+        if (sourceIcon == null || balanceIconTransform == null)
         {
             Debug.LogWarning("[LevelCompleteUI] Coin icon or balance icon transform not assigned. Skipping coin animation.");
             // Still update the balance text
             if (totalCoinsText != null)
             {
-                totalCoinsText.text = ProgressSaveManager<SaveData>.Instance.GetCoins().ToString();
+                totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
             }
             yield break;
         }
         
         // Calculate number of coins to spawn (use coinAnimationCount or coinsEarned, whichever is smaller)
-        int coinsToSpawn = Mathf.Min(coinAnimationCount, coinsEarned);
-        int coinsPerParticle = coinsEarned / coinsToSpawn;
-        int remainingCoins = coinsEarned % coinsToSpawn;
+        int coinsToSpawn = Mathf.Min(coinAnimationCount, coinsToAnimate);
+        int coinsPerParticle = coinsToAnimate / coinsToSpawn;
+        int remainingCoins = coinsToAnimate % coinsToSpawn;
         
         // Get world positions
-        Vector3 startPos = coinIconTransform.position;
+        Vector3 startPos = sourceIcon.position;
         Vector3 endPos = balanceIconTransform.position;
         
         // Initialize animation state
@@ -671,7 +708,7 @@ public class LevelCompleteUI : MonoBehaviour
         // Ensure final balance is correct
         if (totalCoinsText != null)
         {
-            totalCoinsText.text = ProgressSaveManager<SaveData>.Instance.GetCoins().ToString();
+            totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
         }
     }
     

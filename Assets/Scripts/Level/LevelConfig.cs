@@ -33,6 +33,12 @@ public class LevelConfig : ScriptableObject
     [Tooltip("List of puzzle piece IDs to reward. Use 'random' for a random missing piece. ID format: puzzleId_pieceIndex (e.g. puzzle1_0)")]
     [SerializeField] private System.Collections.Generic.List<string> puzzlePieceRewards = new System.Collections.Generic.List<string> { "random" };
     
+    [Header("Monster Spawn Settings")]
+    [SerializeField] private float minSpawnInterval = 10f;
+    [SerializeField] private float maxSpawnInterval = 30f;
+    [SerializeField] private int maxActiveMonsters = 3;
+    [SerializeField] private float safeTimeOffset = 20f; // Monsters start spawning after 20 seconds
+    
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
     public string LevelName => levelName;
@@ -42,5 +48,11 @@ public class LevelConfig : ScriptableObject
     public int BossGoldReward => bossGoldReward;
     public float BossFightTimeLimit => bossFightTimeLimit;
     public System.Collections.Generic.List<string> PuzzlePieceRewards => puzzlePieceRewards;
+    
+    // Monster Spawn Properties
+    public float MinSpawnInterval => minSpawnInterval;
+    public float MaxSpawnInterval => maxSpawnInterval;
+    public int MaxActiveMonsters => maxActiveMonsters;
+    public float SafeTimeOffset => safeTimeOffset;
 }
 

@@ -23,17 +23,17 @@ public class MonsterGoal
     public BaseNode targetNode;          // Used when goalType is DestroyNodeConnections
     
     /// <summary>
-    /// Check if the goal is still valid (target exists)
+    /// Check if the goal is still valid (target exists and is not already captured)
     /// </summary>
     public bool IsValid()
     {
         switch (goalType)
         {
             case MonsterGoalType.DestroyConnection:
-                return targetConnection != null && targetConnection.gameObject != null;
+                return targetConnection != null && targetConnection.gameObject != null && !targetConnection.IsCaptured;
             
             case MonsterGoalType.DestroyNodeConnections:
-                return targetNode != null && targetNode.gameObject != null;
+                return targetNode != null && targetNode.gameObject != null && !targetNode.IsCaptured;
             
             default:
                 return false;

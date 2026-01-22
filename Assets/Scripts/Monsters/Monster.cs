@@ -197,9 +197,32 @@ public class Monster : MonoBehaviour
         if (isDead) return;
         
         // Only move if spawn animation is complete, not stunned, and goal is not completed
-        if (canMove && !isStunned && !isGoalCompleted && currentGoal != null && currentGoal.IsValid())
+        if (canMove && !isStunned && !isGoalCompleted)
         {
-            MoveTowardTarget();
+            // Check if current goal is still valid
+            if (currentGoal != null && currentGoal.IsValid())
+            {
+                MoveTowardTarget();
+            }
+            else
+            {
+                // Goal is no longer valid (e.g. connection destroyed by another monster)
+                // Request new closest goal
+                MonsterAiManager manager = MonsterAiManager.Instance;
+                if (manager != null)
+                {
+                    MonsterGoal newGoal = manager.GetClosestGoal(transform.position);
+                    if (newGoal != null && newGoal.IsValid())
+                    {
+                        currentGoal = newGoal;
+                    }
+                    else
+                    {
+                        // No valid goals left, just stay idle or die?
+                        // For now, we'll just wait. If no goals are available, the monster might just stand there.
+                    }
+                }
+            }
         }
     }
     

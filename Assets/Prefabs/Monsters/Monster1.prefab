@@ -5810,7 +5810,7 @@ MonoBehaviour:
   healthBar: {fileID: 3788785820376703257}
   healthBarPrefab: {fileID: 0}
   spawnSound: {fileID: 8300000, guid: a0d93386d81280d4f8d8c1155964bf32, type: 3}
-  hitSound: {fileID: 8300000, guid: 3e029c8dacec2304ea43ee2a84a4c175, type: 3}
+  hitSound: {fileID: 8300000, guid: 8e7782b77d7e1274c9fd892a5d4d2378, type: 3}
   dieSound: {fileID: 8300000, guid: 44afb43d2009fde438d1297ec2ac7b58, type: 3}
   audioSource: {fileID: 6837337798208244209}
   hitParticleEffect: {fileID: 7652953615941276288}

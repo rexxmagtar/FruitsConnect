@@ -9374,10 +9374,9 @@ MonoBehaviour:
   monsterPrefabs:
   - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   - {fileID: 8163196463235052042, guid: d6ff9d20fc9f555489fadc022e5daa44, type: 3}
-  minSpawnInterval: 5
-  maxSpawnInterval: 10
-  maxActiveMonsters: 5
   maxSpawnAttempts: 20
+  spawnZoneWidth: 12.5
+  spawnZoneHeight: 17.5
   portalPrefab: {fileID: 3625492018946710591, guid: 33d981063df345d4d9549b72857c570f, type: 3}
   portalAppearDuration: 0.5
   portalDisappearDuration: 0.5

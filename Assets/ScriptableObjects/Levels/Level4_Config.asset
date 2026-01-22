@@ -22,3 +22,7 @@ MonoBehaviour:
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - cake1_2
+  minSpawnInterval: 2
+  maxSpawnInterval: 5
+  maxActiveMonsters: 1
+  safeTimeOffset: 0
