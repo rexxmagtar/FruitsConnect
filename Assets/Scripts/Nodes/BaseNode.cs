@@ -941,7 +941,7 @@ public abstract class BaseNode : MonoBehaviour
     /// Note: Energy may already be applied when connection is created (if connected to producer)
     /// This check ensures energy is only applied once, even with multiple connections
     /// </summary>
-    private void ActivateNode()
+    protected virtual void ActivateNode()
     {
         // Apply energy if node has connections and energy not yet applied
         // Energy is typically applied when connection is created, but this ensures it's applied once
@@ -987,7 +987,7 @@ public abstract class BaseNode : MonoBehaviour
     /// <summary>
     /// Reset delivery count (for level reset)
     /// </summary>
-    public void ResetDeliveries()
+    public virtual void ResetDeliveries()
     {
         currentDeliveries = 0;
         currentVisualEffectPower = 1.0f; // Reset visual to all grayscale

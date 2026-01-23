@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: default
   particlePrefab: {fileID: 6499725632659285678, guid: 8a9c26537c9fb684db1136e7324b44ed, type: 3}
+  helperSpiritPrefab: {fileID: 6831418918358256370, guid: 574249910d82ec04396ede77465f87f1, type: 3}
   stage: 0
   effectSprite: {fileID: 21300000, guid: c420e8118cc22a9489e8b575114a8e5d, type: 3}
   price: 0

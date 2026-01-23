@@ -6,6 +6,8 @@ using UnityEngine;
 /// </summary>
 public class NeutralNode : BaseNode
 {
+    private GameObject currentHelperSpirit;
+
     protected override void Awake()
     {
         base.Awake();
@@ -14,6 +16,51 @@ public class NeutralNode : BaseNode
         SetupNeutralVisuals();
     }
     
+    protected override void ActivateNode()
+    {
+        base.ActivateNode();
+        SpawnHelperSpirit();
+    }
+
+    public override void ResetDeliveries()
+    {
+        base.ResetDeliveries();
+        DespawnHelperSpirit();
+    }
+
+    private void SpawnHelperSpirit()
+    {
+        if (currentHelperSpirit != null) return;
+
+        var currentParticleData = HitParticlesManager.Instance.GetCurrentParticle();
+        if (currentParticleData != null && currentParticleData.helperSpiritPrefab != null)
+        {
+            currentHelperSpirit = Instantiate(currentParticleData.helperSpiritPrefab, transform.position, Quaternion.identity);
+            var helperSpirit = currentHelperSpirit.GetComponent<HelperSpirit>();
+            if (helperSpirit != null)
+            {
+                helperSpirit.Initialize(this);
+            }
+        }
+    }
+
+    private void DespawnHelperSpirit()
+    {
+        if (currentHelperSpirit != null)
+        {
+            var helperSpirit = currentHelperSpirit.GetComponent<HelperSpirit>();
+            if (helperSpirit != null)
+            {
+                helperSpirit.Despawn();
+            }
+            else
+            {
+                Destroy(currentHelperSpirit);
+            }
+            currentHelperSpirit = null;
+        }
+    }
+
     private void SetupNeutralVisuals()
     {
         // If materials aren't assigned, create default red outline material

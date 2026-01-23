@@ -5,6 +5,7 @@ public class HitParticlesData : ScriptableObject
 {
     public string id;
     public GameObject particlePrefab;
+    public GameObject helperSpiritPrefab;
     public int stage;
     public Sprite effectSprite;
     public int price;

@@ -32,6 +32,7 @@ public class MonsterAiManager : MonoBehaviour
     
     // Active monsters
     private List<Monster> activeMonsters = new List<Monster>();
+    public List<Monster> ActiveMonsters => activeMonsters;
     
     // Spawn coroutine
     private Coroutine spawnCoroutine;

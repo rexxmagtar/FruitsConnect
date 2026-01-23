@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: magic_field
   particlePrefab: {fileID: 5009813809563322685, guid: 421610d58bb38d44d812d8a561b5cadc, type: 3}
+  helperSpiritPrefab: {fileID: 0}
   stage: 0
   effectSprite: {fileID: -702928828, guid: 215687feeab0b7445b4a1cd86c82c2e1, type: 3}
   price: 200
