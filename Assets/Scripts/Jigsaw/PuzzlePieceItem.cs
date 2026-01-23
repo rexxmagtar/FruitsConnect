@@ -36,6 +36,16 @@ namespace JigsawSystem
         canvasGroup.alpha = 1f;
         
         rectTransform = GetComponent<RectTransform>();
+
+        // Ensure we have a LayoutElement and set default state
+        SetIgnoreLayout(false);
+    }
+
+    public void SetIgnoreLayout(bool ignore)
+    {
+        LayoutElement layout = GetComponent<LayoutElement>();
+        if (layout == null) layout = gameObject.AddComponent<LayoutElement>();
+        layout.ignoreLayout = ignore;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -58,6 +68,7 @@ namespace JigsawSystem
         
         // Move to drag layer
         transform.SetParent(solveUI.DragLayer);
+        SetIgnoreLayout(true);
         canvasGroup.blocksRaycasts = false;
         canvasGroup.alpha = 0.6f;
         
@@ -90,9 +101,10 @@ namespace JigsawSystem
     }
 
     public void ResetToOriginal()
-        {
-            transform.SetParent(originalParent);
-            rectTransform.anchoredPosition = originalPosition;
-        }
+    {
+        transform.SetParent(originalParent);
+        rectTransform.anchoredPosition = originalPosition;
+        SetIgnoreLayout(false);
+    }
     }
 }

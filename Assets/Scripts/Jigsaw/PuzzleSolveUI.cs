@@ -237,6 +237,7 @@ namespace JigsawSystem
             // Spawn a temporary visual piece for dragging
             var dragPiece = Instantiate(piecePrefab, DragLayer);
             dragPiece.Initialize(currentPuzzle.puzzleId, storagePiece.PieceIndex, currentPuzzle.pieces[storagePiece.PieceIndex], this);
+            dragPiece.SetIgnoreLayout(true);
             dragPiece.LinkedStoragePiece = storagePiece;
             
             // Sync position to cursor
@@ -270,6 +271,7 @@ namespace JigsawSystem
             // Spawn a temporary visual piece for dragging
             var dragPiece = Instantiate(piecePrefab, DragLayer);
             dragPiece.Initialize(currentPuzzle.puzzleId, pieceIndex, currentPuzzle.pieces[pieceIndex], this);
+            dragPiece.SetIgnoreLayout(true);
             
             // Sync position to cursor
             dragPiece.transform.position = eventData.position;
