@@ -18,7 +18,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3473529909581181512, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: m_Name
-      value: Spirit1
+      value: SpiritDefault
       objectReference: {fileID: 0}
     - target: {fileID: 4559080999636468818, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: m_LocalScale.x
@@ -98,11 +98,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5830850444779986723, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: InitialModule.startColor.maxColor.g
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5830850444779986723, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: InitialModule.startColor.maxColor.r
-      value: 0.7411766
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6010611732222195546, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: m_Parameters.colorGradient.key0.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6010611732222195546, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: m_Parameters.colorGradient.key0.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6010611732222195546, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: m_Parameters.colorGradient.key0.r
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6139904261238893799, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: m_IsActive
@@ -111,6 +123,18 @@ PrefabInstance:
     - target: {fileID: 8240415215158998338, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
       value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 8240415215158998338, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8240415215158998338, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8240415215158998338, guid: bc142210df3ec4545a4e3e1f21e00da7, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

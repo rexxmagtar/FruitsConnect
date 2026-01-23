@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: impact
   particlePrefab: {fileID: 8448053760210330966, guid: 24e06c3211438564589827dc0596b722, type: 3}
+  helperSpiritPrefab: {fileID: 5680977683535789568, guid: f341572851222e646ae3eef0a00e461e, type: 3}
   stage: 0
   effectSprite: {fileID: 21300000, guid: d06507230bedf03418234d530f2b77b8, type: 3}
   price: 100
