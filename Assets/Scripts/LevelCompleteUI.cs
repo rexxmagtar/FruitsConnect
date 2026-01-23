@@ -689,6 +689,11 @@ public class LevelCompleteUI : MonoBehaviour
                 RectTransform rectTransform = coinParticle.GetComponent<RectTransform>();
                 rectTransform.sizeDelta = coinParticleSize;
             }
+
+            // Ensure particle doesn't affect layout
+            LayoutElement layoutElement = coinParticle.GetComponent<LayoutElement>();
+            if (layoutElement == null) layoutElement = coinParticle.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
             
             coinParticle.transform.position = startPos;
             activeCoins.Add(coinParticle);
@@ -804,11 +809,7 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Calculate progress BEFORE completing the current level (previous level)
         int previousLevel = completedLevel - 1;
-        if (previousLevel < 1)
-        {
-            previousLevel = 1;
-        }
-        
+
         // Get active fruit data for the completed level
         ProgressFruitData fruitData = progressConfig.GetActiveFruitData(completedLevel);
         if (fruitData == null)

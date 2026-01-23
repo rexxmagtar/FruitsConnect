@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PuzzleCake1
   m_EditorClassIdentifier: 
   puzzleId: cake1
-  displayName: 
+  displayName: Cake
   fullImage: {fileID: 21300000, guid: 7c297967ab9116a48b0308e9482839e5, type: 3}
   fullBlurredImage: {fileID: 21300000, guid: c435e075ca18e30468937f3364a560cf, type: 3}
   completionReward: 400

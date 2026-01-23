@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: PuzzleCherryHouse1
   m_EditorClassIdentifier: 
   puzzleId: cherryHouse1
-  displayName: 
+  displayName: Cherry farm
   fullImage: {fileID: 21300000, guid: b47c3d247f6a1374bb13dbc296099153, type: 3}
-  fullBlurredImage: {fileID: 21300000, guid: b47c3d247f6a1374bb13dbc296099153, type: 3}
+  fullBlurredImage: {fileID: 21300000, guid: bfb91144f39dcc04bb8f0bab1bbd8120, type: 3}
   completionReward: 400
   pieces:
   - {fileID: 21300000, guid: 2c2d7679df5bc5f43bc8da52174f73df, type: 3}

@@ -51,14 +51,7 @@ namespace UI
             var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
             int currentLevel = saveData.CurrentLevel;
 
-            // Update stage lockers visibility
-            // Stage 0: default, Stage 1: level 10, Stage 2: level 20...
-            for (int i = 0; i < stageLockers.Count; i++)
-            {
-                bool isStageAccessible = i == 0 || currentLevel >= i * 10;
-                if (stageLockers[i] != null)
-                    stageLockers[i].SetActive(!isStageAccessible);
-            }
+          
 
             foreach (var particle in allParticles)
             {
@@ -73,6 +66,17 @@ namespace UI
                         btn.Initialize(particle, this, isAccessible);
                         _buttons.Add(btn);
                     }
+                }
+            }
+
+              // Update stage lockers visibility
+            // Stage 0: default, Stage 1: level 10, Stage 2: level 20...
+            for (int i = 0; i < stageLockers.Count; i++)
+            {
+                bool isStageAccessible = i == 0 || currentLevel >= i * 10;
+                if (stageLockers[i] != null){
+                    stageLockers[i].SetActive(!isStageAccessible);
+                    stageLockers[i].transform.SetAsLastSibling();
                 }
             }
         }

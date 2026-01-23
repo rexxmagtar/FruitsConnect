@@ -8,6 +8,7 @@ namespace UI
     {
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI priceField;
+        [SerializeField] private TextMeshProUGUI statusField;
         [SerializeField] private Image effectImage;
         [SerializeField] private GameObject moneyPriceContainer;
         [SerializeField] private System.Collections.Generic.List<Image> targetImages = new System.Collections.Generic.List<Image>();
@@ -40,32 +41,67 @@ namespace UI
         {
             bool isUnlocked = HitParticlesManager.Instance.IsUnlocked(_data.id);
             bool isSelected = HitParticlesManager.Instance.GetCurrentParticle()?.id == _data.id;
+            bool isAffordable = GameManager.Instance.GetCoins() >= _data.price;
 
+            // Handle Money Icon (moneyPriceContainer)
             if (moneyPriceContainer != null)
                 moneyPriceContainer.SetActive(!isUnlocked);
 
-            if (priceField != null)
-            {
-                if (_data.price == 0)
-                    priceField.text = "Free";
-                else
-                    priceField.text = _data.price.ToString();
-            }
+            Color targetColor = Color.white;
 
-            bool isAffordable = HitParticlesManager.Instance.IsUnlocked(_data.id) || GameManager.Instance.GetCoins() >= _data.price;
-            bool shouldBeGray = !_isAccessible || !isAffordable;
+            if (isUnlocked)
+            {
+                if (priceField != null) priceField.gameObject.SetActive(false);
+                if (statusField != null)
+                {
+                    statusField.gameObject.SetActive(true);
+                    if (isSelected)
+                    {
+                        targetColor = Color.green;
+                        statusField.text = "Selected";
+                    }
+                    else
+                    {
+                        targetColor = Color.blue;
+                        statusField.text = "Select";
+                    }
+                }
+            }
+            else
+            {
+                // Locked
+                if (statusField != null) statusField.gameObject.SetActive(false);
+                if (priceField != null)
+                {
+                    priceField.gameObject.SetActive(true);
+                    if (_data.price == 0)
+                        priceField.text = "Free";
+                    else
+                        priceField.text = _data.price.ToString();
+                }
+
+                if (!_isAccessible || !isAffordable)
+                {
+                    targetColor = Color.gray;
+                }
+                else
+                {
+                    targetColor = Color.blue;
+                }
+            }
 
             foreach (var img in targetImages)
             {
                 if (img != null)
                 {
-                    img.color = shouldBeGray ? Color.gray : Color.white;
+                    img.color = targetColor;
                 }
             }
 
             if (button != null)
             {
-                button.interactable = _isAccessible && (isUnlocked || GameManager.Instance.GetCoins() >= _data.price);
+                // Allow clicking if it's unlocked OR (accessible and affordable)
+                button.interactable = isUnlocked || (_isAccessible && isAffordable);
             }
 
             if (selectionBorder != null)

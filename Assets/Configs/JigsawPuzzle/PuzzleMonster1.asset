@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PuzzleMonster1
   m_EditorClassIdentifier: 
   puzzleId: monster1
-  displayName: 
+  displayName: Angry parasite
   fullImage: {fileID: 21300000, guid: 48aecb6573599044489cd70825143bc0, type: 3}
   fullBlurredImage: {fileID: 21300000, guid: 3feb766170251d94d97041a7e67b7058, type: 3}
   completionReward: 400

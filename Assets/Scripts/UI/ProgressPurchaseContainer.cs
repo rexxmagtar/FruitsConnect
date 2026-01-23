@@ -511,6 +511,10 @@ public class ProgressPurchaseContainer : MonoBehaviour
             GameObject circleObj = new GameObject("ShinyCircleParticle");
             RectTransform circleRect = circleObj.AddComponent<RectTransform>();
             Image circleImage = circleObj.AddComponent<Image>();
+
+            // Ensure particle doesn't affect layout
+            LayoutElement layoutElement = circleObj.AddComponent<LayoutElement>();
+            layoutElement.ignoreLayout = true;
             
             circleImage.sprite = shinyCircleSprite;
             circleImage.SetNativeSize();
