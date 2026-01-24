@@ -463,7 +463,7 @@ public class ConnectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Clear all connections (for level reset)
+    /// Clear all connections (for level reset/unload)
     /// </summary>
     public void ClearAllConnections()
     {
@@ -474,7 +474,8 @@ public class ConnectionManager : MonoBehaviour
         {
             if (connection != null)
             {
-                connection.DestroyConnection();
+                // Don't play particles during level clear/reset
+                connection.DestroyConnection(false);
             }
         }
         

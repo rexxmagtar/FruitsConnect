@@ -442,7 +442,8 @@ public class Connection : MonoBehaviour
     /// <summary>
     /// Clean up and destroy connection
     /// </summary>
-    public void DestroyConnection()
+    /// <param name="playParticles">Whether to play destruction particles (default true, false for scene cleanup)</param>
+    public void DestroyConnection(bool playParticles = true)
     {
         // Stop animation
         StopAnimation();
@@ -470,12 +471,20 @@ public class Connection : MonoBehaviour
             boxCollider.enabled = false;
         }
         
-        // Play destruction particles and destroy after animation
-        if (destructionCoroutine != null)
+        if (playParticles)
         {
-            StopCoroutine(destructionCoroutine);
+            // Play destruction particles and destroy after animation
+            if (destructionCoroutine != null)
+            {
+                StopCoroutine(destructionCoroutine);
+            }
+            destructionCoroutine = StartCoroutine(DestructionSequence());
         }
-        destructionCoroutine = StartCoroutine(DestructionSequence());
+        else
+        {
+            // Destroy immediately for scene cleanup
+            Destroy(gameObject);
+        }
     }
     
     /// <summary>

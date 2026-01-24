@@ -17,6 +17,8 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button shopButton;
     [SerializeField] private Button jigsawButton;
     [SerializeField] private Button skinSelectButton;
+    [SerializeField] private GameObject jigsawLocker;
+    [SerializeField] private GameObject skinSelectLocker;
     [SerializeField] private TextMeshProUGUI startButtonText;
     [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI balanceText;
@@ -132,8 +134,8 @@ public class MainMenuUI : MonoBehaviour
         // Initialize upgrade containers
         InitializeUpgradeContainers();
         
-        // Update upgrade visibility based on level completion
-        UpdateUpgradeVisibility();
+        // Update feature visibility and locks based on level completion
+        UpdateFeatureLocks();
         
         // Update upgrade affordability
         UpdateUpgradeAffordability();
@@ -224,8 +226,8 @@ public class MainMenuUI : MonoBehaviour
         // Update UI elements (level number text, start button text, progress slider)
         UpdateUI();
         
-        // Update upgrade visibility based on level completion
-        UpdateUpgradeVisibility();
+        // Update feature visibility and locks based on level completion
+        UpdateFeatureLocks();
         
         // Update upgrade affordability (balance may have changed after completing level)
         UpdateUpgradeAffordability();
@@ -277,7 +279,7 @@ public class MainMenuUI : MonoBehaviour
     {
         UpdateBalanceDisplay();
         UpdateUpgradeAffordability();
-        UpdateUpgradeVisibility();
+        UpdateFeatureLocks();
         UpdateUI();
         UpdateBossAlertVisibility();
     }
@@ -451,7 +453,7 @@ public class MainMenuUI : MonoBehaviour
         Debug.Log("UpdateLevelDisplay: " + level);
         currentLevel = level;
         UpdateUI();
-        UpdateUpgradeVisibility();
+        UpdateFeatureLocks();
         UpdateBossAlertVisibility();
     }
     
@@ -595,13 +597,14 @@ public class MainMenuUI : MonoBehaviour
     }
     
     /// <summary>
-    /// Update upgrade containers visibility based on level completion
-    /// Upgrades are hidden until user has completed first 2 levels
+    /// Update visibility and interactability of features based on level completion
+    /// Upgrades are hidden until user has completed first few levels
+    /// Puzzle select is locked until level 6 completion
+    /// Skin select is locked until level 10 completion
     /// </summary>
-    private void UpdateUpgradeVisibility()
+    private void UpdateFeatureLocks()
     {
         // Get current level (0-indexed: 0 = level 1, 1 = level 2, 2 = level 3, etc.)
-        // User needs to complete levels 1 and 2, so CurrentLevel should be >= 2
         int currentLevelIndex = 0;
         LevelsManager levelsManager = LevelsManager.Instance;
         if (levelsManager != null)
@@ -619,10 +622,10 @@ public class MainMenuUI : MonoBehaviour
             }
         }
         
-        // Show upgrades only if user has completed first 2 levels (CurrentLevel >= 2)
+        // 1. Upgrades: Show only if user has completed first 2 levels (CurrentLevel >= 2)
+        // Existing logic: currentLevelIndex >= 3 (Level 4+)
         bool shouldShowUpgrades = currentLevelIndex >= 3;
         
-        // Update visibility of upgrade containers
         if (connectionSpeedContainer != null)
         {
             connectionSpeedContainer.gameObject.SetActive(shouldShowUpgrades);
@@ -632,8 +635,32 @@ public class MainMenuUI : MonoBehaviour
         {
             monsterDamageContainer.gameObject.SetActive(shouldShowUpgrades);
         }
+
+        // 2. Puzzle Select (Jigsaw): Locked until level 6 completed (started level 7)
+        // currentLevelIndex is 0-indexed, so Level 7 is index 6.
+        bool jigsawLocked = currentLevelIndex < 6;
+        if (jigsawButton != null)
+        {
+            jigsawButton.interactable = !jigsawLocked;
+        }
+        if (jigsawLocker != null)
+        {
+            jigsawLocker.SetActive(jigsawLocked);
+        }
+
+        // 3. Skin Select: Locked until level 10 completed (started level 11)
+        // Level 11 is index 10.
+        bool skinSelectLocked = currentLevelIndex < 10;
+        if (skinSelectButton != null)
+        {
+            skinSelectButton.interactable = !skinSelectLocked;
+        }
+        if (skinSelectLocker != null)
+        {
+            skinSelectLocker.SetActive(skinSelectLocked);
+        }
         
-        Debug.Log($"UpdateUpgradeVisibility: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}");
+        Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, JigsawLocked={jigsawLocked}, SkinLocked={skinSelectLocked}");
     }
     
     /// <summary>
