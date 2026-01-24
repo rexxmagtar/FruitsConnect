@@ -437,9 +437,9 @@ public class LevelEditorWindow : EditorWindow
         // Use template from config if available
         if (levelCreationConfig != null && levelCreationConfig.LevelTemplate != null)
         {
-            levelObj = Instantiate(levelCreationConfig.LevelTemplate);
+            levelObj = PrefabUtility.InstantiatePrefab(levelCreationConfig.LevelTemplate) as GameObject;
             levelObj.name = "New_Level";
-            Debug.Log("Created new level from template.");
+            Debug.Log("Created new level from template prefab.");
         }
         else
         {

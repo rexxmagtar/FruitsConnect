@@ -16,5 +16,5 @@ MonoBehaviour:
   particlePrefab: {fileID: 8448053760210330966, guid: 24e06c3211438564589827dc0596b722, type: 3}
   helperSpiritPrefab: {fileID: 5680977683535789568, guid: f341572851222e646ae3eef0a00e461e, type: 3}
   stage: 0
-  effectSprite: {fileID: 21300000, guid: d06507230bedf03418234d530f2b77b8, type: 3}
+  effectSprite: {fileID: 21300000, guid: 0a1f00bdd9722104abe606b32a2cc53b, type: 3}
   price: 100

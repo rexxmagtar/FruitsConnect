@@ -8,9 +8,25 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 69018332000712655, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: simulationSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 69018332000712655, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: ShapeModule.radius.value
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 69018332000712655, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: InitialModule.startSize.scalar
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 69018332000712655, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: InitialModule.startSize.minScalar
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 3334293670390588611, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2098.5361
+      value: -7.4121943
       objectReference: {fileID: 0}
     - target: {fileID: 3334293670390588611, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -18,7 +34,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3334293670390588611, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1173.8218
+      value: -3.6280904
       objectReference: {fileID: 0}
     - target: {fileID: 3334293670390588611, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -47,6 +63,18 @@ PrefabInstance:
     - target: {fileID: 3334293670390588611, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5970415382964712956, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: simulationSpeed
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5970415382964712956, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: InitialModule.startSize.scalar
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5970415382964712956, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 6441873369525384307, guid: 0f3d407feb92ebb49b98d0157de5008a, type: 3}
       propertyPath: m_Name

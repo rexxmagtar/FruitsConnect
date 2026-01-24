@@ -64,6 +64,10 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 7027636043351174211, guid: 925e57636a46c96458ef4a2772c492f8, type: 3}
+    - target: {fileID: 5475455773377396113, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.329
+      objectReference: {fileID: 0}
     - target: {fileID: 6591981792106794704, guid: 392dde4676bc71a41ba2092cbc8ab671, type: 3}
       propertyPath: m_Name
       value: Neutral_Node blackberry
