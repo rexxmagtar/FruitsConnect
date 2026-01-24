@@ -32,6 +32,12 @@ public class NeutralNode : BaseNode
     {
         if (currentHelperSpirit != null) return;
 
+        // Only spawn spirits after level 5
+        if (LevelsManager.Instance != null && LevelsManager.Instance.GetCurrentLevelNumber() <= 5)
+        {
+            return;
+        }
+
         var currentParticleData = HitParticlesManager.Instance.GetCurrentParticle();
         if (currentParticleData != null && currentParticleData.helperSpiritPrefab != null)
         {

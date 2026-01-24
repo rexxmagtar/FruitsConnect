@@ -20,9 +20,7 @@ MonoBehaviour:
   isBossFight: 1
   bossGoldReward: 50
   bossFightTimeLimit: 30
-  puzzlePieceRewards:
-  - cake1_3
-  - cake1_4
+  puzzlePieceRewards: []
   monsterPrefabs:
   - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   minSpawnInterval: 10

@@ -647,6 +647,7 @@ public class MainMenuUI : MonoBehaviour
         {
             jigsawLocker.SetActive(jigsawLocked);
         }
+        SetButtonContentVisibility(jigsawButton, !jigsawLocked, jigsawLocker);
 
         // 3. Skin Select: Locked until level 10 completed (started level 11)
         // Level 11 is index 10.
@@ -659,8 +660,29 @@ public class MainMenuUI : MonoBehaviour
         {
             skinSelectLocker.SetActive(skinSelectLocked);
         }
+        SetButtonContentVisibility(skinSelectButton, !skinSelectLocked, skinSelectLocker);
         
         Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, JigsawLocked={jigsawLocked}, SkinLocked={skinSelectLocked}");
+    }
+    
+    /// <summary>
+    /// Helper to hide/show button content (icons, text) when it's locked.
+    /// This prevents "ghosting" effects where content is visible through the locker overlay during fades.
+    /// </summary>
+    private void SetButtonContentVisibility(Button button, bool visible, GameObject locker)
+    {
+        if (button == null) return;
+
+        // Optionally hide the main button image if it's considered part of the "content"
+        // Most buttons have a background image that should stay, so we only hide children
+        
+        foreach (Transform child in button.transform)
+        {
+            // Don't hide the locker itself!
+            if (locker != null && (child.gameObject == locker || locker.transform.IsChildOf(child))) continue;
+            
+            child.gameObject.SetActive(visible);
+        }
     }
     
     /// <summary>

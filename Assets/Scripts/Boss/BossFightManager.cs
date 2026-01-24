@@ -377,6 +377,16 @@ public class BossFightManager : MonoBehaviour
             }
         }
         
+        // Hide all helper spirits (these don't fade, just despawn)
+        HelperSpirit[] helperSpirits = FindObjectsByType<HelperSpirit>(FindObjectsSortMode.None);
+        foreach (var spirit in helperSpirits)
+        {
+            if (spirit != null)
+            {
+                spirit.Despawn();
+            }
+        }
+        
         // Hide gameplay UI
         GameplayUI gameplayUI = FindFirstObjectByType<GameplayUI>();
         if (gameplayUI != null)

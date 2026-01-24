@@ -441,13 +441,22 @@ public class LevelCompleteUI : MonoBehaviour
         yield return new WaitForSeconds(1f);
         
 
-                // Show puzzle piece earned popups if any
+        // Show puzzle piece earned popups if any
         if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
         {
             JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
         }
 
-                // All animations complete, fade in menu button (images and texts simultaneously)
+        // Show spirit unlock UI if level 5 was just completed
+        if (nextLevelNumber - 1 == 5)
+        {
+            if (UI.ShoSpiritsUnlockUI.Instance != null)
+            {
+                UI.ShoSpiritsUnlockUI.Instance.Show();
+            }
+        }
+
+        // All animations complete, fade in menu button (images and texts simultaneously)
         StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
         StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
         
