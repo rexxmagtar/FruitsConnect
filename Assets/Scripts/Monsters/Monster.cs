@@ -502,6 +502,25 @@ public class Monster : MonoBehaviour
         // Play hit scale animation for better UX
         PlayHitScaleAnimation();
         
+        // If we were in the middle of an attack sequence but haven't captured anything yet,
+        // stop the sequence and reset goal completion so it restarts after stun.
+        if (isGoalCompleted && capturedNode == null && capturedConnection == null)
+        {
+            if (attackCoroutine != null)
+            {
+                StopCoroutine(attackCoroutine);
+                attackCoroutine = null;
+            }
+            isGoalCompleted = false;
+            canMove = true;
+            
+            // Reset animator to running state so it can transition back to attack later
+            if (aiController != null)
+            {
+                aiController.SetRunning();
+            }
+        }
+
         // Stun monster for 1 second (stop movement)
         StunMonster(1f);
         

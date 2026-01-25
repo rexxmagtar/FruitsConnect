@@ -409,6 +409,7 @@ MonoBehaviour:
     - Node_97046beb
   graphVisualizer: {fileID: 8752097702055879664}
   levelCompleteParticles: {fileID: 7176069111157253218}
+  hintGameObjects: []
   TerrainMeshRenderer: {fileID: 7486394484868789906}
 --- !u!114 &8752097702055879664
 MonoBehaviour:
@@ -1537,21 +1538,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2331051752444746074, guid: 732575bdcd7b2d041b6ef01391c9ff21, type: 3}
-      propertyPath: InitialModule.startSize.scalar
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2342551430275629943, guid: 732575bdcd7b2d041b6ef01391c9ff21, type: 3}
-      propertyPath: InitialModule.startSize.scalar
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 3827180498068875314, guid: 732575bdcd7b2d041b6ef01391c9ff21, type: 3}
       propertyPath: m_Name
       value: LevelCompleteParticles
-      objectReference: {fileID: 0}
-    - target: {fileID: 5093173124508782388, guid: 732575bdcd7b2d041b6ef01391c9ff21, type: 3}
-      propertyPath: InitialModule.startSize.scalar
-      value: 0.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

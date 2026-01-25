@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bab1e41cd1834f47b6d8c689f6257f9, type: 3}
+  m_Name: HitParticlesDataWind
+  m_EditorClassIdentifier: 
+  id: wind
+  particlePrefab: {fileID: 1624384507574794162, guid: ac039fbdea1049347932b1e800407bf8, type: 3}
+  helperSpiritPrefab: {fileID: 5680977683535789568, guid: 4a5e2f49ec85c9648afd9310c5556cd2, type: 3}
+  stage: 2
+  effectSprite: {fileID: 21300000, guid: 18fbe81b28e151b44bc25f3c774435b5, type: 3}
+  price: 200
