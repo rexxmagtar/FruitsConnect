@@ -9,6 +9,7 @@ public class LevelConfig : ScriptableObject
     
     [Header("Rewards")]
     [SerializeField] private int coinReward = 10;
+    [SerializeField] private int monsterBounty = 5;
     
     [Header("Info")]
     [SerializeField] private string levelName;
@@ -43,6 +44,7 @@ public class LevelConfig : ScriptableObject
     
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
+    public int MonsterBounty => monsterBounty;
     public string LevelName => levelName;
     public int StartingEnergy => startingEnergy;
     public GameObject ConnectionAnimationPrefab => connectionAnimationPrefab;

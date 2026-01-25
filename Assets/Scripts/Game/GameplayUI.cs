@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using DataRepository;
 using TMPro;
+using DG.Tweening;
+using AdsServices; // Assuming this is the namespace for AdsManager
 
 /// <summary>
 /// UI overlay for gameplay - displays level info, energy balance, and controls
@@ -15,6 +17,13 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private Button homeButton;
     [SerializeField] private Button pauseButton;
     
+    [Header("Energy Helper")]
+    [SerializeField] private Button helpButton;
+    [SerializeField] private Image helpTimerFillImage;
+    [SerializeField] private float helpTimerDuration = 10f;
+    [SerializeField] private float helpShowInterval = 60f;
+    [SerializeField] private float helpRetryInterval = 20f;
+    
     [Header("Animation Settings")]
     [SerializeField] private float sliderAnimationSpeed = 5f;
     
@@ -22,6 +31,10 @@ public class GameplayUI : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     
     private float targetSliderValue;
+    private float nextHelpShowTime;
+    private float currentHelpTimer;
+    private bool isHelpButtonVisible;
+    private Tween helpPulseTween;
     
     private void Awake()
     {
@@ -49,6 +62,13 @@ public class GameplayUI : MonoBehaviour
         if (pauseButton != null)
         {
             pauseButton.onClick.AddListener(OnPauseButtonClick);
+        }
+
+        // Setup help button
+        if (helpButton != null)
+        {
+            helpButton.onClick.AddListener(OnHelpButtonClick);
+            helpButton.gameObject.SetActive(false);
         }
     }
     
@@ -85,6 +105,10 @@ public class GameplayUI : MonoBehaviour
             canvasGroup.blocksRaycasts = true;
         }
         
+        // Initialize help button timer
+        nextHelpShowTime = Time.time + helpShowInterval;
+        HideHelpButton(helpShowInterval);
+
         // Initialize slider if available
         if (energySlider != null)
         {
@@ -247,6 +271,9 @@ public class GameplayUI : MonoBehaviour
         // LevelCompleteUI handles the win screen, so we don't need to do anything here
         // Just update energy display in case it changed
         UpdateEnergyDisplay();
+        
+        // Hide help button on level win
+        HideHelpButton(helpShowInterval);
     }
     
     /// <summary>
@@ -256,6 +283,10 @@ public class GameplayUI : MonoBehaviour
     {
         // Update energy display after reset
         UpdateEnergyDisplay();
+
+        // Reset help button timer on level reset
+        nextHelpShowTime = Time.time + helpShowInterval;
+        HideHelpButton(helpShowInterval);
     }
     
     private void Update()
@@ -267,6 +298,123 @@ public class GameplayUI : MonoBehaviour
         if (energySlider != null)
         {
             energySlider.value = Mathf.Lerp(energySlider.value, targetSliderValue, sliderAnimationSpeed * Time.deltaTime);
+        }
+
+        UpdateHelpButtonLogic();
+    }
+
+    /// <summary>
+    /// Update logic for the energy help button
+    /// </summary>
+    private void UpdateHelpButtonLogic()
+    {
+        if (GameController.Instance == null || !GameController.Instance.GameplayEnabled) return;
+
+        // Only show hint button after level 5
+        if (LevelsManager.Instance != null && LevelsManager.Instance.GetCurrentLevelNumber() <= 5)
+        {
+            if (isHelpButtonVisible)
+            {
+                HideHelpButton(helpShowInterval);
+            }
+            return;
+        }
+
+        if (!isHelpButtonVisible)
+        {
+            if (Time.time >= nextHelpShowTime)
+            {
+                ShowHelpButton();
+            }
+        }
+        else
+        {
+            currentHelpTimer -= Time.deltaTime;
+            if (helpTimerFillImage != null)
+            {
+                helpTimerFillImage.fillAmount = currentHelpTimer / helpTimerDuration;
+            }
+
+            if (currentHelpTimer <= 0)
+            {
+                HideHelpButton(helpRetryInterval);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Show the help button with pulsing animation
+    /// </summary>
+    private void ShowHelpButton()
+    {
+        if (helpButton == null) return;
+
+        isHelpButtonVisible = true;
+        currentHelpTimer = helpTimerDuration;
+        helpButton.gameObject.SetActive(true);
+        
+        if (helpTimerFillImage != null)
+        {
+            helpTimerFillImage.fillAmount = 1f;
+        }
+
+        // Pulse animation
+        helpButton.transform.localScale = Vector3.one;
+        helpPulseTween = helpButton.transform.DOScale(1.1f, 0.5f)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetEase(Ease.InOutSine)
+            .SetUpdate(true); // Ensure it pulses even if paused (though we show it during gameplay)
+    }
+
+    /// <summary>
+    /// Hide the help button and stop animations
+    /// </summary>
+    private void HideHelpButton(float nextInterval)
+    {
+        if (helpButton == null) return;
+
+        isHelpButtonVisible = false;
+        nextHelpShowTime = Time.time + nextInterval;
+        helpButton.gameObject.SetActive(false);
+        
+        if (helpPulseTween != null)
+        {
+            helpPulseTween.Kill();
+            helpPulseTween = null;
+        }
+    }
+
+    /// <summary>
+    /// Handle help button click - show rewarded ad
+    /// </summary>
+    private async void OnHelpButtonClick()
+    {
+        if (AdsManager.Instance == null) return;
+
+        // Pause game
+        float previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+
+        Debug.Log("Energy Helper: Showing rewarded ad");
+        bool success = await AdsManager.Instance.ShowRewardedAdAsync();
+
+        // Resume game
+        Time.timeScale = previousTimeScale;
+
+        if (success)
+        {
+            Debug.Log("Energy Helper: Ad successful, adding energy");
+            if (GameController.Instance != null)
+            {
+                GameController.Instance.IncrementMaxEnergy();
+            }
+            UpdateEnergyDisplay();
+            HideHelpButton(helpShowInterval); // Wait 1 minute after success
+        }
+        else
+        {
+            Debug.Log("Energy Helper: Ad failed or cancelled");
+            HideHelpButton(helpRetryInterval); // Retry in 20 seconds
         }
     }
 }

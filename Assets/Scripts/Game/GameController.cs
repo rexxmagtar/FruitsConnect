@@ -24,6 +24,9 @@ public class GameController : MonoBehaviour
     [SerializeField] private int currentEnergy = 0;
     [SerializeField] private int startingEnergy = 5;
     
+    // Rewards tracking during level
+    private int monsterCoinsEarned = 0;
+    
     // Singleton
     private static GameController _instance;
     public static GameController Instance => _instance;
@@ -56,7 +59,17 @@ public class GameController : MonoBehaviour
     /// Get maximum player energy (starting energy for the level)
     /// </summary>
     public int GetMaxEnergy() => startingEnergy;
-    
+
+    /// <summary>
+    /// Increment max energy (starting energy for current level) and add 1 energy
+    /// </summary>
+    public void IncrementMaxEnergy()
+    {
+        startingEnergy++;
+        currentEnergy++;
+        Debug.Log($"Max energy increased to {startingEnergy}. Current energy: {currentEnergy}");
+    }
+
     /// <summary>
     /// Check if player can afford connecting to a node (if it has negative weight)
     /// </summary>
@@ -90,6 +103,16 @@ public class GameController : MonoBehaviour
         Debug.Log($"Energy modified by {amount}. Current energy: {currentEnergy}");
         
         // TODO: Update UI when energy UI is implemented
+    }
+    
+    /// <summary>
+    /// Add bounty from killing a monster
+    /// </summary>
+    public void AddMonsterBounty(int amount)
+    {
+        if (amount <= 0) return;
+        monsterCoinsEarned += amount;
+        Debug.Log($"Monster bounty added: {amount}. Total for level: {monsterCoinsEarned}");
     }
     
     /// <summary>
@@ -578,8 +601,9 @@ public class GameController : MonoBehaviour
                 // Calculate boss final reward
                 int bossFinalReward = bossDefeated ? (int)(bossBaseReward * multiplier) : 0;
                 
-                // Award all coins (regular level + boss bounty)
-                GameManager.Instance.AddCoins(coinsEarned + bossFinalReward);
+                // Award all coins (regular level + boss bounty + monster bounty)
+                int totalCoinsAwarded = coinsEarned + bossFinalReward + monsterCoinsEarned;
+                GameManager.Instance.AddCoins(totalCoinsAwarded);
                 
                 // Complete level (increments CurrentLevel)
                 GameManager.Instance.CompleteLevel();
@@ -589,6 +613,10 @@ public class GameController : MonoBehaviour
                 
                 // Get earned puzzle pieces from current level config
                 System.Collections.Generic.List<string> puzzlePieces = config.PuzzlePieceRewards;
+                
+                // Use a copy of monster bounty for UI then reset it
+                int finalMonsterBounty = monsterCoinsEarned;
+                monsterCoinsEarned = 0;
 
                 // Hide gameplay UI
                 if (gameplayUI != null)
@@ -598,7 +626,8 @@ public class GameController : MonoBehaviour
             
                 if (levelCompleteUI != null)
                 {
-                    levelCompleteUI.Show(coinsEarned, nextLevel, bossBaseReward, multiplier, bossDefeated, puzzlePieces);
+                    // Pass coinsEarned + finalMonsterBounty as the base reward to show in UI
+                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, nextLevel, bossBaseReward, multiplier, bossDefeated, puzzlePieces);
                 }
                 else
                 {
@@ -654,6 +683,9 @@ public class GameController : MonoBehaviour
         
         currentLevel = null;
         gameplayEnabled = false;
+        
+        // Reset rewards tracking
+        monsterCoinsEarned = 0;
     }
     
     /// <summary>

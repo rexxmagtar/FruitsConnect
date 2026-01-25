@@ -438,7 +438,7 @@ public class LevelCompleteUI : MonoBehaviour
         // Animate fruit progress delta (initial progress was already set)
         yield return StartCoroutine(AnimateFruitProgress());
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.3f);
         
 
         // Show puzzle piece earned popups if any

@@ -5814,6 +5814,8 @@ MonoBehaviour:
   audioSource: {fileID: 6837337798208244209}
   hitParticleEffect: {fileID: 0}
   dieParticleEffect: {fileID: 8324274440917960474}
+  moneyFlyPrefab: {fileID: 3664431748527025542, guid: d425c578e8b8f234ead7bbd491ac92db, type: 3}
+  moneySprite: {fileID: 21300000, guid: 90a1354973ae6c443be572a6f00d8238, type: 3}
   currentGoal:
     goalType: 0
     targetConnection: {fileID: 0}

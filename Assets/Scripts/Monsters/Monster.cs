@@ -39,7 +39,11 @@ public class Monster : MonoBehaviour
     
     [Header("Particle Effects")]
     [SerializeField] private ParticleSystem hitParticleEffect;
-     [SerializeField] private ParticleSystem dieParticleEffect;
+    [SerializeField] private ParticleSystem dieParticleEffect;
+    
+    [Header("Rewards")]
+    [SerializeField] private GameObject moneyFlyPrefab;
+    [SerializeField] private Sprite moneySprite;
     
     [Header("Goal")]
     [SerializeField] private MonsterGoal currentGoal;
@@ -690,6 +694,9 @@ public class Monster : MonoBehaviour
             aiController.TriggerDie();
         }
         
+        // Give bounty reward
+        AwardBounty();
+        
         // Play die sound
         PlayDieSound();
         
@@ -745,6 +752,64 @@ public class Monster : MonoBehaviour
         Destroy(gameObject);
     }
     
+    /// <summary>
+    /// Award bounty to player for killing this monster
+    /// </summary>
+    private void AwardBounty()
+    {
+        GameController gameController = GameController.Instance;
+        if (gameController == null) return;
+        
+        LevelConfig config = gameController.CurrentLevelConfig;
+        if (config == null) return;
+        
+        int bounty = config.MonsterBounty;
+        if (bounty > 0)
+        {
+            gameController.AddMonsterBounty(bounty);
+            SpawnMoneyEffect();
+        }
+    }
+    
+    /// <summary>
+    /// Spawn the flying money sprite effect
+    /// </summary>
+    private void SpawnMoneyEffect()
+    {
+        // Use provided prefab or create on the fly
+        GameObject effectObj;
+        MoneyFlyEffect effect;
+
+        if (moneyFlyPrefab != null)
+        {
+            effectObj = Instantiate(moneyFlyPrefab, transform.position + Vector3.up * 1f, Quaternion.identity);
+            effect = effectObj.GetComponent<MoneyFlyEffect>();
+            if (effect == null)
+            {
+                effect = effectObj.AddComponent<MoneyFlyEffect>();
+            }
+        }
+        else
+        {
+            // Create a temporary object with a sprite renderer
+            effectObj = new GameObject("MoneyFlyEffect");
+            effectObj.transform.position = transform.position + Vector3.up * 1f;
+            
+            SpriteRenderer sr = effectObj.AddComponent<SpriteRenderer>();
+            sr.sprite = moneySprite;
+            // Set sorting order high to ensure it's visible
+            sr.sortingOrder = 10;
+            
+            // Add the effect component
+            effect = effectObj.AddComponent<MoneyFlyEffect>();
+        }
+        
+        if (effect != null)
+        {
+            effect.Play();
+        }
+    }
+
     /// <summary>
     /// Play die sound effect
     /// </summary>
