@@ -16,6 +16,9 @@ public class LevelController : MonoBehaviour
     [Header("Level Complete Effects")]
     [SerializeField] private ParticleSystem levelCompleteParticles;
 
+    [Header("Hints")]
+    [SerializeField] private List<GameObject> hintGameObjects = new List<GameObject>();
+
     public MeshRenderer TerrainMeshRenderer;
     
     // Dictionary for fast lookup (built at runtime from serialized list)
@@ -24,6 +27,12 @@ public class LevelController : MonoBehaviour
     private void Awake()
     {
         BuildConnectionDictionary();
+
+        // Disable hints by default on level load
+        foreach (var hint in hintGameObjects)
+        {
+            if (hint != null) hint.SetActive(false);
+        }
         
         // Get or create GraphVisualizer
         if (graphVisualizer == null)
@@ -280,6 +289,17 @@ public class LevelController : MonoBehaviour
         return graphVisualizer;
     }
     
+    /// <summary>
+    /// Show or hide hint objects
+    /// </summary>
+    public void ShowHints(bool show)
+    {
+        foreach (var hint in hintGameObjects)
+        {
+            if (hint != null) hint.SetActive(show);
+        }
+    }
+
     /// <summary>
     /// Activate level complete particle effects
     /// </summary>

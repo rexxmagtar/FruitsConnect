@@ -120,6 +120,32 @@ public class GameplayUI : MonoBehaviour
     public void UpdateDisplay()
     {
         UpdateEnergyDisplay();
+        UpdateButtonsVisibility();
+    }
+    
+    /// <summary>
+    /// Update visibility of control buttons based on current level
+    /// </summary>
+    private void UpdateButtonsVisibility()
+    {
+        bool isFirstLevel = false;
+        if (LevelsManager.Instance != null)
+        {
+            isFirstLevel = LevelsManager.Instance.GetCurrentLevelNumber() == 1;
+        }
+
+        // Hide restart and home buttons on the first level
+        bool showButtons = !isFirstLevel;
+
+        if (restartButton != null)
+        {
+            restartButton.gameObject.SetActive(showButtons);
+        }
+
+        if (homeButton != null)
+        {
+            homeButton.gameObject.SetActive(showButtons);
+        }
     }
     
     /// <summary>

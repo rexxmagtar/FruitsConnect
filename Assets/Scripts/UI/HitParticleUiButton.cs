@@ -127,6 +127,12 @@ namespace UI
                     HitParticlesManager.Instance.SelectParticle(_data.id);
                     _parentUI.RefreshAllButtons();
                     _parentUI.PlayPurchaseSound();
+                    
+                    // Trigger purchase effect
+                    if (_parentUI != null && effectImage != null)
+                    {
+                        _parentUI.TriggerPurchaseEffect(effectImage.rectTransform);
+                    }
                 }
             }
         }

@@ -649,6 +649,8 @@ MonoBehaviour:
     - Node_640bde23
   graphVisualizer: {fileID: 2172529266281928747}
   levelCompleteParticles: {fileID: 3924771200163527455}
+  hintGameObjects:
+  - {fileID: 86109989500845183}
   TerrainMeshRenderer: {fileID: 856770742575799508}
 --- !u!114 &2172529266281928747
 MonoBehaviour:
@@ -1816,6 +1818,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 23ae9f6a628dc5149a2708fcd0ee7cd0, type: 3}
+--- !u!1 &86109989500845183 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4340968288525986166, guid: 23ae9f6a628dc5149a2708fcd0ee7cd0, type: 3}
+  m_PrefabInstance: {fileID: 4399976415821092105}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &8518405009004347745 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5420274591098475624, guid: 23ae9f6a628dc5149a2708fcd0ee7cd0, type: 3}

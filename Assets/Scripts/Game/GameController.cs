@@ -226,6 +226,12 @@ public class GameController : MonoBehaviour
         
         gameplayEnabled = true;
         Debug.Log("Game started - input enabled");
+
+        // Show hints when level starts
+        if (currentLevel != null)
+        {
+            currentLevel.ShowHints(true);
+        }
         
         // Start monster spawning
         MonsterAiManager monsterManager = MonsterAiManager.Instance;
