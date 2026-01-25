@@ -24,6 +24,11 @@ namespace UI
         [SerializeField] private int shinyCircleCount = 20;
         [SerializeField] private float shinyCircleAnimationDuration = 1.5f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip unlockSound;
+        [SerializeField] private AudioClip buttonClickSound;
+
         private bool isWaitingForClick = false;
 
         private void Awake()
@@ -33,6 +38,15 @@ namespace UI
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
                 if (panel != null) panel.SetActive(false);
+
+                if (audioSource == null)
+                {
+                    audioSource = GetComponent<AudioSource>();
+                    if (audioSource == null)
+                    {
+                        audioSource = gameObject.AddComponent<AudioSource>();
+                    }
+                }
             }
             else
             {
@@ -53,6 +67,12 @@ namespace UI
             panel.SetActive(true);
             canvasGroup.alpha = 0;
             
+            // Play sound
+            if (audioSource != null && unlockSound != null)
+            {
+                audioSource.PlayOneShot(unlockSound);
+            }
+
             // Fade in
             canvasGroup.DOFade(1, fadeDuration);
             
@@ -67,6 +87,10 @@ namespace UI
             {
                 if (Input.GetMouseButtonDown(0))
                 {
+                    if (audioSource != null && buttonClickSound != null)
+                    {
+                        audioSource.PlayOneShot(buttonClickSound);
+                    }
                     isWaitingForClick = false;
                 }
                 yield return null;

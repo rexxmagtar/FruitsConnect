@@ -11,7 +11,8 @@ public class GameplayUI : MonoBehaviour
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI energyBalanceText;
     [SerializeField] private Slider energySlider;
-    [SerializeField] private Button resetButton;
+    [SerializeField] private Button restartButton;
+    [SerializeField] private Button homeButton;
     [SerializeField] private Button pauseButton;
     
     [Header("Animation Settings")]
@@ -35,9 +36,14 @@ public class GameplayUI : MonoBehaviour
         }
         
         // Setup button listeners
-        if (resetButton != null)
+        if (restartButton != null)
         {
-            resetButton.onClick.AddListener(OnResetButtonClick);
+            restartButton.onClick.AddListener(OnRestartButtonClick);
+        }
+        
+        if (homeButton != null)
+        {
+            homeButton.onClick.AddListener(OnHomeButtonClick);
         }
         
         if (pauseButton != null)
@@ -168,14 +174,26 @@ public class GameplayUI : MonoBehaviour
     }
     
     /// <summary>
-    /// Handle reset button click
+    /// Handle restart button click
     /// </summary>
-    private void OnResetButtonClick()
+    private void OnRestartButtonClick()
     {
         GameController controller = GameController.Instance;
         if (controller != null)
         {
-            controller.ResetLevel();
+            controller.RestartLevel();
+        }
+    }
+
+    /// <summary>
+    /// Handle home button click
+    /// </summary>
+    private void OnHomeButtonClick()
+    {
+        GameController controller = GameController.Instance;
+        if (controller != null)
+        {
+            controller.OnReturnToMainMenu();
         }
     }
     

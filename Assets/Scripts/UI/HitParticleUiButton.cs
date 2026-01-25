@@ -118,6 +118,7 @@ namespace UI
             {
                 HitParticlesManager.Instance.SelectParticle(_data.id);
                 _parentUI.RefreshAllButtons();
+                _parentUI.PlaySelectSound();
             }
             else
             {
@@ -125,6 +126,7 @@ namespace UI
                 {
                     HitParticlesManager.Instance.SelectParticle(_data.id);
                     _parentUI.RefreshAllButtons();
+                    _parentUI.PlayPurchaseSound();
                 }
             }
         }

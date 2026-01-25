@@ -444,38 +444,34 @@ public class GameController : MonoBehaviour
     }
     
     /// <summary>
-    /// Reset level - clear all connections
+    /// Reset level - fully unload and reload the level prefab
     /// </summary>
     public void ResetLevel()
     {
-        if (connectionManager != null)
+        if (currentLevelConfig == null)
         {
-            connectionManager.ClearAllConnections();
-            connectionManager.HideGhostLine();
+            Debug.LogError("Cannot reset level - currentLevelConfig is null");
+            return;
         }
+
+        // Store config reference before unloading
+        LevelConfig config = currentLevelConfig;
         
-        // Clear all monsters
-        MonsterAiManager monsterManager = MonsterAiManager.Instance;
-        if (monsterManager != null)
+        // Fully unload current level
+        UnloadLevel();
+        
+        // Reset camera force (in case it was moved)
+        CameraController cameraController = CameraController.Instance;
+        if (cameraController != null)
         {
-            monsterManager.ClearAllMonsters();
+            cameraController.ResetCameraForce();
         }
-        
-        // Clear drag state
-        if (dragStartNode != null)
-        {
-            dragStartNode.OnDeselect();
-            dragStartNode = null;
-        }
-        isDragging = false;
-        currentHoveredNode = null;
-        
-        // Reset energy to starting value
-        currentEnergy = startingEnergy;
-        Debug.Log($"Energy reset to {currentEnergy}");
+
+        // Reload the level
+        PreloadLevel(config);
         
         OnLevelReset?.Invoke();
-        Debug.Log("Level reset");
+        Debug.Log($"Level reset and reloaded: {config.LevelName}");
     }
     
     /// <summary>
@@ -702,9 +698,18 @@ public class GameController : MonoBehaviour
     }
     
     /// <summary>
-    /// Handle return to main menu from LevelCompleteUI
+    /// Restart level - reset and start again
     /// </summary>
-    private void OnReturnToMainMenu()
+    public void RestartLevel()
+    {
+        ResetLevel();
+        StartGame();
+    }
+
+    /// <summary>
+    /// Handle return to main menu from LevelCompleteUI or GameplayUI
+    /// </summary>
+    public void OnReturnToMainMenu()
     {
         // Unload current level
         UnloadLevel();

@@ -56,6 +56,8 @@ public class LoadingScreenUI : MonoBehaviour
     {
         // Initialize LevelsManager
         LevelsManager levelsManager = LevelsManager.Instance;
+        GameController gameController = GameController.Instance;
+        
         if (levelsManager != null)
         {
             levelsManager.Initialize();
@@ -67,7 +69,6 @@ public class LoadingScreenUI : MonoBehaviour
             if (levelConfig != null)
             {
                 // Preload level in GameController
-                GameController gameController = GameController.Instance;
                 if (gameController != null)
                 {
                     gameController.PreloadLevel(levelConfig);
@@ -76,12 +77,42 @@ public class LoadingScreenUI : MonoBehaviour
             }
         }
         
-        // Show main menu
-        MainMenuUI mainMenu = FindObjectOfType<MainMenuUI>(true);
-        if (mainMenu != null)
+        // Check if we should skip main menu (if first level and not completed yet)
+        bool shouldStartFirstLevelDirectly = false;
+        if (levelsManager != null)
         {
-            mainMenu.gameObject.SetActive(true);
-            mainMenu.Show();
+            // Get current level number (1-indexed)
+            int currentLevelNumber = levelsManager.GetCurrentLevelNumber();
+            if (currentLevelNumber == 1)
+            {
+                shouldStartFirstLevelDirectly = true;
+            }
+        }
+
+        if (shouldStartFirstLevelDirectly && gameController != null)
+        {
+            Debug.Log("First level detected. Skipping main menu and starting game directly.");
+            
+            // Start the game directly
+            gameController.StartGame();
+            
+            // Show gameplay UI
+            GameplayUI gameplayUI = FindFirstObjectByType<GameplayUI>(FindObjectsInactive.Include);
+            if (gameplayUI != null)
+            {
+                gameplayUI.gameObject.SetActive(true);
+                gameplayUI.Show();
+            }
+        }
+        else
+        {
+            // Show main menu
+            MainMenuUI mainMenu = FindFirstObjectByType<MainMenuUI>(FindObjectsInactive.Include);
+            if (mainMenu != null)
+            {
+                mainMenu.gameObject.SetActive(true);
+                mainMenu.Show();
+            }
         }
         
         // Hide loading screen

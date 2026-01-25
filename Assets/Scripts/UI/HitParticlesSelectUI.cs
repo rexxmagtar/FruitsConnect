@@ -21,12 +21,26 @@ namespace UI
         [Header("Close Button")]
         [SerializeField] private Button closeButton;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip purchaseSound;
+        [SerializeField] private AudioClip selectSound;
+
         public event System.Action OnClosed;
 
         private List<HitParticleUiButton> _buttons = new List<HitParticleUiButton>();
 
         private void Awake()
         {
+            if (audioSource == null)
+            {
+                audioSource = GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
             if (closeButton != null)
             {
                 closeButton.onClick.AddListener(() => 
@@ -34,6 +48,22 @@ namespace UI
                     gameObject.SetActive(false);
                     OnClosed?.Invoke();
                 });
+            }
+        }
+
+        public void PlayPurchaseSound()
+        {
+            if (audioSource != null && purchaseSound != null)
+            {
+                audioSource.PlayOneShot(purchaseSound);
+            }
+        }
+
+        public void PlaySelectSound()
+        {
+            if (audioSource != null && selectSound != null)
+            {
+                audioSource.PlayOneShot(selectSound);
             }
         }
 
