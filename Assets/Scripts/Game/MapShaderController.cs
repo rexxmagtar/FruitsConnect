@@ -28,9 +28,6 @@ public class MapShaderController : MonoBehaviour
     private static readonly int ConnectedNodeCountID = Shader.PropertyToID("_ConnectedNodeCount");
     private static readonly int ConsumerPositionsID = Shader.PropertyToID("_ConsumerPositions");
     private static readonly int ConsumerCountID = Shader.PropertyToID("_ConsumerCount");
-    private static readonly int PartialNodePositionsID = Shader.PropertyToID("_PartialNodePositions");
-    private static readonly int PartialNodeProgressID = Shader.PropertyToID("_PartialNodeProgress");
-    private static readonly int PartialNodeCountID = Shader.PropertyToID("_PartialNodeCount");
     
     // Maximum number of nodes shader can handle
     private const int MAX_NODES = 32;
@@ -38,10 +35,12 @@ public class MapShaderController : MonoBehaviour
     // List of all terrain materials that use MapGrayscaleShader
     private List<Material> terrainMaterials = new List<Material>();
     private Dictionary<Material, float> originalColorRadii = new Dictionary<Material, float>();
+    private List<Terrain> terrainComponents = new List<Terrain>();
+    private MaterialPropertyBlock terrainPropertyBlock;
     
     private void Awake()
     {
-       
+        terrainPropertyBlock = new MaterialPropertyBlock();
     }
     
     private void Start()
@@ -86,6 +85,7 @@ public class MapShaderController : MonoBehaviour
     {
         terrainMaterials.Clear();
         originalColorRadii.Clear();
+        terrainComponents.Clear();
         
         if (levelController == null)
         {
@@ -132,7 +132,7 @@ public class MapShaderController : MonoBehaviour
                 if (mat == null) continue;
                 
                 // Check if material uses MapGrayscaleShader
-                if (mat.shader != null && (mat.shader.name == "Custom/MapGrayscaleShader" || mat.shader.name == "Custom/MapGrayscaleShaderStandard"))
+                if (mat.shader != null && (mat.shader.name == "Custom/MapGrayscaleShader" || mat.shader.name == "Custom/MapGrayscaleShaderStandard" || mat.shader.name == "Custom/TerrainGrayscaleUnlit"))
                 {
                     if (uniqueMaterials.Add(mat))
                     {
@@ -150,9 +150,65 @@ public class MapShaderController : MonoBehaviour
                 }
             }
         }
+
+        // Also check for Unity Terrain components which don't use Renderer
+        Terrain[] terrains = terrainParent.GetComponentsInChildren<Terrain>(true);
+        foreach (Terrain terrain in terrains)
+        {
+            if (terrain == null) continue;
+            
+            Material mat = terrain.materialTemplate;
+            if (mat == null) continue;
+
+            if (mat.shader != null && (mat.shader.name == "Custom/MapGrayscaleShader" || mat.shader.name == "Custom/MapGrayscaleShaderStandard" || mat.shader.name == "Custom/TerrainGrayscaleUnlit"))
+            {
+                if (uniqueMaterials.Add(mat))
+                {
+                    terrainMaterials.Add(mat);
+                    if (mat.HasProperty(ColorRadiusID))
+                    {
+                        originalColorRadii[mat] = mat.GetFloat(ColorRadiusID);
+                    }
+                    else
+                    {
+                        originalColorRadii[mat] = colorRadius;
+                    }
+                }
+                
+                // Cache the terrain component for manual flushing
+                if (!terrainComponents.Contains(terrain))
+                {
+                    terrainComponents.Add(terrain);
+                }
+            }
+        }
+
+        // Check levelController's direct reference if it exists
+        if (levelController.TerrainMeshRenderer != null)
+        {
+            foreach (Material mat in levelController.TerrainMeshRenderer.sharedMaterials)
+            {
+                if (mat == null) continue;
+                if (mat.shader != null && (mat.shader.name == "Custom/MapGrayscaleShader" || mat.shader.name == "Custom/MapGrayscaleShaderStandard" || mat.shader.name == "Custom/TerrainGrayscaleUnlit"))
+                {
+                    if (uniqueMaterials.Add(mat))
+                    {
+                        terrainMaterials.Add(mat);
+                        if (mat.HasProperty(ColorRadiusID))
+                        {
+                            originalColorRadii[mat] = mat.GetFloat(ColorRadiusID);
+                        }
+                        else
+                        {
+                            originalColorRadii[mat] = colorRadius;
+                        }
+                    }
+                }
+            }
+        }
         
         // Also add the original mapMaterial if it exists and uses the shader
-        if (mapMaterial != null && mapMaterial.shader != null && (mapMaterial.shader.name == "Custom/MapGrayscaleShader" || mapMaterial.shader.name == "Custom/MapGrayscaleShaderStandard"))
+        if (mapMaterial != null && mapMaterial.shader != null && (mapMaterial.shader.name == "Custom/MapGrayscaleShader" || mapMaterial.shader.name == "Custom/MapGrayscaleShaderStandard" || mapMaterial.shader.name == "Custom/TerrainGrayscaleUnlit"))
         {
             if (uniqueMaterials.Add(mapMaterial))
             {
@@ -220,7 +276,6 @@ public class MapShaderController : MonoBehaviour
         // Producers show colored zones only if not captured
         // Other nodes (non-producers, non-consumers) show colored zones if connected to producer AND fully delivered
         List<BaseNode> connectedNodes = new List<BaseNode>();
-        List<BaseNode> partialNodes = new List<BaseNode>(); // Nodes with delivery progress but not fully delivered
         
         foreach (BaseNode node in allNodes)
         {
@@ -255,11 +310,6 @@ public class MapShaderController : MonoBehaviour
                     else if (node.IsFullyDelivered)
                     {
                         connectedNodes.Add(node);
-                    }
-                    else if (node.CurrentDeliveries > 0)
-                    {
-                        // Node has some deliveries but not fully delivered - show partial progress
-                        partialNodes.Add(node);
                     }
                 }
             }
@@ -313,27 +363,6 @@ public class MapShaderController : MonoBehaviour
             consumerPositions[i] = Vector4.zero;
         }
         
-        Vector4[] partialNodePositions = new Vector4[MAX_NODES];
-        float[] partialNodeProgress = new float[MAX_NODES];
-        int partialCount = Mathf.Min(partialNodes.Count, MAX_NODES);
-        
-        for (int i = 0; i < partialCount; i++)
-        {
-            if (partialNodes[i] != null)
-            {
-                Vector3 pos = partialNodes[i].transform.position;
-                partialNodePositions[i] = new Vector4(pos.x, pos.y, pos.z, 0);
-                partialNodeProgress[i] = partialNodes[i].DeliveryProgress;
-            }
-        }
-        
-        // Fill remaining slots with zero
-        for (int i = partialCount; i < MAX_NODES; i++)
-        {
-            partialNodePositions[i] = Vector4.zero;
-            partialNodeProgress[i] = 0f;
-        }
-        
         // Update all materials
         foreach (Material mat in materialsToUpdate)
         {
@@ -350,9 +379,28 @@ public class MapShaderController : MonoBehaviour
             mat.SetInt(ConnectedNodeCountID, connectedCount);
             mat.SetVectorArray(ConsumerPositionsID, consumerPositions);
             mat.SetInt(ConsumerCountID, consumerCount);
-            mat.SetVectorArray(PartialNodePositionsID, partialNodePositions);
-            mat.SetFloatArray(PartialNodeProgressID, partialNodeProgress);
-            mat.SetInt(PartialNodeCountID, partialCount);
+        }
+
+        // Terrains often don't pick up shared material changes at runtime.
+        // We use MaterialPropertyBlock to force the terrain renderer to update.
+        if (terrainPropertyBlock == null) terrainPropertyBlock = new MaterialPropertyBlock();
+        
+        terrainPropertyBlock.SetFloat(ColorRadiusID, colorRadius);
+        terrainPropertyBlock.SetFloat(SmoothFalloffID, smoothFalloff);
+        terrainPropertyBlock.SetFloat(GlobalColorBlendID, 1.0f);
+        terrainPropertyBlock.SetVectorArray(ConnectedNodePositionsID, connectedNodePositions);
+        terrainPropertyBlock.SetInt(ConnectedNodeCountID, connectedCount);
+        terrainPropertyBlock.SetVectorArray(ConsumerPositionsID, consumerPositions);
+        terrainPropertyBlock.SetInt(ConsumerCountID, consumerCount);
+
+        // Apply to all cached terrains
+        foreach (Terrain terrain in terrainComponents)
+        {
+            if (terrain != null)
+            {
+                terrain.SetSplatMaterialPropertyBlock(terrainPropertyBlock);
+                terrain.Flush();
+            }
         }
     }
     
@@ -531,17 +579,44 @@ public class MapShaderController : MonoBehaviour
                     mat.SetFloat(GlobalColorBlendID, currentBlend);
                 }
             }
+
+            // Update property block for terrains
+            if (terrainPropertyBlock == null) terrainPropertyBlock = new MaterialPropertyBlock();
+            terrainPropertyBlock.SetFloat(GlobalColorBlendID, currentBlend);
+
+            // Flush terrains
+            foreach (Terrain terrain in terrainComponents)
+            {
+                if (terrain != null)
+                {
+                    terrain.SetSplatMaterialPropertyBlock(terrainPropertyBlock);
+                    terrain.Flush();
+                }
+            }
             
             yield return null;
         }
         
         // Ensure final state - set to 0 for full color everywhere
+        if (terrainPropertyBlock == null) terrainPropertyBlock = new MaterialPropertyBlock();
+        terrainPropertyBlock.SetFloat(GlobalColorBlendID, endBlend);
+
         foreach (Material mat in terrainMaterials)
         {
             if (mat == null) continue;
             if (mat.HasProperty(GlobalColorBlendID))
             {
                 mat.SetFloat(GlobalColorBlendID, endBlend);
+            }
+        }
+
+        // Final flush
+        foreach (Terrain terrain in terrainComponents)
+        {
+            if (terrain != null)
+            {
+                terrain.SetSplatMaterialPropertyBlock(terrainPropertyBlock);
+                terrain.Flush();
             }
         }
         

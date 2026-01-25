@@ -10439,7 +10439,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   panel: {fileID: 920058299}
   canvasGroup: {fileID: 920058302}
-  particleParent: {fileID: 0}
+  particleParent: {fileID: 1523889173}
   fadeDuration: 0.3
   shinyCircleSprite: {fileID: 21300000, guid: 84d3bfc13a038914e990f0bbc80dad32, type: 3}
   shinyCircleCount: 20
@@ -11813,7 +11813,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.63529414}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.85882354}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

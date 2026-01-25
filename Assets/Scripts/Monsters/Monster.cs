@@ -55,6 +55,8 @@ public class Monster : MonoBehaviour
     private Vector3 originalScale;
     private Coroutine hitScaleCoroutine;
     private Coroutine stunCoroutine;
+    private Coroutine attackCoroutine;
+    private Coroutine spawnAnimationCoroutine;
     
     // Properties
     public float MaxHealth => maxHealth;
@@ -133,7 +135,8 @@ public class Monster : MonoBehaviour
         PlaySpawnSound();
         
         // Start spawn animation delay - wait for spawn animation to complete before allowing movement
-        StartCoroutine(SpawnAnimationDelay());
+        if (spawnAnimationCoroutine != null) StopCoroutine(spawnAnimationCoroutine);
+        spawnAnimationCoroutine = StartCoroutine(SpawnAnimationDelay());
     }
     
     /// <summary>
@@ -144,8 +147,20 @@ public class Monster : MonoBehaviour
         // Wait for spawn animation duration (3 seconds)
         while(aiController.IsInState("Spawn"))
         {
+            // Safety check: stop if monster died or gameplay ended
+            if (isDead || (GameController.Instance != null && !GameController.Instance.GameplayEnabled))
+            {
+                yield break;
+            }
+            
             Debug.Log("Monster: Spawning");
             yield return null;
+        }
+        
+        // Final check
+        if (isDead || (GameController.Instance != null && !GameController.Instance.GameplayEnabled))
+        {
+            yield break;
         }
         
         // Now allow movement and start running animation
@@ -285,7 +300,8 @@ public class Monster : MonoBehaviour
         }
         
         // Start attack sequence: attack animation -> falling down -> sleep
-        StartCoroutine(AttackSequence());
+        if (attackCoroutine != null) StopCoroutine(attackCoroutine);
+        attackCoroutine = StartCoroutine(AttackSequence());
     }
     
     /// <summary>
@@ -304,8 +320,20 @@ public class Monster : MonoBehaviour
         // We'll wait for the configured duration, or check if animator is still in attack state
         while (aiController.IsAttacking())
         {
+            // Safety check: stop if monster died or gameplay ended
+            if (isDead || (GameController.Instance != null && !GameController.Instance.GameplayEnabled))
+            {
+                yield break;
+            }
+            
             Debug.Log("Monster: Attacking");
             yield return null;
+        }
+        
+        // Final check before capturing: monster must not be dead and gameplay must be enabled
+        if (isDead || (GameController.Instance != null && !GameController.Instance.GameplayEnabled))
+        {
+            yield break;
         }
         
         // Attack animation is complete, now destroy/capture the target
@@ -602,6 +630,31 @@ public class Monster : MonoBehaviour
         if (isDead) return;
         
         isDead = true;
+        
+        // Stop all active behavior coroutines
+        if (attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+            attackCoroutine = null;
+        }
+        
+        if (spawnAnimationCoroutine != null)
+        {
+            StopCoroutine(spawnAnimationCoroutine);
+            spawnAnimationCoroutine = null;
+        }
+        
+        if (stunCoroutine != null)
+        {
+            StopCoroutine(stunCoroutine);
+            stunCoroutine = null;
+        }
+        
+        if (hitScaleCoroutine != null)
+        {
+            StopCoroutine(hitScaleCoroutine);
+            hitScaleCoroutine = null;
+        }
         
         // Hide healthbar immediately when health reaches zero
         if (healthBar != null)
