@@ -1646,7 +1646,7 @@ PrefabInstance:
     - target: {fileID: 9109983900351290604, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: ShapeModule.m_SkinnedMeshRenderer
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 2291751008559974564}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 7985772631460852593, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}

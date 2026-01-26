@@ -6,6 +6,8 @@ using UnityEngine;
 /// </summary>
 public class ProducerNode : BaseNode
 {
+    public override bool ShouldShowEnergy => false;
+
     protected override void Awake()
     {
         base.Awake();

@@ -7,6 +7,8 @@ using UnityEngine;
 /// </summary>
 public class ConsumerNode : BaseNode
 {
+    public override bool ShouldShowEnergy => false;
+
     protected override void Awake()
     {
         base.Awake();

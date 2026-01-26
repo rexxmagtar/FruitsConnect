@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 007da7f034193494ca19714500eded31, type: 3}
+  m_Name: Level30_Config
+  m_EditorClassIdentifier: 
+  levelPrefab: {fileID: 916330530489842723, guid: 56f5ed21f8de1dd4a986491bc2478b71, type: 3}
+  coinReward: 50
+  monsterBounty: 2
+  levelName: Level30
+  startingEnergy: 5
+  connectionAnimationPrefab: {fileID: 2141506787181539334, guid: 657599acedf7b3e48b27cee3f2ea2ca8, type: 3}
+  isBossFight: 1
+  bossGoldReward: 200
+  bossFightTimeLimit: 30
+  puzzlePieceRewards:
+  - random
+  monsterPrefabs: []
+  minSpawnInterval: 10
+  maxSpawnInterval: 30
+  maxActiveMonsters: 3
+  safeTimeOffset: 20

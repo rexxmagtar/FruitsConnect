@@ -70,6 +70,13 @@ public class NodeEnergyDisplay : MonoBehaviour
         if (node == null || energyText == null)
             return;
         
+        // Hide energy display for nodes that shouldn't show it (Producers/Consumers)
+        if (!node.ShouldShowEnergy)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+        
         int weight = node.Weight;
         
         // Show gray zero instead of hiding if weight is 0

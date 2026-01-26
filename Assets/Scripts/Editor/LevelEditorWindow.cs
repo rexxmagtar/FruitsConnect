@@ -34,7 +34,7 @@ public class LevelEditorWindow : EditorWindow
     public static void ShowWindow()
     {
         LevelEditorWindow window = GetWindow<LevelEditorWindow>("Level Editor");
-        window.minSize = new Vector2(400, 600);
+        window.minSize = new Vector2(600, 600);
         window.Show();
     }
     
@@ -55,30 +55,44 @@ public class LevelEditorWindow : EditorWindow
         GUILayout.Label("Fruit Connect Level Editor", EditorStyles.boldLabel);
         EditorGUILayout.Space();
         
+        EditorGUILayout.BeginVertical("box");
         DrawConfigSection();
+        EditorGUILayout.EndVertical();
         EditorGUILayout.Space();
         
         DrawAutoGenerationSection();
         EditorGUILayout.Space();
         
+        EditorGUILayout.BeginVertical("box");
         DrawLevelSection();
+        EditorGUILayout.EndVertical();
         EditorGUILayout.Space();
         
         if (currentLevel != null)
         {
+            EditorGUILayout.BeginVertical("box");
             DrawNodeCreationSection();
+            EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
             
+            EditorGUILayout.BeginVertical("box");
             DrawNodeListSection();
+            EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
             
+            EditorGUILayout.BeginVertical("box");
             DrawConnectionMappingSection();
+            EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
             
+            EditorGUILayout.BeginVertical("box");
             DrawValidationSection();
+            EditorGUILayout.EndVertical();
             EditorGUILayout.Space();
             
+            EditorGUILayout.BeginVertical("box");
             DrawSaveSection();
+            EditorGUILayout.EndVertical();
         }
         
         EditorGUILayout.EndScrollView();
@@ -270,8 +284,9 @@ public class LevelEditorWindow : EditorWindow
             string nodeTypeName = nodes[i].GetType().Name;
             string weightStr = nodes[i].Weight != 0 ? $", Weight: {nodes[i].Weight:+#;-#;0}" : "";
             string label = $"{nodes[i].NodeID} ({nodeTypeName}) - Max Out: {nodes[i].MaxOutgoingConnections}{weightStr}";
+            GUIContent labelContent = new GUIContent(label, label); // Add tooltip
             
-            if (GUILayout.Button(label, GUILayout.Width(350)))
+            if (GUILayout.Button(labelContent, GUILayout.ExpandWidth(true)))
             {
                 selectedNodeIndex = i;
                 Selection.activeGameObject = nodes[i].gameObject;
@@ -283,11 +298,16 @@ public class LevelEditorWindow : EditorWindow
             // Add swap button for neutral nodes
             if (nodes[i] is NeutralNode)
             {
-                if (GUILayout.Button("↔ Double", GUILayout.Width(70)))
+                if (GUILayout.Button("↔ Double", GUILayout.Width(80)))
                 {
                     SwapNeutralNodePrefab(nodes[i]);
                     break;
                 }
+            }
+            else
+            {
+                // Reserve space to keep the Delete buttons aligned
+                GUILayout.Space(84);
             }
             
             if (GUILayout.Button("Delete", GUILayout.Width(60)))
@@ -337,6 +357,8 @@ public class LevelEditorWindow : EditorWindow
         {
             if (targetNode == null || targetNode == selectedNode) continue;
             
+            EditorGUILayout.BeginHorizontal("box");
+            
             bool isConnected = currentMappings.Contains(targetNode.NodeID);
             
             // Check if reverse connection exists (bidirectional warning)
@@ -349,7 +371,8 @@ public class LevelEditorWindow : EditorWindow
                 label += " ⚠ BIDIRECTIONAL";
             }
             
-            bool newValue = EditorGUILayout.ToggleLeft(label, isConnected);
+            GUIContent toggleContent = new GUIContent(label, label); // Add tooltip for long IDs
+            bool newValue = EditorGUILayout.ToggleLeft(toggleContent, isConnected, GUILayout.ExpandWidth(true));
             
             if (newValue != isConnected)
             {
@@ -373,6 +396,8 @@ public class LevelEditorWindow : EditorWindow
                 }
                 changed = true;
             }
+            
+            EditorGUILayout.EndHorizontal();
         }
         
         EditorGUILayout.EndScrollView();

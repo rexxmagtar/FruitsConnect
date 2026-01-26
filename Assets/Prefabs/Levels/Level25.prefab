@@ -930,7 +930,7 @@ PrefabInstance:
     - target: {fileID: 2321263375528557668, guid: cf46f1be50dc4ed4f8f07450b549159b, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: ff68e870ca631984ca979ff875a19273, type: 2}
+      objectReference: {fileID: 2100000, guid: 6e49fb18a30f74a40a3b939034abe0e5, type: 2}
     - target: {fileID: 3425836630667247115, guid: cf46f1be50dc4ed4f8f07450b549159b, type: 3}
       propertyPath: m_Name
       value: PortalBoss

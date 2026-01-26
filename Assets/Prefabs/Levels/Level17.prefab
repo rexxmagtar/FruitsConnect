@@ -1455,7 +1455,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2163337649090122277, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
       propertyPath: connectionMappings.Array.data[4].validTargetIDs.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2163337649090122277, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
       propertyPath: connectionMappings.Array.data[5].validTargetIDs.Array.size

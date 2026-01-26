@@ -95,6 +95,8 @@ public abstract class BaseNode : MonoBehaviour
         set => isEnergyApplied = value;
     }
     
+    public virtual bool ShouldShowEnergy => true;
+    
     public List<Connection> OutgoingConnections => outgoingConnections;
     public List<Connection> IncomingConnections => incomingConnections;
     
