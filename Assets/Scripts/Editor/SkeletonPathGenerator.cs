@@ -161,54 +161,16 @@ public static class SkeletonPathGenerator
         if (neutralIDs.Count == 0)
             return layers;
         
-        // Calculate target nodes per layer
-        // Last layer should have at least as many nodes as consumers (or at least 2)
-        int minLastLayerNodes = Mathf.Max(consumerCount, 2);
-        int remainingNodes = neutralIDs.Count;
-        
-        // Distribute nodes: give last layer priority to ensure it has enough nodes
-        // Then distribute remaining nodes evenly across other layers
-        
-        // First, ensure last layer has enough nodes
-        int lastLayerIndex = layerCount - 1;
-        int nodesForLastLayer = Mathf.Min(minLastLayerNodes, remainingNodes);
-        
-        // If we have enough nodes, use weighted distribution
-        // Otherwise, use simple round-robin
-        if (neutralIDs.Count >= minLastLayerNodes + (layerCount - 1))
+        // Even distribution: each layer gets neutralIDs.Count / layerCount nodes
+        // This is more balanced and avoids "thin" layers that create bottlenecks
+        for (int i = 0; i < neutralIDs.Count; i++)
         {
-            // We have enough nodes: give last layer priority, then distribute rest
-            int nodesDistributed = 0;
-            
-            // Fill last layer first
-            for (int i = 0; i < nodesForLastLayer; i++)
-            {
-                layers[lastLayerIndex].Add(neutralIDs[nodesDistributed]);
-                nodesDistributed++;
-            }
-            
-            // Distribute remaining nodes evenly across all layers (including last layer)
-            remainingNodes = neutralIDs.Count - nodesDistributed;
-            for (int i = 0; i < remainingNodes; i++)
-            {
-                int layerIndex = nodesDistributed % layerCount;
-                layers[layerIndex].Add(neutralIDs[nodesDistributed]);
-                nodesDistributed++;
-            }
-        }
-        else
-        {
-            // Not enough nodes: use round-robin but ensure last layer gets at least 1
-            for (int i = 0; i < neutralIDs.Count; i++)
-            {
-                int layerIndex = i % layerCount;
-                layers[layerIndex].Add(neutralIDs[i]);
-            }
+            int layerIndex = i % layerCount;
+            layers[layerIndex].Add(neutralIDs[i]);
         }
         
         // Log distribution
         Debug.Log($"Layer distribution: {string.Join(", ", layers.Select((layer, idx) => $"Layer{idx}:{layer.Count}"))}");
-        Debug.Log($"Last layer has {layers[lastLayerIndex].Count} node(s) for {consumerCount} consumer(s)");
         
         return layers;
     }
@@ -275,55 +237,32 @@ public static class SkeletonPathGenerator
         var firstLayer = network.NeutralLayerIDs[0];
         int producerCount = network.ProducerIDs.Count;
         
-        // Calculate how many nodes each producer should connect to
-        int connectionsPerProducer = Mathf.Min(2, Mathf.Max(1, firstLayer.Count / producerCount));
-        
-        // Track which neutrals are already assigned to avoid early overlap
-        HashSet<string> assignedNeutrals = new HashSet<string>();
-        
-        for (int p = 0; p < producerCount; p++)
+        // Ensure every node in the first layer is covered by at least one producer
+        // This avoids unreachable nodes in the first layer
+        for (int i = 0; i < firstLayer.Count; i++)
         {
-            string producerID = network.ProducerIDs[p];
-            network.Connections[producerID] = new List<string>();
+            string neutralID = firstLayer[i];
+            // Assign this neutral to a producer (round-robin)
+            string producerID = network.ProducerIDs[i % producerCount];
             
-            // Calculate this producer's range in the first layer
-            // Distribute nodes evenly: each producer gets a segment of the layer
-            int segmentSize = Mathf.Max(connectionsPerProducer, firstLayer.Count / producerCount);
-            int segmentStart = (p * segmentSize) % firstLayer.Count;
-            
-            // Try to assign unique nodes first
-            int assigned = 0;
-            for (int offset = 0; offset < firstLayer.Count && assigned < connectionsPerProducer; offset++)
+            if (!network.Connections.ContainsKey(producerID))
             {
-                int idx = (segmentStart + offset) % firstLayer.Count;
-                string neutralID = firstLayer[idx];
-                
-                if (!assignedNeutrals.Contains(neutralID))
-                {
-                    network.Connections[producerID].Add(neutralID);
-                    assignedNeutrals.Add(neutralID);
-                    assigned++;
-                }
+                network.Connections[producerID] = new List<string>();
             }
             
-            // If we couldn't find enough unique nodes, allow sharing
-            // This can happen when there are many producers and few neutrals
-            if (assigned < connectionsPerProducer)
+            if (!network.Connections[producerID].Contains(neutralID))
             {
-                for (int offset = 0; offset < firstLayer.Count && assigned < connectionsPerProducer; offset++)
-                {
-                    int idx = (segmentStart + offset) % firstLayer.Count;
-                    string neutralID = firstLayer[idx];
-                    
-                    if (!network.Connections[producerID].Contains(neutralID))
-                    {
-                        network.Connections[producerID].Add(neutralID);
-                        assigned++;
-                    }
-                }
+                network.Connections[producerID].Add(neutralID);
             }
-            
-            Debug.Log($"Producer {p} ({producerID}): Connected to {network.Connections[producerID].Count} neutrals: {string.Join(", ", network.Connections[producerID])}");
+        }
+        
+        // Ensure every producer has at least one connection
+        foreach (var producerID in network.ProducerIDs)
+        {
+            if (!network.Connections.ContainsKey(producerID) || network.Connections[producerID].Count == 0)
+            {
+                network.Connections[producerID] = new List<string> { firstLayer[Random.Range(0, firstLayer.Count)] };
+            }
         }
     }
     
@@ -339,35 +278,49 @@ public static class SkeletonPathGenerator
         var fromLayer = network.NeutralLayerIDs[fromLayerIdx];
         var toLayer = network.NeutralLayerIDs[toLayerIdx];
         
-        // Each node in fromLayer connects to 1-2 nodes in toLayer
-        foreach (var fromID in fromLayer)
+        // Ensure every node in toLayer has at least one incoming connection
+        // This is critical for reachability
+        for (int i = 0; i < toLayer.Count; i++)
         {
+            string targetID = toLayer[i];
+            // Assign an incoming connection from fromLayer (round-robin)
+            string fromID = fromLayer[i % fromLayer.Count];
+            
             if (!network.Connections.ContainsKey(fromID))
             {
                 network.Connections[fromID] = new List<string>();
             }
             
-            // Determine connections based on max capacity and difficulty
-            int maxOut = network.MaxConnections[fromID];
-            int connectionsToMake = difficulty switch
+            if (!network.Connections[fromID].Contains(targetID))
             {
-                DifficultyTier.Easy => Mathf.Min(maxOut, 1),
-                DifficultyTier.Medium => Mathf.Min(maxOut, 1),
-                DifficultyTier.Hard => Mathf.Min(maxOut, 2),
-                DifficultyTier.Expert => Mathf.Min(maxOut, 2), // Expert: Use full capacity
+                network.Connections[fromID].Add(targetID);
+            }
+        }
+        
+        // Add extra connections based on difficulty and node capacity
+        // This creates alternative paths and cross-layer connections
+        foreach (var fromID in fromLayer)
+        {
+            int maxOut = network.MaxConnections[fromID];
+            int currentOut = network.Connections.ContainsKey(fromID) ? network.Connections[fromID].Count : 0;
+            
+            // Expert: Use more connections to create complexity
+            int targetExtra = difficulty switch
+            {
+                DifficultyTier.Easy => 0,
+                DifficultyTier.Medium => 1,
+                DifficultyTier.Hard => 2,
+                DifficultyTier.Expert => 3,
                 _ => 1
             };
             
-            // Connect to next nodes in sequence (with wraparound)
-            int startIdx = fromLayer.IndexOf(fromID);
-            for (int i = 0; i < connectionsToMake && i < toLayer.Count; i++)
+            for (int i = 0; i < targetExtra && currentOut < maxOut; i++)
             {
-                int targetIdx = (startIdx + i) % toLayer.Count;
-                string targetID = toLayer[targetIdx];
-                
+                string targetID = toLayer[Random.Range(0, toLayer.Count)];
                 if (!network.Connections[fromID].Contains(targetID))
                 {
                     network.Connections[fromID].Add(targetID);
+                    currentOut++;
                 }
             }
         }
