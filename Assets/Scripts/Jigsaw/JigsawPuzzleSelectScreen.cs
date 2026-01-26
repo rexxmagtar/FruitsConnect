@@ -50,6 +50,23 @@ namespace JigsawSystem
 
         private void OnEnable()
         {
+            if (JigsawPuzzleManager.Instance != null)
+            {
+                JigsawPuzzleManager.Instance.OnPuzzleSolved += HandlePuzzleSolved;
+            }
+            RefreshList();
+        }
+
+        private void OnDisable()
+        {
+            if (JigsawPuzzleManager.Instance != null)
+            {
+                JigsawPuzzleManager.Instance.OnPuzzleSolved -= HandlePuzzleSolved;
+            }
+        }
+
+        private void HandlePuzzleSolved(string puzzleId)
+        {
             RefreshList();
         }
 

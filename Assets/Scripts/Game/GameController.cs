@@ -517,6 +517,9 @@ public class GameController : MonoBehaviour
             monsterManager.StopSpawning();
             monsterManager.KillAllMonsters();
         }
+
+        // Notify UI and other systems immediately that the level is won
+        OnLevelWon?.Invoke();
         
         // Play level complete animation (color return) before proceeding
         StartCoroutine(PlayLevelCompleteAnimation());
@@ -635,8 +638,6 @@ public class GameController : MonoBehaviour
                 }
             }
         }
-        
-        OnLevelWon?.Invoke();
     }
     
     /// <summary>

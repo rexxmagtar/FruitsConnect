@@ -20,6 +20,7 @@ public class NodeDisplay : MonoBehaviour
     [Header("Energy Display Settings")]
     [SerializeField] private Color positiveColor = Color.green;
     [SerializeField] private Color negativeColor = Color.red;
+    [SerializeField] private Color zeroColor = Color.gray;
     
     [Header("Connection Display Settings")]
     [SerializeField] private Color filledColor = Color.white;
@@ -201,14 +202,16 @@ public class NodeDisplay : MonoBehaviour
         
         int weight = node.Weight;
         
-        // Show/hide energy text based on weight
+        // Show gray zero instead of hiding if weight is 0
+        energyText.gameObject.SetActive(true);
+        
         if (weight == 0)
         {
-            energyText.gameObject.SetActive(false);
+            energyText.text = "0";
+            energyText.color = zeroColor;
         }
         else
         {
-            energyText.gameObject.SetActive(true);
             energyText.text = weight > 0 ? $"+{weight}" : $"{weight}";
             energyText.color = weight > 0 ? positiveColor : negativeColor;
         }

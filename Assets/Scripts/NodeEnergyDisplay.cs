@@ -16,6 +16,7 @@ public class NodeEnergyDisplay : MonoBehaviour
     [Header("Display Settings")]
     [SerializeField] private Color positiveColor = Color.green;
     [SerializeField] private Color negativeColor = Color.red;
+    [SerializeField] private Color zeroColor = Color.gray;
     [SerializeField] private Vector3 offsetFromNode = new Vector3(0, 1.2f, 0);
     [SerializeField] private float canvasScale = 0.01f;
     
@@ -71,20 +72,22 @@ public class NodeEnergyDisplay : MonoBehaviour
         
         int weight = node.Weight;
         
-        // Hide display if weight is 0 (producers/consumers)
-        if (weight == 0)
-        {
-            gameObject.SetActive(false);
-            return;
-        }
-        
+        // Show gray zero instead of hiding if weight is 0
         gameObject.SetActive(true);
         
-        // Format text with + or - sign
-        energyText.text = weight > 0 ? $"+{weight}" : $"{weight}";
-        
-        // Set color based on sign
-        energyText.color = weight > 0 ? positiveColor : negativeColor;
+        if (weight == 0)
+        {
+            energyText.text = "0";
+            energyText.color = zeroColor;
+        }
+        else
+        {
+            // Format text with + or - sign
+            energyText.text = weight > 0 ? $"+{weight}" : $"{weight}";
+            
+            // Set color based on sign
+            energyText.color = weight > 0 ? positiveColor : negativeColor;
+        }
     }
     
     /// <summary>

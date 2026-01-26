@@ -612,7 +612,6 @@ MonoBehaviour:
   - nodeID: Node_aa723015
     validTargetIDs:
     - Node_0a2414d6
-    - Node_a41f36d0
   - nodeID: Node_1f59f451
     validTargetIDs: []
   - nodeID: Node_e56cbf4c
@@ -1884,7 +1883,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7270991357346082894, guid: 06d9075951e29734ca95b960b934c8e0, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2081,7 +2080,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7270991357346082894, guid: 06d9075951e29734ca95b960b934c8e0, type: 3}
       propertyPath: maxOutgoingConnections
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

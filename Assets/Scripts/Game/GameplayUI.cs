@@ -170,6 +170,11 @@ public class GameplayUI : MonoBehaviour
         {
             homeButton.gameObject.SetActive(showButtons);
         }
+
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(true);
+        }
     }
     
     /// <summary>
@@ -268,12 +273,27 @@ public class GameplayUI : MonoBehaviour
     /// </summary>
     private void OnLevelWon()
     {
-        // LevelCompleteUI handles the win screen, so we don't need to do anything here
         // Just update energy display in case it changed
         UpdateEnergyDisplay();
         
         // Hide help button on level win
         HideHelpButton(helpShowInterval);
+
+        // Hide restart and home buttons immediately on win
+        if (restartButton != null)
+        {
+            restartButton.gameObject.SetActive(false);
+        }
+
+        if (homeButton != null)
+        {
+            homeButton.gameObject.SetActive(false);
+        }
+
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
     }
     
     /// <summary>
@@ -322,7 +342,7 @@ public class GameplayUI : MonoBehaviour
 
         if (!isHelpButtonVisible)
         {
-            if (Time.time >= nextHelpShowTime)
+            if (Time.time >= nextHelpShowTime && AdsManager.Instance.IsRewardedAdReady())
             {
                 ShowHelpButton();
             }

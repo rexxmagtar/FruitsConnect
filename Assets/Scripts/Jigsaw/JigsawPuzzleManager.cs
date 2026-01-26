@@ -12,6 +12,8 @@ namespace JigsawSystem
         private static JigsawPuzzleManager _instance;
         public static JigsawPuzzleManager Instance => _instance;
 
+        public event System.Action<string> OnPuzzleSolved;
+
         [Header("Configuration")]
         [SerializeField] private JigsawPuzzlesConfig config;
 
@@ -119,6 +121,7 @@ namespace JigsawSystem
                 }
                 
                 ProgressSaveManager<SaveData>.Instance.SaveGameData();
+                OnPuzzleSolved?.Invoke(puzzleId);
             }
         }
 
