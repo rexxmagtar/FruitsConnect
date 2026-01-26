@@ -44,10 +44,37 @@ SpriteAtlas:
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
-    packedSpriteRenderDataKeys: []
+    packedSpriteRenderDataKeys:
+    - 9e1789d3e3f9a6d46b22d169395f8625: 21300000
+    - 192785743e82acc4c82db19fc0ebdc8a: 21300000
+    - 806a4c453aaae894e819f2ade806a080: 21300000
+    - 48a554a58cc577b4cbd56a6c6f6fe0d6: 21300000
+    - 7f6ce837dad07ec4fb7f5d859a324160: 21300000
+    - f31a526867e22a44c843e9f9c451385d: 21300000
+    - 9e6e75880ee739e40a79c22a91f1ee82: 21300000
+    - 93f7c66bcf633cb4380bac4cb2a50195: 21300000
+    - 67cdb3dc025c56f43b2edddb97ed9eab: 21300000
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites: []
-  m_PackedSpriteNamesToIndex: []
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 9e1789d3e3f9a6d46b22d169395f8625, type: 3}
+  - {fileID: 21300000, guid: 192785743e82acc4c82db19fc0ebdc8a, type: 3}
+  - {fileID: 21300000, guid: 806a4c453aaae894e819f2ade806a080, type: 3}
+  - {fileID: 21300000, guid: 48a554a58cc577b4cbd56a6c6f6fe0d6, type: 3}
+  - {fileID: 21300000, guid: 7f6ce837dad07ec4fb7f5d859a324160, type: 3}
+  - {fileID: 21300000, guid: f31a526867e22a44c843e9f9c451385d, type: 3}
+  - {fileID: 21300000, guid: 9e6e75880ee739e40a79c22a91f1ee82, type: 3}
+  - {fileID: 21300000, guid: 93f7c66bcf633cb4380bac4cb2a50195, type: 3}
+  - {fileID: 21300000, guid: 67cdb3dc025c56f43b2edddb97ed9eab, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - pancake_piece_5
+  - pancake_piece_3
+  - pancake_piece_6
+  - pancake_piece_0
+  - pancake_piece_7
+  - pancake_piece_4
+  - pancake_piece_8
+  - pancake_piece_2
+  - pancake_piece_1
   m_RenderDataMap: {}
   m_Tag: pancake_Atlas
   m_IsVariant: 0

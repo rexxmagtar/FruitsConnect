@@ -44,10 +44,37 @@ SpriteAtlas:
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
-    packedSpriteRenderDataKeys: []
+    packedSpriteRenderDataKeys:
+    - abcaf6410fd227d40b1384e058575f84: 21300000
+    - c12570f48383fff42a6cf2d2a6e76d44: 21300000
+    - 179e1835f54a61345bf5ddfb7d0e7173: 21300000
+    - 8d2c8b673a78e214283b5cfbc2d42b11: 21300000
+    - 25ae16a70fb5f6349840a8e962b60eb9: 21300000
+    - 47a25a3d891eef04faee12943ee164bc: 21300000
+    - 5f05ca7dce62ae4409e936911524ff0e: 21300000
+    - ce83682f519af6d4eb82d45749d34441: 21300000
+    - a68cb73feb78a2f408187593013d6a9d: 21300000
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites: []
-  m_PackedSpriteNamesToIndex: []
+  m_PackedSprites:
+  - {fileID: 21300000, guid: abcaf6410fd227d40b1384e058575f84, type: 3}
+  - {fileID: 21300000, guid: c12570f48383fff42a6cf2d2a6e76d44, type: 3}
+  - {fileID: 21300000, guid: 179e1835f54a61345bf5ddfb7d0e7173, type: 3}
+  - {fileID: 21300000, guid: 8d2c8b673a78e214283b5cfbc2d42b11, type: 3}
+  - {fileID: 21300000, guid: 25ae16a70fb5f6349840a8e962b60eb9, type: 3}
+  - {fileID: 21300000, guid: 47a25a3d891eef04faee12943ee164bc, type: 3}
+  - {fileID: 21300000, guid: 5f05ca7dce62ae4409e936911524ff0e, type: 3}
+  - {fileID: 21300000, guid: ce83682f519af6d4eb82d45749d34441, type: 3}
+  - {fileID: 21300000, guid: a68cb73feb78a2f408187593013d6a9d, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - icecream_piece_2
+  - icecream_piece_3
+  - icecream_piece_6
+  - icecream_piece_8
+  - icecream_piece_5
+  - icecream_piece_4
+  - icecream_piece_0
+  - icecream_piece_7
+  - icecream_piece_1
   m_RenderDataMap: {}
   m_Tag: icecream_Atlas
   m_IsVariant: 0

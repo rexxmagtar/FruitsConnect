@@ -35,6 +35,7 @@ namespace UI
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip purchaseSound;
         [SerializeField] private AudioClip selectSound;
+        [SerializeField] private AudioClip buttonClickSound;
 
         public event System.Action OnClosed;
 
@@ -55,9 +56,18 @@ namespace UI
             {
                 closeButton.onClick.AddListener(() => 
                 {
+                    PlayButtonClickSound();
                     gameObject.SetActive(false);
                     OnClosed?.Invoke();
                 });
+            }
+        }
+
+        public void PlayButtonClickSound()
+        {
+            if (audioSource != null && buttonClickSound != null)
+            {
+                audioSource.PlayOneShot(buttonClickSound);
             }
         }
 

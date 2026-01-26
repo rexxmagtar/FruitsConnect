@@ -100,6 +100,14 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 7027636043351174211, guid: 8768700d11f1a864d911db0d7c4030d6, type: 3}
+    - target: {fileID: 4028069921200213851, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.111
+      objectReference: {fileID: 0}
+    - target: {fileID: 4028069921200213851, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.201
+      objectReference: {fileID: 0}
     - target: {fileID: 6382964089287062070, guid: 646fce21c38c07d4598992fe25696e88, type: 3}
       propertyPath: requiredDeliveries
       value: 12

@@ -44,10 +44,37 @@ SpriteAtlas:
     bindAsDefault: 1
     isAtlasV2: 0
     cachedData: {fileID: 0}
-    packedSpriteRenderDataKeys: []
+    packedSpriteRenderDataKeys:
+    - 1a3bf91243d441c43b6c89149e02d05e: 21300000
+    - cfe687a68e1cb8a43a1e141e402262c8: 21300000
+    - 47759687af29bf842bada4a0282791bb: 21300000
+    - 1ff7c7c7d4822be449c5dea0bb996494: 21300000
+    - e0e5c75d18254e340a1ebd2bb2a42bd2: 21300000
+    - 592ccf7dc1ba04a4180b149dc90d15fe: 21300000
+    - 7c948c6eec679af4380359efd4904b1c: 21300000
+    - d770df4f7672f714ca5996da9e577ba9: 21300000
+    - 7d8b826f67e0022468a0d1f41a3f5df9: 21300000
   m_MasterAtlas: {fileID: 0}
-  m_PackedSprites: []
-  m_PackedSpriteNamesToIndex: []
+  m_PackedSprites:
+  - {fileID: 21300000, guid: 1a3bf91243d441c43b6c89149e02d05e, type: 3}
+  - {fileID: 21300000, guid: cfe687a68e1cb8a43a1e141e402262c8, type: 3}
+  - {fileID: 21300000, guid: 47759687af29bf842bada4a0282791bb, type: 3}
+  - {fileID: 21300000, guid: 1ff7c7c7d4822be449c5dea0bb996494, type: 3}
+  - {fileID: 21300000, guid: e0e5c75d18254e340a1ebd2bb2a42bd2, type: 3}
+  - {fileID: 21300000, guid: 592ccf7dc1ba04a4180b149dc90d15fe, type: 3}
+  - {fileID: 21300000, guid: 7c948c6eec679af4380359efd4904b1c, type: 3}
+  - {fileID: 21300000, guid: d770df4f7672f714ca5996da9e577ba9, type: 3}
+  - {fileID: 21300000, guid: 7d8b826f67e0022468a0d1f41a3f5df9, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - coctail_piece_0
+  - coctail_piece_1
+  - coctail_piece_4
+  - coctail_piece_7
+  - coctail_piece_5
+  - coctail_piece_3
+  - coctail_piece_6
+  - coctail_piece_8
+  - coctail_piece_2
   m_RenderDataMap: {}
   m_Tag: coctail_Atlas
   m_IsVariant: 0
