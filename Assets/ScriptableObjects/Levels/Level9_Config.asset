@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 3879580671195757388, guid: 553c4b4c3ee6313438ceb773e471e596, type: 3}
   coinReward: 30
+  monsterBounty: 2
   levelName: Level9
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}

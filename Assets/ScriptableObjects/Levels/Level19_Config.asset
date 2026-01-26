@@ -10,20 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 007da7f034193494ca19714500eded31, type: 3}
-  m_Name: Level2_Config
+  m_Name: Level19_Config
   m_EditorClassIdentifier: 
-  levelPrefab: {fileID: 5841814309483783011, guid: eccb4ea67b3c80f45ba2dc6880f14a01, type: 3}
-  coinReward: 15
+  levelPrefab: {fileID: 1374524486878506987, guid: 6ffa7b305b3a08949b6b5a8b9d7a8871, type: 3}
+  coinReward: 10
   monsterBounty: 2
-  levelName: Level2
+  levelName: Level19
   startingEnergy: 5
-  connectionAnimationPrefab: {fileID: 5975054958780068455, guid: b9f75b79e4832e8468caf160ae9350c3, type: 3}
+  connectionAnimationPrefab: {fileID: 536847310261410110, guid: 278f007cfdf2cd14395bb39525df674e, type: 3}
   isBossFight: 0
   bossGoldReward: 50
   bossFightTimeLimit: 30
-  puzzlePieceRewards: []
+  puzzlePieceRewards:
+  - random
   monsterPrefabs: []
-  minSpawnInterval: 5
-  maxSpawnInterval: 10
-  maxActiveMonsters: 0
-  safeTimeOffset: 10
+  minSpawnInterval: 10
+  maxSpawnInterval: 30
+  maxActiveMonsters: 3
+  safeTimeOffset: 20

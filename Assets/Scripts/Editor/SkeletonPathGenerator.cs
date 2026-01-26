@@ -301,8 +301,13 @@ public static class SkeletonPathGenerator
         // This creates alternative paths and cross-layer connections
         foreach (var fromID in fromLayer)
         {
+            if (!network.Connections.ContainsKey(fromID))
+            {
+                network.Connections[fromID] = new List<string>();
+            }
+
             int maxOut = network.MaxConnections[fromID];
-            int currentOut = network.Connections.ContainsKey(fromID) ? network.Connections[fromID].Count : 0;
+            int currentOut = network.Connections[fromID].Count;
             
             // Expert: Use more connections to create complexity
             int targetExtra = difficulty switch
@@ -700,8 +705,8 @@ public static class SkeletonPathGenerator
     {
         int layerCount = network.NeutralLayerIDs.Count;
         
-        // Target: Any path should consume ~5 energy (start with 5, end with ~0)
-        // A path picks ONE node from each layer, so we need each layer to contribute ~-1 on average
+        // Target: Paths should consume all starting energy (~5) to be challenging
+        // A path picks ONE node from each layer, so we need each layer to contribute ~-1.6 on average
         float targetWeightPerLayer = -5.0f / layerCount;
         
         Debug.Log($"Assigning weights: {layerCount} layers, target per layer: {targetWeightPerLayer:F2}");
@@ -720,8 +725,7 @@ public static class SkeletonPathGenerator
     }
     
     /// <summary>
-    /// Generate a random weight with only 10% chance of being 0
-    /// 90% of the time returns non-zero value (-3 to -1 or 1 to 3)
+    /// Generate a random weight in range [-4, 4] with balance between positive and negative
     /// </summary>
     private static int GenerateRandomWeight()
     {
@@ -734,20 +738,20 @@ public static class SkeletonPathGenerator
         }
         else if (roll < 0.55f)
         {
-            // 45% chance: negative weight (-3 to -1)
-            return Random.Range(-3, 0);
+            // 45% chance: negative weight (-4 to -1)
+            return Random.Range(-4, 0);
         }
         else
         {
-            // 45% chance: positive weight (1 to 3)
-            return Random.Range(1, 4);
+            // 45% chance: positive weight (1 to 5)
+            return Random.Range(1, 5);
         }
     }
     
     /// <summary>
     /// Assign weights to nodes in a single layer with small node count (1-3 nodes)
     /// Ensures that the layer contributes correctly to overall energy consumption
-    /// Zero weights only appear 10% of the time
+    /// Range: -4 to 4. Allows for "swings" (e.g. +2 and -5) to maintain balance.
     /// </summary>
     private static void AssignLayerWeightsForSmallCount(List<string> layerIDs, float targetAverage, SkeletonNetwork network)
     {
@@ -760,26 +764,33 @@ public static class SkeletonPathGenerator
         if (nodeCount == 1)
         {
             // Single node: must be close to target average
-            // Target is around -1, so assign -1 or -2
-            // Avoid 0 for single nodes as it would make layer useless
-            int weight = targetAverage <= -1.5f ? Random.Range(-3, -1) : Random.Range(-2, 1);
-            if (weight == 0) weight = -1; // Ensure single node is never 0
-            weights.Add(weight);
+            int weight = Mathf.RoundToInt(targetAverage);
+            // Ensure we don't return 0 for a single-node layer if it needs to drain energy
+            if (weight == 0 && targetAverage < 0) weight = -1;
+            weights.Add(Mathf.Clamp(weight, -4, 4));
         }
         else if (nodeCount == 2)
         {
-            // Two nodes: create complementary weights that average to target
-            // Target ~-1, so we want sum of ~-2
+            // Two nodes: Create variety. One could be positive, requiring the other to be strongly negative.
             int targetSum = Mathf.RoundToInt(targetAverage * 2);
             
-            // Pick first weight randomly (with 10% zero chance)
-            int weight1 = GenerateRandomWeight();
-            
-            // Calculate complementary weight to hit target sum
-            int weight2 = Mathf.Clamp(targetSum - weight1, -3, 3);
-            
-            weights.Add(weight1);
-            weights.Add(weight2);
+            // 60% chance to create a "swing" (positive + strong negative)
+            if (Random.value < 0.6f)
+            {
+                int posWeight = Random.Range(1, 5); // +1 to +4
+                int negWeight = targetSum - posWeight; // Will be strongly negative
+                
+                weights.Add(posWeight);
+                weights.Add(Mathf.Clamp(negWeight, -4, 4));
+            }
+            else
+            {
+                // Otherwise two negatives or a negative and zero
+                int weight1 = Random.Range(-4, 1);
+                int weight2 = Mathf.Clamp(targetSum - weight1, -4, 4);
+                weights.Add(weight1);
+                weights.Add(weight2);
+            }
             
             // Shuffle
             if (Random.value > 0.5f)
@@ -791,20 +802,24 @@ public static class SkeletonPathGenerator
         }
         else // 3+ nodes
         {
-            // Multiple nodes: create a mix that averages to target
+            // Multiple nodes: mix positive and negative to hit target sum
             int targetSum = Mathf.RoundToInt(targetAverage * nodeCount);
-            
-            // First assign random weights to n-1 nodes (with 10% zero chance)
             int currentSum = 0;
+            
+            // Assign a mix of weights for first n-1 nodes
             for (int i = 0; i < nodeCount - 1; i++)
             {
-                int weight = GenerateRandomWeight();
+                // Force at least one positive node in larger layers for interest
+                int weight;
+                if (i == 0 && Random.value < 0.7f) weight = Random.Range(1, 5);
+                else weight = GenerateRandomWeight();
+                
                 weights.Add(weight);
                 currentSum += weight;
             }
             
             // Last node adjusts to hit target sum
-            int lastWeight = Mathf.Clamp(targetSum - currentSum, -3, 3);
+            int lastWeight = Mathf.Clamp(targetSum - currentSum, -4, 4);
             weights.Add(lastWeight);
             
             // Shuffle for randomness
