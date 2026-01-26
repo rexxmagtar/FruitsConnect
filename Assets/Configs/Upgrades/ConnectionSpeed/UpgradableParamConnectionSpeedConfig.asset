@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   priceConfig: {fileID: 11400000, guid: 946ab294b6bc7fb43ab4e6b98fa2e2bd, type: 2}
   powerConfig: {fileID: 11400000, guid: 3c182f85c3ed9e341b70e97abaedcedc, type: 2}
-  paramName: Connection speed
+  paramName: Delivery
   paramType: 0

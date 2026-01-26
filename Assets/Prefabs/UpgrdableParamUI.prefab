@@ -35,7 +35,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 90.085884, y: 9.7505}
-  m_SizeDelta: {x: 126.7558, y: 60.7461}
+  m_SizeDelta: {x: 126.76, y: 60.7461}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1755023820817104426
 CanvasRenderer:
@@ -1604,7 +1604,7 @@ MonoBehaviour:
   imagesToGrayWhenCantAfford:
   - {fileID: 2575026143119973445}
   - {fileID: 7400014688711225063}
-  powerFormat: 'Power: {0}'
+  powerFormat: 'Power: \n{0}'
   levelFormat: Level {0}
   improveValueFormat: +{0}
   priceFormat: '{0}'
