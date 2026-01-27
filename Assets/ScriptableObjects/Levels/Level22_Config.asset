@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level22_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 7891477311661542060, guid: a4ebe56ea39f94749aeca6d04ac6c21e, type: 3}
-  coinReward: 45
+  coinReward: 50
   monsterBounty: 2
   levelName: Level22
   startingEnergy: 5

@@ -720,7 +720,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5888636726004379396}
   m_Layer: 0
-  m_Name: Armature (1)
+  m_Name: Armature
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1276,7 +1276,7 @@ GameObject:
   - component: {fileID: 8913890912468863787}
   - component: {fileID: 4971476285896167547}
   m_Layer: 0
-  m_Name: char1 (1)
+  m_Name: char1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1537,7 +1537,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1841577578397256310, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: maxHealth
-      value: 40
+      value: 130
       objectReference: {fileID: 0}
     - target: {fileID: 1841577578397256310, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: 'vulnerableZoneSpawnPoints.Array.data[0]'

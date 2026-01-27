@@ -127,6 +127,9 @@ public class GameManager : MonoBehaviour
             // 7. Hit Particles - Initialize after player progress
             await InitializeHitParticles();
 
+            // 8. Review Manager - Initialize for in-app reviews
+            InitializeReviewManager();
+
             // ProgressSaveManager<SaveData>.Instance.SyncWithCloud();
             
             
@@ -337,6 +340,15 @@ public class GameManager : MonoBehaviour
         LogDebug("Initializing Hit Particles...");
         OnInitializationProgress?.Invoke(0.8f);
         HitParticlesManager.Instance.Initialize();
+    }
+
+    /// <summary>
+    /// Initialize Review Manager
+    /// </summary>
+    private void InitializeReviewManager()
+    {
+        LogDebug("Initializing Review Manager...");
+        var reviewManager = Management.ReviewManager.Instance;
     }
     /// <summary>
     /// Restart the game initialization process

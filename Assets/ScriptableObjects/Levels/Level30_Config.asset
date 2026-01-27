@@ -13,17 +13,19 @@ MonoBehaviour:
   m_Name: Level30_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 916330530489842723, guid: 56f5ed21f8de1dd4a986491bc2478b71, type: 3}
-  coinReward: 50
+  coinReward: 60
   monsterBounty: 2
   levelName: Level30
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 2141506787181539334, guid: 657599acedf7b3e48b27cee3f2ea2ca8, type: 3}
   isBossFight: 1
-  bossGoldReward: 200
+  bossGoldReward: 120
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - random
-  monsterPrefabs: []
+  monsterPrefabs:
+  - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
+  - {fileID: 8163196463235052042, guid: d6ff9d20fc9f555489fadc022e5daa44, type: 3}
   minSpawnInterval: 10
   maxSpawnInterval: 30
   maxActiveMonsters: 3

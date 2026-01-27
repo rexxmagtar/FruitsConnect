@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level23_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 6264320353907760745, guid: bfa5e600dad089a4296b23e9a2a2610c, type: 3}
-  coinReward: 45
+  coinReward: 50
   monsterBounty: 2
   levelName: Level23
   startingEnergy: 5

@@ -316,9 +316,9 @@ public class ConnectionManager : MonoBehaviour
                 // Mark as checked for this iteration only
                 checkedThisIteration.Add(conn);
                 
-                // A connection should exist only if its ToNode is connected to a producer
-                // Check if the ToNode is still connected to a producer
-                if (!IsConnectedToProducer(conn.ToNode))
+                // A connection should exist only if its FromNode is connected to a producer
+                // Check if the FromNode is still connected to a producer
+                if (!IsConnectedToProducer(conn.FromNode))
                 {
                     connectionsToBreak.Add(conn);
                 }

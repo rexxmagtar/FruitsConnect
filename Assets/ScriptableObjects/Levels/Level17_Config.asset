@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level17_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 317774698456112147, guid: 295dd048d10e05949bd7f880b0bd8d42, type: 3}
-  coinReward: 40
+  coinReward: 50
   monsterBounty: 2
   levelName: Level17
   startingEnergy: 5

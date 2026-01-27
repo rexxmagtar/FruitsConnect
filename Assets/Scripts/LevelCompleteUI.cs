@@ -157,6 +157,17 @@ public class LevelCompleteUI : MonoBehaviour
         this.bossTotalReward = isBossDefeated ? (int)(bossBaseReward * bossMultiplier) : 0;
         
         gameObject.SetActive(true);
+
+        // Prepare review if every 5th level completed
+        int completedLevel = nextLevelNumber - 1;
+        if (completedLevel > 0 && completedLevel % 5 == 0)
+        {
+            if (Management.ReviewManager.Instance != null)
+            {
+                Management.ReviewManager.Instance.PrepareReview();
+            }
+        }
+
         StartCoroutine(ShowAnimation());
     }
     
@@ -471,6 +482,16 @@ public class LevelCompleteUI : MonoBehaviour
         {
             returnToMenuButton.interactable = true;
         }
+
+        // Show review if prepared
+        int completedLevel = nextLevelNumber - 1;
+        if (completedLevel > 0 && completedLevel % 5 == 0)
+        {
+            if (Management.ReviewManager.Instance != null)
+            {
+                Management.ReviewManager.Instance.ShowReview();
+            }
+        }
     }
 
     /// <summary>
@@ -525,6 +546,7 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         Hide();
+
         // Invoke event
         OnContinueButtonPressed?.Invoke();
     }
@@ -541,6 +563,7 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         Hide();
+
         // Invoke event
         OnReturnToMenuButtonPressed?.Invoke();
     }

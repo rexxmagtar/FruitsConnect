@@ -8,6 +8,12 @@ public class LevelsManager : MonoBehaviour
 {
     [Header("Configuration")]
     [SerializeField] private LevelsConfig levelsConfig;
+
+#if UNITY_EDITOR
+    [Header("Debug")]
+    [SerializeField] private bool debugLoadSpecificLevel;
+    [SerializeField] private int debugLevelIndex;
+#endif
     
     // Singleton
     private static LevelsManager _instance;
@@ -52,6 +58,14 @@ public class LevelsManager : MonoBehaviour
             Debug.LogError("LevelsConfig not assigned!");
             return null;
         }
+
+#if UNITY_EDITOR
+        if (debugLoadSpecificLevel)
+        {
+            Debug.Log($"[Debug] Loading specific level index: {debugLevelIndex}");
+            return GetLevelConfig(debugLevelIndex);
+        }
+#endif
         
         // Get current level from save data
         var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
@@ -115,6 +129,12 @@ public class LevelsManager : MonoBehaviour
     /// </summary>
     public int GetCurrentLevelNumber()
     {
+#if UNITY_EDITOR
+        if (debugLoadSpecificLevel)
+        {
+            return debugLevelIndex + 1;
+        }
+#endif
         var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
         return saveData.CurrentLevel + 1; // +1 for display (1-indexed)
     }

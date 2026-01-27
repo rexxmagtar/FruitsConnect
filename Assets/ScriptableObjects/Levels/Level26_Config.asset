@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Level26_Config
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 4086227025163363447, guid: 4bb7539ea40bf794dac2683b93f97554, type: 3}
-  coinReward: 45
+  coinReward: 60
   monsterBounty: 2
   levelName: Level26
   startingEnergy: 5
@@ -23,7 +23,9 @@ MonoBehaviour:
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - random
-  monsterPrefabs: []
+  monsterPrefabs:
+  - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
+  - {fileID: 8163196463235052042, guid: d6ff9d20fc9f555489fadc022e5daa44, type: 3}
   minSpawnInterval: 10
   maxSpawnInterval: 30
   maxActiveMonsters: 3

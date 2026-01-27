@@ -1541,7 +1541,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1841577578397256310, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: maxHealth
-      value: 40
+      value: 200
       objectReference: {fileID: 0}
     - target: {fileID: 1841577578397256310, guid: 1f13ec3831fb1134c9090945becf05fc, type: 3}
       propertyPath: 'vulnerableZoneSpawnPoints.Array.data[0]'
