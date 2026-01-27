@@ -779,11 +779,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6382964089287062070, guid: e76e0e385d023984592102aec1db4b84, type: 3}
       propertyPath: weight
-      value: -1
+      value: -4
       objectReference: {fileID: 0}
     - target: {fileID: 6382964089287062070, guid: e76e0e385d023984592102aec1db4b84, type: 3}
       propertyPath: maxOutgoingConnections
-      value: -4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8700972006790670246, guid: e76e0e385d023984592102aec1db4b84, type: 3}
       propertyPath: m_text

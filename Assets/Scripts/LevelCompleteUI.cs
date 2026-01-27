@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using JigsawSystem;
 using DataRepository;
-
+using DG.Tweening;
 
 public class LevelCompleteUI : MonoBehaviour
 {
@@ -38,6 +38,14 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private ParticleSystem celebrationEffect;
     [SerializeField] private AudioClip celebrationSound;
     [SerializeField] private AudioClip buttonClickSound;
+
+    [Header("Confetti Settings")]
+    [SerializeField] private int confettiCount = 50;
+    [SerializeField] private float confettiAnimationDuration = 3f;
+    [SerializeField] private Vector2 confettiMinSize = new Vector2(10f, 10f);
+    [SerializeField] private Vector2 confettiMaxSize = new Vector2(20f, 20f);
+    [SerializeField] private Color[] confettiColors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta };
+    [SerializeField] private RectTransform confettiParent;
     
     [Header("Coin Animation Settings")]
     [SerializeField] private int coinAnimationCount = 5;
@@ -376,6 +384,9 @@ public class LevelCompleteUI : MonoBehaviour
         {
             celebrationEffect.Play();
         }
+
+        // Spawn UI confetti
+        SpawnConfettiParticles();
         
         // Fade in
         float elapsedTime = 0f;
@@ -648,6 +659,80 @@ public class LevelCompleteUI : MonoBehaviour
         if (celebrationEffect != null)
         {
             celebrationEffect.Stop();
+        }
+    }
+
+    /// <summary>
+    /// Spawn UI confetti particles with a fire and fall trajectory
+    /// </summary>
+    private void SpawnConfettiParticles()
+    {
+        RectTransform parent = confettiParent != null ? confettiParent : (RectTransform)transform;
+        
+        for (int i = 0; i < confettiCount; i++)
+        {
+            GameObject confettiObj = new GameObject("Confetti");
+            confettiObj.transform.SetParent(parent, false);
+            
+            RectTransform rect = confettiObj.AddComponent<RectTransform>();
+            Image img = confettiObj.AddComponent<Image>();
+            
+            // Random color from the list
+            if (confettiColors != null && confettiColors.Length > 0)
+            {
+                img.color = confettiColors[Random.Range(0, confettiColors.Length)];
+            }
+            else
+            {
+                img.color = new Color(Random.value, Random.value, Random.value, 1f);
+            }
+            
+            // Random size
+            float sizeX = Random.Range(confettiMinSize.x, confettiMaxSize.x);
+            float sizeY = Random.Range(confettiMinSize.y, confettiMaxSize.y);
+            rect.sizeDelta = new Vector2(sizeX, sizeY);
+            
+            // Ensure it doesn't block layout or raycasts
+            LayoutElement le = confettiObj.AddComponent<LayoutElement>();
+            le.ignoreLayout = true;
+            img.raycastTarget = false;
+            
+            // Initial position (usually center of the screen/parent)
+            rect.anchoredPosition = Vector2.zero;
+            
+            // Random initial rotation
+            rect.localRotation = Quaternion.Euler(0, 0, Random.Range(0, 360f));
+            
+            // Trajectory settings
+            float duration = Random.Range(confettiAnimationDuration * 0.8f, confettiAnimationDuration * 1.2f);
+            float horizontalDistance = Random.Range(-400f, 400f);
+            float jumpPower = Random.Range(200f, 500f);
+            
+            // Fire and fall trajectory using DOLocalJump
+            // This will move it from center to a random horizontal position while "jumping" (the fire part)
+            // and then landing (the fall part).
+            Vector2 targetPos = new Vector2(horizontalDistance, -Screen.height / 2f - 100f);
+            
+            rect.DOAnchorPos(targetPos, duration).SetEase(Ease.OutQuad);
+            
+            // Add a "jump" to simulate the initial burst up
+            Sequence jumpSeq = DOTween.Sequence();
+            float peakY = Random.Range(200f, 450f);
+            jumpSeq.Append(rect.DOAnchorPosY(peakY, duration * 0.3f).SetEase(Ease.OutQuad));
+            jumpSeq.Append(rect.DOAnchorPosY(targetPos.y, duration * 0.7f).SetEase(Ease.InQuad));
+            
+            // Rotate while falling
+            rect.DORotate(new Vector3(0, 0, Random.Range(-720f, 720f)), duration, RotateMode.FastBeyond360);
+            
+            // Optional: Randomly flip the confetti (simulating it turning in the air)
+            rect.DOScaleX(0, duration / 4).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
+            
+            // Fade out near the end
+            CanvasGroup cg = confettiObj.AddComponent<CanvasGroup>();
+            if (cg == null) cg = confettiObj.AddComponent<CanvasGroup>();
+            cg.DOFade(0, 0.5f).SetDelay(duration - 0.5f).OnComplete(() => {
+                Destroy(confettiObj);
+            });
         }
     }
     

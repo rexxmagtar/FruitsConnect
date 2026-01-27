@@ -1297,6 +1297,10 @@ PrefabInstance:
       propertyPath: 'connectionMappings.Array.data[7].validTargetIDs.Array.data[1]'
       value: Consumer_c66de1d3-227b-41ab-999e-9e3b9312a3b1
       objectReference: {fileID: 0}
+    - target: {fileID: 5015022841985816390, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6060836090701931101, guid: 7dbd59e150378ee4d9f964794446bf63, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
