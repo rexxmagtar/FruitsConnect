@@ -158,9 +158,9 @@ public class LevelCompleteUI : MonoBehaviour
         
         gameObject.SetActive(true);
 
-        // Prepare review if every 5th level completed
+        // Prepare review if level 5, 15, 25... completed
         int completedLevel = nextLevelNumber - 1;
-        if (completedLevel > 0 && completedLevel % 5 == 0)
+        if (completedLevel > 0 && completedLevel % 10 == 5)
         {
             if (Management.ReviewManager.Instance != null)
             {
@@ -483,9 +483,9 @@ public class LevelCompleteUI : MonoBehaviour
             returnToMenuButton.interactable = true;
         }
 
-        // Show review if prepared
+        // Show review if prepared (Level 5, 15, 25...)
         int completedLevel = nextLevelNumber - 1;
-        if (completedLevel > 0 && completedLevel % 5 == 0)
+        if (completedLevel > 0 && completedLevel % 10 == 5)
         {
             if (Management.ReviewManager.Instance != null)
             {

@@ -228,7 +228,7 @@ public class Boss : MonoBehaviour
     /// <summary>
     /// Handle tap/click on boss - take damage
     /// </summary>
-    private void OnMouseDown()
+    public void OnMouseDown()
     {
         if (!isFighting || isDead || hasEscaped) return;
         
@@ -260,14 +260,28 @@ public class Boss : MonoBehaviour
         // Get mouse/touch position
         Vector3 inputPosition = Input.mousePosition;
         
-        // Use raycast to find hit point on boss collider
+        // Use raycast to find hit point on boss colliders (including children)
         Ray ray = Camera.main.ScreenPointToRay(inputPosition);
         RaycastHit hit;
         
-        Collider bossCollider = GetComponent<Collider>();
-        if (bossCollider != null && bossCollider.Raycast(ray, out hit, 1000f))
+        // Try Physics.Raycast first to find the exact point on any collider
+        if (Physics.Raycast(ray, out hit, 1000f))
         {
-            return hit.point;
+            // Check if we hit this object or a child
+            if (hit.transform == transform || hit.transform.IsChildOf(transform))
+            {
+                return hit.point;
+            }
+        }
+
+        // Fallback: search all colliders on this object and its children
+        Collider[] allColliders = GetComponentsInChildren<Collider>();
+        foreach (Collider col in allColliders)
+        {
+            if (col.Raycast(ray, out hit, 1000f))
+            {
+                return hit.point;
+            }
         }
         
         // Fallback: use boss position
