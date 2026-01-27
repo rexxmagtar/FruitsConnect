@@ -12721,8 +12721,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   levelsConfig: {fileID: 11400000, guid: 84cb6bf357f938d4ba2ef5c230c74550, type: 2}
-  debugLoadSpecificLevel: 0
-  debugLevelIndex: 23
+  debugLoadSpecificLevel: 1
+  debugLevelIndex: 24
 --- !u!114 &983725531
 MonoBehaviour:
   m_ObjectHideFlags: 0
