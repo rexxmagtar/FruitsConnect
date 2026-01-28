@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 using DG.Tweening;
 
 /// <summary>
@@ -18,7 +19,15 @@ public class ProgressPurchaseContainer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI paramNameText;
     [SerializeField] private TextMeshProUGUI priceText;
     [SerializeField] private Button purchaseButton;
-    [SerializeField] private Image[] imagesToGrayWhenCantAfford;
+    
+    [System.Serializable]
+    public struct ImageDeactivationPair
+    {
+        public Image image;
+        public Sprite deactivatedSprite;
+    }
+    
+    [SerializeField] private List<ImageDeactivationPair> imagesToDeactivateWhenCantAfford;
     
     [Header("Display Format")]
     [SerializeField] private string powerFormat = "Power: {0}";
@@ -58,6 +67,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
     private UpgradableParam currentParam;
     private Coroutine sliderAnimationCoroutine;
     private Color[] originalImageColors; // Store original colors for restoration
+    private Sprite[] originalSprites; // Store original sprites for restoration
     private Coroutine levelUpAnimationCoroutine;
     
     private void Awake()
@@ -92,8 +102,8 @@ public class ProgressPurchaseContainer : MonoBehaviour
             sliderAnimationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         }
         
-        // Store original colors of images before any modifications
-        StoreOriginalImageColors();
+        // Store original visuals of images before any modifications
+        StoreOriginalVisuals();
         
         // Setup container references if not assigned
         if (containerRectTransform == null)
@@ -118,19 +128,22 @@ public class ProgressPurchaseContainer : MonoBehaviour
     }
     
     /// <summary>
-    /// Store the original colors of all images that will be grayed out
-    /// This must be called before any color modifications
+    /// Store the original colors and sprites of all images that will be deactivated
+    /// This must be called before any modifications
     /// </summary>
-    private void StoreOriginalImageColors()
+    private void StoreOriginalVisuals()
     {
-        if (imagesToGrayWhenCantAfford == null || imagesToGrayWhenCantAfford.Length == 0) return;
+        if (imagesToDeactivateWhenCantAfford == null || imagesToDeactivateWhenCantAfford.Count == 0) return;
         
-        originalImageColors = new Color[imagesToGrayWhenCantAfford.Length];
-        for (int i = 0; i < imagesToGrayWhenCantAfford.Length; i++)
+        originalImageColors = new Color[imagesToDeactivateWhenCantAfford.Count];
+        originalSprites = new Sprite[imagesToDeactivateWhenCantAfford.Count];
+        
+        for (int i = 0; i < imagesToDeactivateWhenCantAfford.Count; i++)
         {
-            if (imagesToGrayWhenCantAfford[i] != null)
+            if (imagesToDeactivateWhenCantAfford[i].image != null)
             {
-                originalImageColors[i] = imagesToGrayWhenCantAfford[i].color;
+                originalImageColors[i] = imagesToDeactivateWhenCantAfford[i].image.color;
+                originalSprites[i] = imagesToDeactivateWhenCantAfford[i].image.sprite;
             }
         }
     }
@@ -196,37 +209,50 @@ public class ProgressPurchaseContainer : MonoBehaviour
             purchaseButton.interactable = canAfford;
         }
         
-        // Update image colors based on affordability
-        UpdateImageColors(canAfford);
+        // Update image visuals based on affordability
+        UpdateVisualState(canAfford);
     }
     
     /// <summary>
-    /// Update image colors based on whether upgrade can be afforded
+    /// Update image colors and sprites based on whether upgrade can be afforded
     /// </summary>
-    private void UpdateImageColors(bool canAfford)
+    private void UpdateVisualState(bool canAfford)
     {
-        if (imagesToGrayWhenCantAfford == null || imagesToGrayWhenCantAfford.Length == 0) return;
+        if (imagesToDeactivateWhenCantAfford == null || imagesToDeactivateWhenCantAfford.Count == 0) return;
         
-        // Ensure original colors are stored (safety check in case Awake wasn't called yet)
-        if (originalImageColors == null || originalImageColors.Length != imagesToGrayWhenCantAfford.Length)
+        // Ensure original visuals are stored (safety check in case Awake wasn't called yet)
+        if (originalImageColors == null || originalImageColors.Length != imagesToDeactivateWhenCantAfford.Count)
         {
-            StoreOriginalImageColors();
+            StoreOriginalVisuals();
         }
         
         Color targetColor = canAfford ? normalColor : grayedOutColor;
         
-        for (int i = 0; i < imagesToGrayWhenCantAfford.Length; i++)
+        for (int i = 0; i < imagesToDeactivateWhenCantAfford.Count; i++)
         {
-            if (imagesToGrayWhenCantAfford[i] != null)
+            var pair = imagesToDeactivateWhenCantAfford[i];
+            if (pair.image != null)
             {
-                // If can afford, restore original color, otherwise use grayed out color
-                if (canAfford && originalImageColors != null && i < originalImageColors.Length)
+                if (canAfford)
                 {
-                    imagesToGrayWhenCantAfford[i].color = originalImageColors[i];
+                    // Restore original color and sprite
+                    if (originalImageColors != null && i < originalImageColors.Length)
+                    {
+                        pair.image.color = originalImageColors[i];
+                    }
+                    if (originalSprites != null && i < originalSprites.Length)
+                    {
+                        pair.image.sprite = originalSprites[i];
+                    }
                 }
                 else
                 {
-                    imagesToGrayWhenCantAfford[i].color = targetColor;
+                    // Set grayed out color and deactivated sprite
+                    pair.image.color = targetColor;
+                    if (pair.deactivatedSprite != null)
+                    {
+                        pair.image.sprite = pair.deactivatedSprite;
+                    }
                 }
             }
         }
@@ -318,8 +344,8 @@ public class ProgressPurchaseContainer : MonoBehaviour
             purchaseButton.interactable = canAfford;
         }
         
-        // Update image colors based on affordability
-        UpdateImageColors(canAfford);
+        // Update image visuals based on affordability
+        UpdateVisualState(canAfford);
         
         // Animate slider smoothly to new step value
         if (stepsProgressSlider != null)
@@ -621,7 +647,7 @@ public class ProgressPurchaseContainer : MonoBehaviour
             purchaseButton.interactable = canAfford;
         }
         
-        // Update image colors
-        UpdateImageColors(canAfford);
+        // Update image visuals
+        UpdateVisualState(canAfford);
     }
 }

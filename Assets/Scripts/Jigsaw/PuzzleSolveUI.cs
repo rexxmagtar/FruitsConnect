@@ -22,6 +22,7 @@ namespace JigsawSystem
         
         [Header("Prefabs")]
         [SerializeField] private PuzzlePieceItem piecePrefab;
+        [SerializeField] private PuzzleUnlockAdButton adButtonPrefab;
 
         [Header("Solve Popup")]
         [SerializeField] private PuzzleSolveUiPopup solvePopup;
@@ -35,6 +36,7 @@ namespace JigsawSystem
 
         private JigsawPuzzleData currentPuzzle;
         private List<PuzzlePieceItem> activePieces = new List<PuzzlePieceItem>();
+        private List<PuzzleUnlockAdButton> activeAdButtons = new List<PuzzleUnlockAdButton>();
         private int[] slotPieceIndices = new int[9]; // Stores piece index at each slot
         
         public RectTransform DragLayer => dragLayer;
@@ -88,8 +90,13 @@ namespace JigsawSystem
             gameObject.SetActive(false);
         }
 
+        public void RefreshFromAd()
+        {
+            Refresh();
+        }
+
         public bool IsSlotOccupied(int slotIndex) => slotPieceIndices[slotIndex] != -1;
-        
+
         public bool IsPuzzleSolved()
         {
             if (currentPuzzle == null) return false;
@@ -101,6 +108,9 @@ namespace JigsawSystem
             // 1. Clear everything
             foreach (var p in activePieces) if (p != null) Destroy(p.gameObject);
             activePieces.Clear();
+            
+            foreach (var b in activeAdButtons) if (b != null) Destroy(b.gameObject);
+            activeAdButtons.Clear();
             
             for (int i = 0; i < 9; i++)
             {
@@ -141,6 +151,20 @@ namespace JigsawSystem
                 }
                 
                 if (!isPlaced) storageItem.SetVisible(true);
+            }
+
+            // 5. Add ad buttons for missing pieces
+            if (adButtonPrefab != null)
+            {
+                for (int i = 0; i < 9; i++)
+                {
+                    if (!collectedIndices.Contains(i))
+                    {
+                        var adButton = Instantiate(adButtonPrefab, storageParent);
+                        adButton.Initialize(currentPuzzle.puzzleId, i, this);
+                        activeAdButtons.Add(adButton);
+                    }
+                }
             }
         }
 

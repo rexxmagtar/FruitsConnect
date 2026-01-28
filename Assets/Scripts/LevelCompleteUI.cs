@@ -41,6 +41,7 @@ public class LevelCompleteUI : MonoBehaviour
 
     [Header("Confetti Settings")]
     [SerializeField] private int confettiCount = 50;
+    [SerializeField] private float confettiSpawnDuration = 2f;
     [SerializeField] private float confettiAnimationDuration = 3f;
     [SerializeField] private Vector2 confettiMinSize = new Vector2(10f, 10f);
     [SerializeField] private Vector2 confettiMaxSize = new Vector2(20f, 20f);
@@ -386,7 +387,7 @@ public class LevelCompleteUI : MonoBehaviour
         }
 
         // Spawn UI confetti
-        SpawnConfettiParticles();
+        StartCoroutine(SpawnConfettiParticlesRoutine());
         
         // Fade in
         float elapsedTime = 0f;
@@ -663,77 +664,93 @@ public class LevelCompleteUI : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawn UI confetti particles with a fire and fall trajectory
+    /// Spawn UI confetti particles with a fountain trajectory from bottom corners
     /// </summary>
-    private void SpawnConfettiParticles()
+    private IEnumerator SpawnConfettiParticlesRoutine()
     {
         RectTransform parent = confettiParent != null ? confettiParent : (RectTransform)transform;
+        float interval = confettiSpawnDuration / confettiCount;
         
         for (int i = 0; i < confettiCount; i++)
         {
-            GameObject confettiObj = new GameObject("Confetti");
-            confettiObj.transform.SetParent(parent, false);
-            
-            RectTransform rect = confettiObj.AddComponent<RectTransform>();
-            Image img = confettiObj.AddComponent<Image>();
-            
-            // Random color from the list
-            if (confettiColors != null && confettiColors.Length > 0)
-            {
-                img.color = confettiColors[Random.Range(0, confettiColors.Length)];
-            }
-            else
-            {
-                img.color = new Color(Random.value, Random.value, Random.value, 1f);
-            }
-            
-            // Random size
-            float sizeX = Random.Range(confettiMinSize.x, confettiMaxSize.x);
-            float sizeY = Random.Range(confettiMinSize.y, confettiMaxSize.y);
-            rect.sizeDelta = new Vector2(sizeX, sizeY);
-            
-            // Ensure it doesn't block layout or raycasts
-            LayoutElement le = confettiObj.AddComponent<LayoutElement>();
-            le.ignoreLayout = true;
-            img.raycastTarget = false;
-            
-            // Initial position (usually center of the screen/parent)
-            rect.anchoredPosition = Vector2.zero;
-            
-            // Random initial rotation
-            rect.localRotation = Quaternion.Euler(0, 0, Random.Range(0, 360f));
-            
-            // Trajectory settings
-            float duration = Random.Range(confettiAnimationDuration * 0.8f, confettiAnimationDuration * 1.2f);
-            float horizontalDistance = Random.Range(-400f, 400f);
-            float jumpPower = Random.Range(200f, 500f);
-            
-            // Fire and fall trajectory using DOLocalJump
-            // This will move it from center to a random horizontal position while "jumping" (the fire part)
-            // and then landing (the fall part).
-            Vector2 targetPos = new Vector2(horizontalDistance, -Screen.height / 2f - 100f);
-            
-            rect.DOAnchorPos(targetPos, duration).SetEase(Ease.OutQuad);
-            
-            // Add a "jump" to simulate the initial burst up
-            Sequence jumpSeq = DOTween.Sequence();
-            float peakY = Random.Range(200f, 450f);
-            jumpSeq.Append(rect.DOAnchorPosY(peakY, duration * 0.3f).SetEase(Ease.OutQuad));
-            jumpSeq.Append(rect.DOAnchorPosY(targetPos.y, duration * 0.7f).SetEase(Ease.InQuad));
-            
-            // Rotate while falling
-            rect.DORotate(new Vector3(0, 0, Random.Range(-720f, 720f)), duration, RotateMode.FastBeyond360);
-            
-            // Optional: Randomly flip the confetti (simulating it turning in the air)
-            rect.DOScaleX(0, duration / 4).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
-            
-            // Fade out near the end
-            CanvasGroup cg = confettiObj.AddComponent<CanvasGroup>();
-            if (cg == null) cg = confettiObj.AddComponent<CanvasGroup>();
-            cg.DOFade(0, 0.5f).SetDelay(duration - 0.5f).OnComplete(() => {
-                Destroy(confettiObj);
-            });
+            // Alternate between left and right side
+            bool isLeft = i % 2 == 0;
+            SpawnSingleConfetti(parent, isLeft);
+            yield return new WaitForSeconds(interval);
         }
+    }
+
+    private void SpawnSingleConfetti(RectTransform parent, bool isLeft)
+    {
+        GameObject confettiObj = new GameObject("Confetti");
+        confettiObj.transform.SetParent(parent, false);
+        
+        RectTransform rect = confettiObj.AddComponent<RectTransform>();
+        Image img = confettiObj.AddComponent<Image>();
+        
+        // Random color
+        if (confettiColors != null && confettiColors.Length > 0)
+        {
+            img.color = confettiColors[Random.Range(0, confettiColors.Length)];
+        }
+        else
+        {
+            img.color = new Color(Random.value, Random.value, Random.value, 1f);
+        }
+        
+        // Random size
+        float sizeX = Random.Range(confettiMinSize.x, confettiMaxSize.x);
+        float sizeY = Random.Range(confettiMinSize.y, confettiMaxSize.y);
+        rect.sizeDelta = new Vector2(sizeX, sizeY);
+        
+        LayoutElement le = confettiObj.AddComponent<LayoutElement>();
+        le.ignoreLayout = true;
+        img.raycastTarget = false;
+        
+        // Position at bottom corner
+        float screenHalfWidth = Screen.width * 0.5f;
+        float screenHalfHeight = Screen.height * 0.5f;
+        
+        // Start position (relative to parent center)
+        float startX = isLeft ? -screenHalfWidth : screenHalfWidth;
+        float startY = -screenHalfHeight;
+        rect.anchoredPosition = new Vector2(startX, startY);
+        
+        // Random initial rotation
+        rect.localRotation = Quaternion.Euler(0, 0, Random.Range(0, 360f));
+        
+        float duration = Random.Range(confettiAnimationDuration * 0.8f, confettiAnimationDuration * 1.2f);
+        
+        // Target positions for the arc
+        // Fire towards center top area
+        float peakX = isLeft ? Random.Range(-screenHalfWidth * 0.5f, 0) : Random.Range(0, screenHalfWidth * 0.5f);
+        float peakY = Random.Range(screenHalfHeight * 0.2f, screenHalfHeight * 0.8f);
+        
+        // End position (falling off screen)
+        float endX = peakX + (isLeft ? Random.Range(50f, 200f) : Random.Range(-200f, -50f));
+        float endY = -screenHalfHeight - 100f;
+        
+        // Sequence for the trajectory
+        Sequence trajectory = DOTween.Sequence();
+        
+        // Horizontal movement: burst towards center, then continue drift
+        trajectory.Join(rect.DOAnchorPosX(endX, duration).SetEase(Ease.OutQuad));
+        
+        // Vertical movement: burst UP, then fall DOWN
+        Sequence verticalSeq = DOTween.Sequence();
+        verticalSeq.Append(rect.DOAnchorPosY(peakY, duration * 0.4f).SetEase(Ease.OutQuad));
+        verticalSeq.Append(rect.DOAnchorPosY(endY, duration * 0.6f).SetEase(Ease.InQuad));
+        trajectory.Join(verticalSeq);
+        
+        // Rotation and flipping
+        rect.DORotate(new Vector3(0, 0, Random.Range(-720f, 720f)), duration, RotateMode.FastBeyond360);
+        rect.DOScaleX(0, duration / 4).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
+        
+        // Fade and Cleanup
+        CanvasGroup cg = confettiObj.AddComponent<CanvasGroup>();
+        cg.DOFade(0, 0.5f).SetDelay(duration - 0.5f).OnComplete(() => {
+            if (confettiObj != null) Destroy(confettiObj);
+        });
     }
     
     /// <summary>

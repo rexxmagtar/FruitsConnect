@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643033967558859897, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: attackDamagePercent
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1593503850417697487, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

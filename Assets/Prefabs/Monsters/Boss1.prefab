@@ -11611,9 +11611,9 @@ MonoBehaviour:
   healthBar: {fileID: 5058797186601534125}
   healthBarPrefab: {fileID: 0}
   animator: {fileID: 4960008600991099466}
-  hitSound: {fileID: 8300000, guid: a929703d2283b154198d58577aa2e285, type: 3}
+  hitSound: {fileID: 8300000, guid: 36ecd28c8eb9a6f468ada8b370c7bc62, type: 3}
   vulnerableZoneHitSound: {fileID: 8300000, guid: ad9dbf0d7e06f0e459236a4ce9f0f4b5, type: 3}
-  dieSound: {fileID: 8300000, guid: 44afb43d2009fde438d1297ec2ac7b58, type: 3}
+  dieSound: {fileID: 8300000, guid: 63fd658d8f05fa54b98e9cb012cd9bc8, type: 3}
   escapeSound: {fileID: 8300000, guid: 2317dac1b8979d143957265e5a59e88b, type: 3}
   audioSource: {fileID: 6499952669105085902}
   hitParticleEffect: {fileID: 5199786277193964039}

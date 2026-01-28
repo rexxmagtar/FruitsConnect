@@ -234,6 +234,7 @@ MonoBehaviour:
   circlePrefab: {fileID: 8758525648371582844, guid: 612a73e1d85b64c408ab048df917587a, type: 3}
   positiveColor: {r: 0, g: 1, b: 0, a: 1}
   negativeColor: {r: 1, g: 0, b: 0, a: 1}
+  zeroColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   filledColor: {r: 1, g: 1, b: 1, a: 1}
   emptyColor: {r: 1, g: 1, b: 1, a: 0.3}
 --- !u!1 &4184549946734688372
@@ -536,7 +537,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   connectionParticles: {fileID: 4703336398679346077}
-  requiredDeliveries: 3
+  requiredDeliveries: 5
   arrivalDetectionDistance: 0.8
   progressAnimationSpeed: 5
 --- !u!82 &2739971908266940658

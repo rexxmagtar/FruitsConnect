@@ -980,10 +980,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8300000, guid: 05c0a39f27c1fa241885f80a22a17983, type: 3}
     - target: {fileID: 8085754748320850274, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
-      propertyPath: hitSound
-      value: 
-      objectReference: {fileID: 8300000, guid: 4a8e2a79dd388e048bb5128bc35b5146, type: 3}
-    - target: {fileID: 8085754748320850274, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
       propertyPath: maxHealth
       value: 10
       objectReference: {fileID: 0}

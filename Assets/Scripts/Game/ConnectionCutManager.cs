@@ -224,11 +224,11 @@ public class ConnectionCutManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Check if raycast hits a node or connection (to avoid starting cut when clicking on those)
+    /// Check if raycast hits a node, connection, or monster (to avoid starting cut when clicking on those)
     /// </summary>
     private bool IsHittingNodeOrConnection(Ray ray)
     {
-        // Check for node hits
+        // Check for hits
         if (Physics.Raycast(ray, out RaycastHit hit, 1000f))
         {
             // Check if we hit a node
@@ -239,6 +239,15 @@ public class ConnectionCutManager : MonoBehaviour
             
             // Check if we hit a connection
             if (hit.collider.GetComponent<Connection>() != null)
+            {
+                return true;
+            }
+
+            // Check if we hit a monster or boss
+            if (hit.collider.GetComponent<Monster>() != null || 
+                hit.collider.GetComponent<Boss>() != null || 
+                hit.collider.GetComponent<BossHitbox>() != null ||
+                hit.collider.GetComponent<VulnerableZone>() != null)
             {
                 return true;
             }

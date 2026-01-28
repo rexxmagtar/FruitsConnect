@@ -39,6 +39,7 @@ namespace Managers
         // Tutorial progress keys
         private const string PUZZLE_TUTORIAL_KEY = "Tutorial_Puzzle_Completed";
         private const string SKIN_TUTORIAL_KEY = "Tutorial_Skin_Completed";
+        private const string UPGRADE_TUTORIAL_KEY = "Tutorial_Upgrade_Completed";
 
         private void Awake()
         {
@@ -99,6 +100,11 @@ namespace Managers
             else if (currentLevelIndex >= 10 && PlayerPrefs.GetInt(SKIN_TUTORIAL_KEY, 0) == 0)
             {
                 StartCoroutine(SkinTutorialRoutine(mainMenu));
+            }
+            // Upgrade Tutorial: Level 3 completed (index >= 3)
+            else if (currentLevelIndex >= 3 && PlayerPrefs.GetInt(UPGRADE_TUTORIAL_KEY, 0) == 0)
+            {
+                StartCoroutine(UpgradeTutorialRoutine(mainMenu));
             }
         }
 
@@ -185,6 +191,74 @@ namespace Managers
             CompleteTutorial(SKIN_TUTORIAL_KEY);
         }
 
+        private IEnumerator UpgradeTutorialRoutine(MainMenuUI mainMenu)
+        {
+            isTutorialActive = true;
+            darkOverlay.gameObject.SetActive(true);
+
+            // Step 1: Hint Damage Upgrade Buy Button
+            ProgressPurchaseContainer damageContainer = GetPrivateField<ProgressPurchaseContainer>(mainMenu, "monsterDamageContainer");
+            if (damageContainer != null)
+            {
+                Button buyButton = GetPrivateField<Button>(damageContainer, "purchaseButton");
+                if (buyButton != null)
+                {
+                    RectTransform buyRect = buyButton.GetComponent<RectTransform>();
+                    UpdateLightZone(buyRect);
+                    ShowFingerPointer(buyRect);
+
+                    bool damageUpgraded = false;
+                    System.Action<UpgradableParam, bool> onUpgrade = (param, isLevelComp) =>
+                    {
+                        if (param is MonsterDamage) damageUpgraded = true;
+                    };
+                    PlayerProgressController.OnUpgradePurchased += onUpgrade;
+
+                    while (!damageUpgraded)
+                    {
+                        // Update hole position in case of UI layout changes
+                        UpdateLightZone(buyRect);
+                        yield return null;
+                    }
+                    PlayerProgressController.OnUpgradePurchased -= onUpgrade;
+                }
+            }
+
+            // Step 2: Hint Delivery Speed Upgrade Buy Button
+            HideFingerPointer();
+            lightRect.gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.5f);
+
+            ProgressPurchaseContainer speedContainer = GetPrivateField<ProgressPurchaseContainer>(mainMenu, "connectionSpeedContainer");
+            if (speedContainer != null)
+            {
+                Button buyButton = GetPrivateField<Button>(speedContainer, "purchaseButton");
+                if (buyButton != null)
+                {
+                    RectTransform buyRect = buyButton.GetComponent<RectTransform>();
+                    UpdateLightZone(buyRect);
+                    ShowFingerPointer(buyRect);
+
+                    bool speedUpgraded = false;
+                    System.Action<UpgradableParam, bool> onUpgrade = (param, isLevelComp) =>
+                    {
+                        if (param is ConnectionSpeed) speedUpgraded = true;
+                    };
+                    PlayerProgressController.OnUpgradePurchased += onUpgrade;
+
+                    while (!speedUpgraded)
+                    {
+                        // Update hole position in case of UI layout changes
+                        UpdateLightZone(buyRect);
+                        yield return null;
+                    }
+                    PlayerProgressController.OnUpgradePurchased -= onUpgrade;
+                }
+            }
+
+            CompleteTutorial(UPGRADE_TUTORIAL_KEY);
+        }
+
         private void UpdateLightZone(RectTransform targetRect)
         {
             if (lightRect == null || darkOverlayMaterial == null) return;
@@ -266,6 +340,7 @@ namespace Managers
         {
             PlayerPrefs.DeleteKey(PUZZLE_TUTORIAL_KEY);
             PlayerPrefs.DeleteKey(SKIN_TUTORIAL_KEY);
+            PlayerPrefs.DeleteKey(UPGRADE_TUTORIAL_KEY);
             PlayerPrefs.Save();
             Debug.Log("Tutorials reset");
         }

@@ -1020,6 +1020,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 505800834}
     m_Modifications:
+    - target: {fileID: 327629283301934087, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 1099718238, guid: fd6cb592190e4d0478872c048c13d0cc, type: 3}
+    - target: {fileID: 327629283301934087, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 327629283301934087, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 327629283301934087, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 562784816131663270, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: settingsUI
       value: 
@@ -1124,6 +1140,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 1121
       objectReference: {fileID: 0}
+    - target: {fileID: 3085951082140568192, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.0016999245
+      objectReference: {fileID: 0}
     - target: {fileID: 3604003126259071655, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1171,6 +1191,10 @@ PrefabInstance:
     - target: {fileID: 6148533910658636214, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_fontSize
       value: 29.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6690692930560361676, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.0022001266
       objectReference: {fileID: 0}
     - target: {fileID: 6787183338673493165, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_Name
@@ -1774,8 +1798,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 3.1844, y: 54}
-  m_SizeDelta: {x: 455.5258, y: 468.929}
+  m_AnchoredPosition: {x: 0, y: 67}
+  m_SizeDelta: {x: 497.2305, y: 511.86}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &217909023
 MonoBehaviour:
@@ -1789,7 +1813,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: a50156f635f361a4f90811af82a24c7d, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -9075,7 +9099,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   useLineTrajectory: 1
-  maxLinePoints: 50
+  maxLinePoints: 100
   minPointDistance: 0.05
   trajectoryPointLifetime: 0.5
   trajectoryColor: {r: 0.2, g: 0.6, b: 1, a: 0.8}
@@ -10071,7 +10095,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Level complete
+  m_text: Victory
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8d2db6f265ba91a458d72d582b734eba, type: 2}
   m_sharedMaterial: {fileID: 7486082335080339418, guid: 8d2db6f265ba91a458d72d582b734eba, type: 2}
@@ -12953,7 +12977,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   levelsConfig: {fileID: 11400000, guid: 84cb6bf357f938d4ba2ef5c230c74550, type: 2}
-  debugLoadSpecificLevel: 1
+  debugLoadSpecificLevel: 0
   debugLevelIndex: 24
 --- !u!114 &983725531
 MonoBehaviour:
@@ -20349,7 +20373,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 540, y: -82.82007}
+  m_AnchoredPosition: {x: 540, y: -82.82019}
   m_SizeDelta: {x: 100, y: 139.64038}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1345328867
@@ -21442,16 +21466,48 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 173883360}
     - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiCount
+      value: 120
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
       propertyPath: celebrationEffect
       value: 
       objectReference: {fileID: 1938992008}
     - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiMaxSize.x
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiMaxSize.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiMinSize.x
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiMinSize.y
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
       propertyPath: levelCompleteText
       value: 
+      objectReference: {fileID: 591555515}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: levelCompleteMessage
+      value: Victory
       objectReference: {fileID: 0}
     - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
       propertyPath: coinAnimationDuration
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiSpawnDuration
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
+      propertyPath: confettiAnimationDuration
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5442973023632953862, guid: d2c6b07d567340845a9ec9f4ddae7940, type: 3}
       propertyPath: progressAnimationDuration
@@ -23645,6 +23701,7 @@ MonoBehaviour:
   mainCanvas: {fileID: 505800833}
   puzzleNameText: {fileID: 661263756}
   piecePrefab: {fileID: 1270104389306655591, guid: 3499b2888dc173e4aaa34048fc785fb8, type: 3}
+  adButtonPrefab: {fileID: 693128947589565219, guid: 59ab5ab3c69d1374ca482a0bfc6624c8, type: 3}
   solvePopup: {fileID: 98745712}
   audioSource: {fileID: 173883360}
   dragStartSound: {fileID: 8300000, guid: 9bbe2cb6fbaf6b04487b2755b5c53ce9, type: 3}

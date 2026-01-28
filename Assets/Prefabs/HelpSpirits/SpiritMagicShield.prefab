@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643033967558859897, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: attackDamagePercent
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1771171330586937812, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: InitialModule.startColor.maxColor.a
@@ -114,7 +114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6831418918358256370, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: m_Name
-      value: Spirit2
+      value: SpiritMagicShield
       objectReference: {fileID: 0}
     - target: {fileID: 7631290284383713174, guid: 574249910d82ec04396ede77465f87f1, type: 3}
       propertyPath: InitialModule.startColor.maxColor.a
