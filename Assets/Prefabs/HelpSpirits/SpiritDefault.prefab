@@ -166,6 +166,6 @@ MonoBehaviour:
   moveSpeed: 5
   dashSpeed: 15
   detectionRadius: 10
-  attackInterval: 1.5
+  attackInterval: 1
   attackDamagePercent: 1
   despawnDuration: 0.5

@@ -75,23 +75,50 @@ namespace JigsawSystem
             if (config == null) return null;
 
             var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
-            List<string> allPossiblePieces = new List<string>();
+            
+            List<string> missingPieces = new List<string>();
+            List<float> weights = new List<float>();
+            float totalWeight = 0;
 
             foreach (var puzzle in config.Puzzles)
             {
+                // Calculate weight for this puzzle based on how many pieces are already collected
+                // More collected pieces = higher weight for remaining pieces
+                int collectedCount = saveData.CollectedPieces.Count(p => p.StartsWith(puzzle.puzzleId + "_"));
+                
+                // Use collectedCount + 1 as weight. 
+                // This means pieces for a puzzle with 8/9 pieces are much more likely 
+                // than pieces for a puzzle with 0/9 pieces (weight 9 vs weight 1).
+                float weight = collectedCount + 1;
+
                 for (int i = 0; i < 9; i++)
                 {
                     string id = $"{puzzle.puzzleId}_{i}";
                     if (!saveData.CollectedPieces.Contains(id))
                     {
-                        allPossiblePieces.Add(id);
+                        missingPieces.Add(id);
+                        weights.Add(weight);
+                        totalWeight += weight;
                     }
                 }
             }
 
-            if (allPossiblePieces.Count == 0) return null;
+            if (missingPieces.Count == 0) return null;
 
-            return allPossiblePieces[Random.Range(0, allPossiblePieces.Count)];
+            // Weighted random selection
+            float randomValue = Random.Range(0, totalWeight);
+            float currentSum = 0;
+
+            for (int i = 0; i < missingPieces.Count; i++)
+            {
+                currentSum += weights[i];
+                if (randomValue <= currentSum)
+                {
+                    return missingPieces[i];
+                }
+            }
+
+            return missingPieces[missingPieces.Count - 1];
         }
 
         public int GetCollectedPieceCount(string puzzleId)

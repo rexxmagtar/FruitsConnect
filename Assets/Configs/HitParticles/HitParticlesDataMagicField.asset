@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: HitParticlesDataMagicField
   m_EditorClassIdentifier: 
   id: magic_field
+  displayName: Purge strike
   particlePrefab: {fileID: 5009813809563322685, guid: 421610d58bb38d44d812d8a561b5cadc, type: 3}
   helperSpiritPrefab: {fileID: 5680977683535789568, guid: 1c9f497578bab1f4d9c0a7edb3e5fdc1, type: 3}
   stage: 0
   effectSprite: {fileID: 21300000, guid: 798a51f6915d8424db952df495804bf9, type: 3}
-  price: 200
+  price: ad
+  damagePowerValue: 300
+  connectionSpeedValue: 500

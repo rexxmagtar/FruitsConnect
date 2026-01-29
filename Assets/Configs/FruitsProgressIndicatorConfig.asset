@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: FruitsProgressIndicatorConfig
   m_EditorClassIdentifier: 
   fruitProgressData:
-  - totalLevelsCount: 10
-    fruitSprite: {fileID: 21300000, guid: b4c04afe6ff0e9845b9bb8de62ca3521, type: 3}
-  - totalLevelsCount: 10
-    fruitSprite: {fileID: 21300000, guid: 46af9176427dc5d418bd8ca342e3215e, type: 3}
+  - fruitSprite: {fileID: 21300000, guid: b4c04afe6ff0e9845b9bb8de62ca3521, type: 3}
+  - fruitSprite: {fileID: 21300000, guid: 46af9176427dc5d418bd8ca342e3215e, type: 3}
+  - fruitSprite: {fileID: 21300000, guid: fba3b9b7c1ef77f4e84b733cfdc3375a, type: 3}

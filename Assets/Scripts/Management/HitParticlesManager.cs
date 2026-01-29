@@ -49,7 +49,7 @@ public class HitParticlesManager : MonoBehaviour
         if (string.IsNullOrEmpty(saveData.SelectedHitParticleId))
         {
             // Find default (stage 0, price 0)
-            var defaultParticle = allParticles.FirstOrDefault(p => p.stage == 0 && p.price == 0);
+            var defaultParticle = allParticles.FirstOrDefault(p => p.stage == 0 && (p.price == "0" || p.price == "Free"));
             if (defaultParticle != null)
             {
                 saveData.SelectedHitParticleId = defaultParticle.id;
@@ -103,19 +103,29 @@ public class HitParticlesManager : MonoBehaviour
     {
         if (IsUnlocked(data.id)) return true;
 
-        int currentCoins = GameManager.Instance.GetCoins();
-        if (currentCoins >= data.price)
+        if (int.TryParse(data.price, out int priceValue))
         {
-            // Deduct coins
-            GameManager.Instance.AddCoins(-data.price);
-            
-            var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
-            saveData.UnlockedHitParticleIds.Add(data.id);
-            ProgressSaveManager<SaveData>.Instance.SaveGameData();
-            return true;
+            int currentCoins = GameManager.Instance.GetCoins();
+            if (currentCoins >= priceValue)
+            {
+                // Deduct coins
+                GameManager.Instance.AddCoins(-priceValue);
+                
+                UnlockParticleDirectly(data.id);
+                return true;
+            }
         }
 
         return false;
+    }
+
+    public void UnlockParticleDirectly(string id)
+    {
+        if (IsUnlocked(id)) return;
+        
+        var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
+        saveData.UnlockedHitParticleIds.Add(id);
+        ProgressSaveManager<SaveData>.Instance.SaveGameData();
     }
 
     public void SpawnHitParticle(Vector3 position)

@@ -142,7 +142,8 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   connectionParticles: {fileID: 7486856799566254762}
-  requiredDeliveries: 3
+  requiredDeliveries: 5
+  arrivalDetectionDistance: 1
   progressAnimationSpeed: 5
 --- !u!136 &637753523147984693
 CapsuleCollider:

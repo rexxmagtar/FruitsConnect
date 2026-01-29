@@ -41,10 +41,12 @@ public class LevelCompleteUI : MonoBehaviour
 
     [Header("Confetti Settings")]
     [SerializeField] private int confettiCount = 50;
+    [SerializeField] private int confettiBurstCount = 3;
     [SerializeField] private float confettiSpawnDuration = 2f;
     [SerializeField] private float confettiAnimationDuration = 3f;
     [SerializeField] private Vector2 confettiMinSize = new Vector2(10f, 10f);
     [SerializeField] private Vector2 confettiMaxSize = new Vector2(20f, 20f);
+    [SerializeField] private float confettiSpawnZoneSize = 50f;
     [SerializeField] private Color[] confettiColors = new Color[] { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan, Color.magenta };
     [SerializeField] private RectTransform confettiParent;
     
@@ -669,13 +671,18 @@ public class LevelCompleteUI : MonoBehaviour
     private IEnumerator SpawnConfettiParticlesRoutine()
     {
         RectTransform parent = confettiParent != null ? confettiParent : (RectTransform)transform;
-        float interval = confettiSpawnDuration / confettiCount;
+        int totalBursts = confettiCount / confettiBurstCount;
+        if (totalBursts <= 0) totalBursts = 1;
+        float interval = confettiSpawnDuration / totalBursts;
         
-        for (int i = 0; i < confettiCount; i++)
+        for (int i = 0; i < totalBursts; i++)
         {
-            // Alternate between left and right side
-            bool isLeft = i % 2 == 0;
-            SpawnSingleConfetti(parent, isLeft);
+            // Spawn multiple particles from both sides in each burst
+            for (int j = 0; j < confettiBurstCount; j++)
+            {
+                SpawnSingleConfetti(parent, true);  // Left side
+                SpawnSingleConfetti(parent, false); // Right side
+            }
             yield return new WaitForSeconds(interval);
         }
     }
@@ -707,13 +714,24 @@ public class LevelCompleteUI : MonoBehaviour
         le.ignoreLayout = true;
         img.raycastTarget = false;
         
-        // Position at bottom corner
-        float screenHalfWidth = Screen.width * 0.5f;
-        float screenHalfHeight = Screen.height * 0.5f;
-        
-        // Start position (relative to parent center)
-        float startX = isLeft ? -screenHalfWidth : screenHalfWidth;
-        float startY = -screenHalfHeight;
+        // Use Anchors to ensure it stays in the corners regardless of screen size
+        if (isLeft)
+        {
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(0, 0);
+            rect.pivot = new Vector2(0, 0);
+        }
+        else
+        {
+            rect.anchorMin = new Vector2(1, 0);
+            rect.anchorMax = new Vector2(1, 0);
+            rect.pivot = new Vector2(1, 0);
+        }
+
+        // Randomize spawn within anchor zone
+        float zoneOffset = confettiSpawnZoneSize;
+        float startX = isLeft ? Random.Range(0, zoneOffset) : Random.Range(-zoneOffset, 0);
+        float startY = Random.Range(0, zoneOffset);
         rect.anchoredPosition = new Vector2(startX, startY);
         
         // Random initial rotation
@@ -721,20 +739,22 @@ public class LevelCompleteUI : MonoBehaviour
         
         float duration = Random.Range(confettiAnimationDuration * 0.8f, confettiAnimationDuration * 1.2f);
         
-        // Target positions for the arc
-        // Fire towards center top area
-        float peakX = isLeft ? Random.Range(-screenHalfWidth * 0.5f, 0) : Random.Range(0, screenHalfWidth * 0.5f);
-        float peakY = Random.Range(screenHalfHeight * 0.2f, screenHalfHeight * 0.8f);
+        // Peak and End positions relative to the anchor
+        float parentWidth = parent.rect.width;
+        float parentHeight = parent.rect.height;
         
-        // End position (falling off screen)
-        float endX = peakX + (isLeft ? Random.Range(50f, 200f) : Random.Range(-200f, -50f));
-        float endY = -screenHalfHeight - 100f;
+        // Horizontal distance: how far across the screen to travel
+        float horizontalTravel = isLeft ? Random.Range(parentWidth * 0.3f, parentWidth * 0.8f) : Random.Range(-parentWidth * 0.8f, -parentWidth * 0.3f);
         
+        // Vertical peaks
+        float peakY = Random.Range(parentHeight * 0.4f, parentHeight * 0.9f);
+        float endY = -100f; // Below the anchor (off screen)
+
         // Sequence for the trajectory
         Sequence trajectory = DOTween.Sequence();
         
-        // Horizontal movement: burst towards center, then continue drift
-        trajectory.Join(rect.DOAnchorPosX(endX, duration).SetEase(Ease.OutQuad));
+        // Horizontal movement: burst towards center
+        trajectory.Join(rect.DOAnchorPosX(startX + horizontalTravel, duration).SetEase(Ease.OutQuad));
         
         // Vertical movement: burst UP, then fall DOWN
         Sequence verticalSeq = DOTween.Sequence();

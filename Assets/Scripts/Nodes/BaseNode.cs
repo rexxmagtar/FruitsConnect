@@ -115,6 +115,11 @@ public abstract class BaseNode : MonoBehaviour
     public int CurrentDeliveries => currentDeliveries;
     public float DeliveryProgress => requiredDeliveries > 0 ? (float)currentDeliveries / requiredDeliveries : 0f;
     public bool IsFullyDelivered => currentDeliveries >= requiredDeliveries;
+
+    // Helper Spirits
+    protected List<GameObject> currentHelperSpirits = new List<GameObject>();
+
+    public bool IsDoubleNode => gameObject.name.Contains("_double_");
     
     /// <summary>
     /// Check if this node is activated and can be clicked/interacted with
@@ -945,20 +950,8 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     protected virtual void ActivateNode()
     {
-        // Apply energy if node has connections and energy not yet applied
-        // Energy is typically applied when connection is created, but this ensures it's applied once
-        if (incomingConnections.Count > 0 && !isEnergyApplied)
-        {
-            GameController gameController = GameController.Instance;
-            if (gameController != null)
-            {
-                // Apply energy (positive weight = gain, negative weight = lose)
-                gameController.ModifyEnergy(weight);
-                isEnergyApplied = true;
-                
-                Debug.Log($"Node {nodeID} activated! Applied energy {weight} after receiving {currentDeliveries} deliveries.");
-            }
-        }
+        // Note: Energy is now managed absolutely by ConnectionManager.RecalculateTotalEnergy()
+        // which is called whenever connections change. Node weights are added if connected to producer.
         
         // Trigger particle effect when node is fully activated
         PlayConnectionParticles();
@@ -1164,6 +1157,8 @@ public abstract class BaseNode : MonoBehaviour
     /// </summary>
     private void OnDestroy()
     {
+        DespawnHelperSpirits();
+        
         // Clean up cached grayscale materials
         if (cachedGrayscaleMainMaterials != null)
         {
@@ -1189,6 +1184,68 @@ public abstract class BaseNode : MonoBehaviour
                 }
             }
         }
+    }
+
+    protected void SpawnHelperSpirits()
+    {
+        if (currentHelperSpirits.Count > 0) return;
+
+        // Only spawn spirits after level 5
+        if (LevelsManager.Instance != null && LevelsManager.Instance.GetCurrentLevelNumber() <= 5)
+        {
+            return;
+        }
+
+        var currentParticleData = HitParticlesManager.Instance.GetCurrentParticle();
+        if (currentParticleData != null && currentParticleData.helperSpiritPrefab != null)
+        {
+            bool isDouble = IsDoubleNode;
+            int spiritCount = isDouble ? 2 : 1;
+
+            for (int i = 0; i < spiritCount; i++)
+            {
+                float heightOffset = 0.5f;
+                float initialAngle = 0f;
+
+                if (isDouble)
+                {
+                    // For double nodes, spawn at different heights and opposite sides
+                    heightOffset = i == 0 ? 0.3f : 1.2f;
+                    initialAngle = i == 0 ? 0f : Mathf.PI;
+                }
+
+                GameObject spiritObj = Instantiate(currentParticleData.helperSpiritPrefab, transform.position, Quaternion.identity);
+                currentHelperSpirits.Add(spiritObj);
+                
+                var helperSpirit = spiritObj.GetComponent<HelperSpirit>();
+                if (helperSpirit != null)
+                {
+                    helperSpirit.Initialize(this, heightOffset, initialAngle);
+                }
+            }
+        }
+    }
+
+    protected void DespawnHelperSpirits()
+    {
+        if (currentHelperSpirits == null || currentHelperSpirits.Count == 0) return;
+
+        foreach (var spiritObj in currentHelperSpirits)
+        {
+            if (spiritObj != null)
+            {
+                var helperSpirit = spiritObj.GetComponent<HelperSpirit>();
+                if (helperSpirit != null)
+                {
+                    helperSpirit.Despawn();
+                }
+                else
+                {
+                    Destroy(spiritObj);
+                }
+            }
+        }
+        currentHelperSpirits.Clear();
     }
 }
 

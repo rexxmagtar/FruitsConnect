@@ -233,6 +233,12 @@ public class GameController : MonoBehaviour
         }
         
         Debug.Log($"Preloaded level: {config.LevelName} with starting energy: {startingEnergy}");
+        
+        // Force energy recalculation after level load to include producers and any initial state
+        if (connectionManager != null)
+        {
+            connectionManager.RecalculateTotalEnergy();
+        }
     }
     
     /// <summary>
@@ -717,6 +723,13 @@ public class GameController : MonoBehaviour
                     
                     // Preload and start next level
                     PreloadLevel(nextLevelConfig);
+                    
+                    // Force energy recalculation after level load to include producers and any initial connections
+                    if (connectionManager != null)
+                    {
+                        connectionManager.RecalculateTotalEnergy();
+                    }
+                    
                     StartGame();
                     
                     // Show gameplay UI

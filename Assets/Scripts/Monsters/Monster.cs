@@ -740,6 +740,13 @@ public class Monster : MonoBehaviour
             manager.OnMonsterDied(this);
         }
         
+        // Recalculate energy after freeing captured node/connection
+        ConnectionManager connectionManager = ConnectionManager.Instance;
+        if (connectionManager != null)
+        {
+            connectionManager.BreakDisconnectedChains();
+        }
+        
         // Update map shader to reflect that producer is no longer captured
         // (ConnectionManager.OnConnectionsChanged will be triggered, but we also update here to be safe)
         MapShaderController mapShaderController = FindFirstObjectByType<MapShaderController>();

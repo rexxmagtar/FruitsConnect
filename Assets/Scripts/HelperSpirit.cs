@@ -28,13 +28,16 @@ public class HelperSpirit : MonoBehaviour
     private Monster _targetMonster;
     private float _nextAttackTime;
     private float _orbitAngle;
+    private float _heightOffset = 0.5f;
     private Vector3 _startScale;
     private bool _isDespawning = false;
     private Vector3 _dashTargetPos;
 
-    public void Initialize(BaseNode parentNode)
+    public void Initialize(BaseNode parentNode, float heightOffset = 0.5f, float initialAngle = 0f)
     {
         _parentNode = parentNode;
+        _heightOffset = heightOffset;
+        _orbitAngle = initialAngle;
         _startScale = transform.localScale;
         transform.localScale = Vector3.zero;
         StartCoroutine(ScaleUp());
@@ -191,7 +194,7 @@ public class HelperSpirit : MonoBehaviour
     private void OrbitAround(Vector3 center)
     {
         _orbitAngle += orbitSpeed * Time.deltaTime;
-        Vector3 offset = new Vector3(Mathf.Cos(_orbitAngle), 0.5f, Mathf.Sin(_orbitAngle)) * orbitRadius;
+        Vector3 offset = new Vector3(Mathf.Cos(_orbitAngle), _heightOffset, Mathf.Sin(_orbitAngle)) * orbitRadius;
         transform.position = Vector3.Lerp(transform.position, center + offset, Time.deltaTime * 5f);
     }
 

@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: HitParticlesDataImpact
   m_EditorClassIdentifier: 
   id: impact
+  displayName: Star explosion
   particlePrefab: {fileID: 8448053760210330966, guid: 24e06c3211438564589827dc0596b722, type: 3}
   helperSpiritPrefab: {fileID: 5680977683535789568, guid: f341572851222e646ae3eef0a00e461e, type: 3}
   stage: 0
   effectSprite: {fileID: 21300000, guid: 0a1f00bdd9722104abe606b32a2cc53b, type: 3}
   price: 100
+  damagePowerValue: 400
+  connectionSpeedValue: 300

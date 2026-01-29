@@ -16,7 +16,12 @@ public class MonsterDamage : UpgradableParam
     /// </summary>
     public override float CalculatePhysicalValue()
     {
-        float multiplier = 1f + ((float)powerValue / 3000f);
+        int totalPower = powerValue;
+        if (HitParticlesManager.Instance != null && HitParticlesManager.Instance.GetCurrentParticle() != null)
+        {
+            totalPower += HitParticlesManager.Instance.GetCurrentParticle().damagePowerValue;
+        }
+        float multiplier = 1f + ((float)totalPower / 3000f);
         return BASE_DAMAGE * multiplier;
     }
     
@@ -25,6 +30,11 @@ public class MonsterDamage : UpgradableParam
     /// </summary>
     public float GetDamageMultiplier()
     {
-        return 1f + ((float)powerValue / 3000f);
+        int totalPower = powerValue;
+        if (HitParticlesManager.Instance != null && HitParticlesManager.Instance.GetCurrentParticle() != null)
+        {
+            totalPower += HitParticlesManager.Instance.GetCurrentParticle().damagePowerValue;
+        }
+        return 1f + ((float)totalPower / 3000f);
     }
 }

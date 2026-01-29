@@ -27,4 +27,4 @@ MonoBehaviour:
   minSpawnInterval: 0
   maxSpawnInterval: 300
   maxActiveMonsters: 3
-  safeTimeOffset: 0
+  safeTimeOffset: 5

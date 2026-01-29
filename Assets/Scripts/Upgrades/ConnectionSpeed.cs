@@ -16,7 +16,12 @@ public class ConnectionSpeed : UpgradableParam
     /// </summary>
     public override float CalculatePhysicalValue()
     {
-        float multiplier = 1f + ((float)powerValue / 3000f);
+        int totalPower = powerValue;
+        if (HitParticlesManager.Instance != null && HitParticlesManager.Instance.GetCurrentParticle() != null)
+        {
+            totalPower += HitParticlesManager.Instance.GetCurrentParticle().connectionSpeedValue;
+        }
+        float multiplier = 1f + ((float)totalPower / 3000f);
         return BASE_SPEED * multiplier;
     }
     
@@ -25,6 +30,11 @@ public class ConnectionSpeed : UpgradableParam
     /// </summary>
     public float GetSpeedMultiplier()
     {
-        return 1f + ((float)powerValue / 3000f);
+        int totalPower = powerValue;
+        if (HitParticlesManager.Instance != null && HitParticlesManager.Instance.GetCurrentParticle() != null)
+        {
+            totalPower += HitParticlesManager.Instance.GetCurrentParticle().connectionSpeedValue;
+        }
+        return 1f + ((float)totalPower / 3000f);
     }
 }

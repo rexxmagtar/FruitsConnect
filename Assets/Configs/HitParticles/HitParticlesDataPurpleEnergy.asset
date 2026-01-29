@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: HitParticlesDataPurpleEnergy
   m_EditorClassIdentifier: 
   id: purple_energy
+  displayName: Hypno focus
   particlePrefab: {fileID: 5521020804632195542, guid: 042fd3bf5f283b249840fad9125abb44, type: 3}
   helperSpiritPrefab: {fileID: 5680977683535789568, guid: da6d6f487e96e6a46bd3a78f357dbc5b, type: 3}
   stage: 1
   effectSprite: {fileID: 21300000, guid: 490fc1d5db7619d48baab0ea1184aec6, type: 3}
-  price: 200
+  price: ad
+  damagePowerValue: 500
+  connectionSpeedValue: 500

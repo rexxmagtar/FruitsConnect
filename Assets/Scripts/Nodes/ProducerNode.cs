@@ -18,6 +18,12 @@ public class ProducerNode : BaseNode
         // Set up visual appearance for producer (red filled sphere)
         SetupProducerVisuals();
     }
+
+    protected override void Start()
+    {
+        base.Start();
+        SpawnHelperSpirits();
+    }
     
     private void SetupProducerVisuals()
     {

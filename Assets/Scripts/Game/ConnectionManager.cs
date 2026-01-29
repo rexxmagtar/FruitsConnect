@@ -145,8 +145,8 @@ public class ConnectionManager : MonoBehaviour
         // Add to active list
         activeConnections.Add(connection);
         
-        // Apply energy immediately when connection is created (if connected to producer)
-        ApplyEnergyForConnection(to);
+        // Recalculate energy after connection state change
+        RecalculateTotalEnergy();
         
         Debug.Log($"Created connection from {from.NodeID} to {to.NodeID}. Node {to.NodeID} needs {to.RequiredDeliveries} deliveries to activate.");
         
@@ -284,7 +284,7 @@ public class ConnectionManager : MonoBehaviour
     /// Iteratively checks ALL connections until no more need to be broken
     /// Guarantees no infinite loops by tracking checked connections per iteration
     /// </summary>
-    private void BreakDisconnectedChains()
+    public void BreakDisconnectedChains()
     {
         if (currentLevel == null) return;
         
@@ -365,57 +365,31 @@ public class ConnectionManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Apply energy immediately when a connection is created
-    /// Energy is applied if the target node is connected to a producer
-    /// </summary>
-    private void ApplyEnergyForConnection(BaseNode targetNode)
-    {
-        if (targetNode == null) return;
-        
-        GameController gameController = GameController.Instance;
-        if (gameController == null) return;
-        
-        // Check if node is connected to producer
-        bool isConnectedToProducer = IsConnectedToProducer(targetNode);
-        
-        // Apply energy immediately if:
-        // 1. Target node is a ProducerNode (and not captured)
-        // 2. Target node is connected to a producer (even if not fully delivered yet)
-        if (isConnectedToProducer && !targetNode.IsEnergyApplied)
-        {
-            // For ProducerNode, always apply immediately
-            if (targetNode is ProducerNode && !targetNode.IsCaptured)
-            {
-                gameController.ModifyEnergy(targetNode.Weight);
-                targetNode.IsEnergyApplied = true;
-                Debug.Log($"Applied energy {targetNode.Weight} immediately for ProducerNode {targetNode.NodeID}");
-            }
-            // For other nodes, apply immediately if connected to producer
-            else if (targetNode.IncomingConnections.Count > 0)
-            {
-                gameController.ModifyEnergy(targetNode.Weight);
-                targetNode.IsEnergyApplied = true;
-                Debug.Log($"Applied energy {targetNode.Weight} immediately for node {targetNode.NodeID} (connected to producer)");
-            }
-        }
-    }
-    
-    /// <summary>
     /// Recalculate total energy from scratch based on currently connected nodes
-    /// Called after connection destruction sequence is complete
+    /// Called after any connection state change (add, remove, break)
     /// </summary>
-    private void RecalculateTotalEnergy()
+    public void RecalculateTotalEnergy()
     {
-        if (currentLevel == null) return;
-        
         GameController gameController = GameController.Instance;
         if (gameController == null) return;
+        
+        List<BaseNode> allNodes;
+        if (currentLevel != null)
+        {
+            allNodes = currentLevel.GetAllNodes();
+        }
+        else
+        {
+            // Fallback: find all nodes in scene if currentLevel is not set (useful during transitions or edge cases)
+            allNodes = new List<BaseNode>(Object.FindObjectsByType<BaseNode>(FindObjectsInactive.Include, FindObjectsSortMode.None));
+        }
+
+        if (allNodes == null || allNodes.Count == 0) return;
         
         // Get starting energy
         int startingEnergy = gameController.GetMaxEnergy();
         
-        // Reset all energy applied flags
-        List<BaseNode> allNodes = currentLevel.GetAllNodes();
+        // Reset all energy applied flags first
         foreach (BaseNode node in allNodes)
         {
             if (node != null)
@@ -431,22 +405,16 @@ public class ConnectionManager : MonoBehaviour
         {
             if (node == null) continue;
             
-            // Producers are always active (don't need deliveries or incoming connections)
-            if (node is ProducerNode && !node.IsCaptured)
-            {
-                totalEnergy += node.Weight;
-                node.IsEnergyApplied = true;
-            }
-            // Count nodes that are connected to a producer (energy is applied immediately when connection is made)
-            // Note: Energy is applied when connection is created, not when fully delivered
-            else if (node.IncomingConnections.Count > 0 && IsConnectedToProducer(node))
+            // Check if node is connected to a producer (energy is applied immediately when connection is made)
+            // Note: Producers are always considered connected to themselves unless captured
+            if (IsConnectedToProducer(node))
             {
                 totalEnergy += node.Weight;
                 node.IsEnergyApplied = true;
             }
             else
             {
-                // Reset energy applied flag if node is not connected to producer (or is a producer that's captured)
+                // Reset energy applied flag if node is not connected to producer
                 node.IsEnergyApplied = false;
                 
                 // Reset deliveries if node is no longer connected to a producer
@@ -624,6 +592,9 @@ public class ConnectionManager : MonoBehaviour
             // Explore incoming connections (walk backwards to find producer)
             foreach (Connection conn in current.IncomingConnections)
             {
+                // Skip if connection is captured by a monster
+                if (conn != null && conn.IsCaptured) continue;
+                
                 BaseNode fromNode = conn.FromNode;
                 
                 if (fromNode != null && !visited.Contains(fromNode))

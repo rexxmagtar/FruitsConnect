@@ -4,9 +4,12 @@ using UnityEngine;
 public class HitParticlesData : ScriptableObject
 {
     public string id;
+    public string displayName;
     public GameObject particlePrefab;
     public GameObject helperSpiritPrefab;
     public int stage;
     public Sprite effectSprite;
-    public int price;
+    public string price;
+    public int damagePowerValue;
+    public int connectionSpeedValue;
 }

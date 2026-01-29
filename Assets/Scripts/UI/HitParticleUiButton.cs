@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using AdsServices;
 
 namespace UI
 {
@@ -9,8 +10,15 @@ namespace UI
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI priceField;
         [SerializeField] private TextMeshProUGUI statusField;
+        [SerializeField] private TextMeshProUGUI displayNameField;
+        [SerializeField] private TextMeshProUGUI damagePowerField;
+        [SerializeField] private TextMeshProUGUI connectionSpeedField;
         [SerializeField] private Image effectImage;
         [SerializeField] private GameObject moneyPriceContainer;
+        [SerializeField] private GameObject adPriceContainer;
+        [SerializeField] private Image adIcon;
+        [SerializeField] private Image loadingImage;
+        [SerializeField] private Image blackPreviewImage;
         [SerializeField] private System.Collections.Generic.List<Image> targetImages = new System.Collections.Generic.List<Image>();
         [SerializeField] private Button button;
         [SerializeField] private Image selectionBorder;
@@ -18,6 +26,8 @@ namespace UI
         private HitParticlesData _data;
         private HitParticlesSelectUI _parentUI;
         private bool _isAccessible;
+        private bool _isWatchingAd = false;
+        private float _rotationSpeed = 180f;
 
         public void Initialize(HitParticlesData data, HitParticlesSelectUI parentUI, bool isAccessible)
         {
@@ -28,7 +38,21 @@ namespace UI
             if (effectImage != null)
                 effectImage.sprite = data.effectSprite;
 
+            if (blackPreviewImage != null)
+            {
+                blackPreviewImage.gameObject.SetActive(!_isAccessible);
+                if (!_isAccessible)
+                {
+                    blackPreviewImage.sprite = data.effectSprite;
+                }
+            }
+
+            if (displayNameField != null)
+                displayNameField.text = data.displayName;
+
             UpdateUI();
+            
+            _lastAdReadyState = AdsManager.Instance.IsRewardedAdReady();
 
             if (button != null)
             {
@@ -41,11 +65,32 @@ namespace UI
         {
             bool isUnlocked = HitParticlesManager.Instance.IsUnlocked(_data.id);
             bool isSelected = HitParticlesManager.Instance.GetCurrentParticle()?.id == _data.id;
-            bool isAffordable = GameManager.Instance.GetCoins() >= _data.price;
+            
+            bool isAdPrice = _data.price == "ad";
+            int priceValue = 0;
+            int.TryParse(_data.price, out priceValue);
+            bool isAffordable = GameManager.Instance.GetCoins() >= priceValue;
+            bool isAdReady = AdsManager.Instance.IsRewardedAdReady();
 
-            // Handle Money Icon (moneyPriceContainer)
+            if (damagePowerField != null)
+                damagePowerField.text =  _data.damagePowerValue.ToString();
+            
+            if (connectionSpeedField != null)
+                connectionSpeedField.text =  _data.connectionSpeedValue.ToString();
+
+            // Handle Price Containers
             if (moneyPriceContainer != null)
-                moneyPriceContainer.SetActive(!isUnlocked);
+                moneyPriceContainer.SetActive(!isUnlocked && !isAdPrice);
+            
+            if (adPriceContainer != null)
+                adPriceContainer.SetActive(!isUnlocked && isAdPrice);
+
+            // Handle Ad Icon and Loading Image
+            if (isAdPrice && !isUnlocked)
+            {
+                if (adIcon != null) adIcon.gameObject.SetActive(isAdReady);
+                if (loadingImage != null) loadingImage.gameObject.SetActive(!isAdReady);
+            }
 
             Color targetColor = Color.white;
 
@@ -73,14 +118,18 @@ namespace UI
                 if (statusField != null) statusField.gameObject.SetActive(false);
                 if (priceField != null)
                 {
-                    priceField.gameObject.SetActive(true);
-                    if (_data.price == 0)
+                    priceField.gameObject.SetActive(!isAdPrice);
+                    if (_data.price == "0" || _data.price == "Free")
                         priceField.text = "Free";
                     else
-                        priceField.text = _data.price.ToString();
+                        priceField.text = _data.price;
                 }
 
-                if (!_isAccessible || !isAffordable)
+                if (isAdPrice)
+                {
+                    targetColor = isAdReady ? Color.blue : Color.gray;
+                }
+                else if (!_isAccessible || !isAffordable)
                 {
                     targetColor = Color.gray;
                 }
@@ -100,8 +149,28 @@ namespace UI
 
             if (button != null)
             {
-                // Allow clicking if it's unlocked OR (accessible and affordable)
-                button.interactable = isUnlocked || (_isAccessible && isAffordable);
+                bool shouldButtonBeActive = _isAccessible || isUnlocked;
+                button.gameObject.SetActive(shouldButtonBeActive);
+
+                if (shouldButtonBeActive)
+                {
+                    // Allow clicking if it's unlocked OR (accessible and affordable) OR (accessible and ad ready)
+                    if (isUnlocked)
+                    {
+                        button.interactable = true;
+                    }
+                    else if (_isAccessible)
+                    {
+                        if (isAdPrice)
+                            button.interactable = isAdReady;
+                        else
+                            button.interactable = isAffordable;
+                    }
+                    else
+                    {
+                        button.interactable = false;
+                    }
+                }
             }
 
             if (selectionBorder != null)
@@ -110,7 +179,35 @@ namespace UI
             }
         }
 
-        private void OnButtonClicked()
+        private bool _lastAdReadyState = false;
+
+        private void Update()
+        {
+            if (_data == null) return;
+
+            bool isUnlocked = HitParticlesManager.Instance.IsUnlocked(_data.id);
+            bool isAdPrice = _data.price == "ad";
+
+            if (!isUnlocked && isAdPrice)
+            {
+                bool isAdReady = AdsManager.Instance.IsRewardedAdReady();
+                
+                // Animate loading image if it's active
+                if (loadingImage != null && loadingImage.gameObject.activeSelf)
+                {
+                    loadingImage.rectTransform.Rotate(Vector3.forward, -_rotationSpeed * Time.deltaTime);
+                }
+
+                // Refresh UI state if ad readiness changes
+                if (isAdReady != _lastAdReadyState && !_isWatchingAd)
+                {
+                    _lastAdReadyState = isAdReady;
+                    UpdateUI();
+                }
+            }
+        }
+
+        private async void OnButtonClicked()
         {
             if (!_isAccessible) return;
 
@@ -122,16 +219,42 @@ namespace UI
             }
             else
             {
-                if (HitParticlesManager.Instance.UnlockParticle(_data))
+                if (_data.price == "ad")
                 {
-                    HitParticlesManager.Instance.SelectParticle(_data.id);
-                    _parentUI.RefreshAllButtons();
-                    _parentUI.PlayPurchaseSound();
+                    if (_isWatchingAd) return;
+                    _isWatchingAd = true;
+
+                    bool success = await AdsManager.Instance.ShowRewardedAdAsync();
                     
-                    // Trigger purchase effect
-                    if (_parentUI != null && effectImage != null)
+                    if (success)
                     {
-                        _parentUI.TriggerPurchaseEffect(effectImage.rectTransform);
+                        HitParticlesManager.Instance.UnlockParticleDirectly(_data.id);
+                        HitParticlesManager.Instance.SelectParticle(_data.id);
+                        _parentUI.RefreshAllButtons();
+                        _parentUI.PlayPurchaseSound();
+                        
+                        if (_parentUI != null && effectImage != null)
+                        {
+                            _parentUI.TriggerPurchaseEffect(effectImage.rectTransform);
+                        }
+                    }
+                    
+                    _isWatchingAd = false;
+                    UpdateUI();
+                }
+                else
+                {
+                    if (HitParticlesManager.Instance.UnlockParticle(_data))
+                    {
+                        HitParticlesManager.Instance.SelectParticle(_data.id);
+                        _parentUI.RefreshAllButtons();
+                        _parentUI.PlayPurchaseSound();
+                        
+                        // Trigger purchase effect
+                        if (_parentUI != null && effectImage != null)
+                        {
+                            _parentUI.TriggerPurchaseEffect(effectImage.rectTransform);
+                        }
                     }
                 }
             }

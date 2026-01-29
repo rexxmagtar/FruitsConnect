@@ -13,8 +13,11 @@ MonoBehaviour:
   m_Name: HitParticlesDataWind
   m_EditorClassIdentifier: 
   id: wind
+  displayName: Windfury
   particlePrefab: {fileID: 1624384507574794162, guid: ac039fbdea1049347932b1e800407bf8, type: 3}
   helperSpiritPrefab: {fileID: 5680977683535789568, guid: 4a5e2f49ec85c9648afd9310c5556cd2, type: 3}
   stage: 2
   effectSprite: {fileID: 21300000, guid: 18fbe81b28e151b44bc25f3c774435b5, type: 3}
-  price: 200
+  price: ad
+  damagePowerValue: 600
+  connectionSpeedValue: 1000
