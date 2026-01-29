@@ -1186,6 +1186,14 @@ public abstract class BaseNode : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when the game actually starts (player presses Start button)
+    /// </summary>
+    public virtual void OnGameStarted()
+    {
+        // Default implementation does nothing
+    }
+
     protected void SpawnHelperSpirits()
     {
         if (currentHelperSpirits.Count > 0) return;

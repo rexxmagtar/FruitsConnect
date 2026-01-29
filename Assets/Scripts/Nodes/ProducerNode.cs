@@ -19,9 +19,9 @@ public class ProducerNode : BaseNode
         SetupProducerVisuals();
     }
 
-    protected override void Start()
+    public override void OnGameStarted()
     {
-        base.Start();
+        base.OnGameStarted();
         SpawnHelperSpirits();
     }
     

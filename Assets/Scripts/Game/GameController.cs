@@ -260,6 +260,15 @@ public class GameController : MonoBehaviour
         if (currentLevel != null)
         {
             currentLevel.ShowHints(true);
+            
+            // Notify all nodes that the game has started
+            foreach (var node in currentLevel.GetAllNodes())
+            {
+                if (node != null)
+                {
+                    node.OnGameStarted();
+                }
+            }
         }
         
         // Start monster spawning
