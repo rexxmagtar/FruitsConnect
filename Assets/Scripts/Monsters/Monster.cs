@@ -409,6 +409,12 @@ public class Monster : MonoBehaviour
                     // Position monster on top of node
                     Vector3 nodePos = currentGoal.targetNode.transform.position;
                     transform.position = nodePos + Vector3.up * positionOffsetY;
+
+                    // Check fail condition if a producer was captured
+                    if (currentGoal.targetNode is ProducerNode && GameController.Instance != null)
+                    {
+                        GameController.Instance.CheckFailCondition();
+                    }
                 }
                 break;
         }

@@ -10,16 +10,19 @@ namespace AdsServices
         private static AdsManager _instance;
 
         private LevelPlayBannerAd _bannerAd;
+        private LevelPlayRewardedAd _rewardedAd;
 
         public string profileId = "226de93e5";
+        public string rewardedAdUnitId = "p516a7qwetzb5pli"; // TODO: Update with actual rewarded ad unit ID if different from banner
 
+        public string bannerAdUnitId = "p516a7qwetzb5pli";
         public static AdsManager Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    _instance = FindObjectOfType<AdsManager>();
+                    _instance = FindFirstObjectByType<AdsManager>();
                     DontDestroyOnLoad(_instance.gameObject);
                 }
                 return _instance;
@@ -30,16 +33,7 @@ namespace AdsServices
 
         private void Awake()
         {
-           
             _instance = this;
-
-            IronSourceRewardedVideoEvents.onAdOpenedEvent += RewardedVideoOnAdOpenedEvent;
-            IronSourceRewardedVideoEvents.onAdClosedEvent += RewardedVideoOnAdClosedEvent;
-            IronSourceRewardedVideoEvents.onAdAvailableEvent += RewardedVideoOnAdAvailable;
-            IronSourceRewardedVideoEvents.onAdUnavailableEvent += RewardedVideoOnAdUnavailable;
-            IronSourceRewardedVideoEvents.onAdShowFailedEvent += RewardedVideoOnAdShowFailedEvent;
-            IronSourceRewardedVideoEvents.onAdRewardedEvent += RewardedVideoOnAdRewardedEvent;
-            IronSourceRewardedVideoEvents.onAdClickedEvent += RewardedVideoOnAdClickedEvent;
         }
 
         public async Task Initialize()
@@ -50,31 +44,43 @@ namespace AdsServices
                 if(ComplianceService.GDPRManager.Instance.IsUserInEurope())
                 {
                     bool gdprConsent = await ComplianceService.GDPRManager.Instance.CheckAndShowGDPRConsentAsync();
-                    IronSource.Agent.setConsent(gdprConsent);
+                    LevelPlay.SetConsent(gdprConsent);
                 }
 
                 // Then check COPPA status  
                 if(ComplianceService.ChildAgeManager.Instance.IsUserInUSA())
                 {
                     bool isChild = await ComplianceService.ChildAgeManager.Instance.CheckAndShowChildAgeDialogAsync();
-                    IronSource.Agent.setMetaData("is_child_directed", isChild ? "true" : "false");
+                    LevelPlay.SetMetaData("is_child_directed", isChild ? "true" : "false");
                 }
 
                 // Initialize LevelPlay after both checks are complete
-                com.unity3d.mediation.LevelPlayAdFormat[] legacyAdFormats = new[] { com.unity3d.mediation.LevelPlayAdFormat.REWARDED };
                 LevelPlay.OnInitSuccess += SdkInitializationCompletedEvent;
                 LevelPlay.OnInitFailed += SdkInitializationFailedEvent;
 
 
                 Debug.Log("Initializing LevelPlay SDK");
-                LevelPlay.Init(profileId, null, legacyAdFormats);
+                LevelPlay.Init(profileId, null);
         }
 
         private void SdkInitializationCompletedEvent(LevelPlayConfiguration config)
         {
             Debug.Log("LevelPlay SDK initialization completed");
-           _bannerAd = new LevelPlayBannerAd("p516a7qwetzb5pli",displayOnLoad: false, position: com.unity3d.mediation.LevelPlayBannerPosition.TopCenter);
-           _bannerAd.LoadAd();
+
+        //    _bannerAd = new LevelPlayBannerAd(bannerAdUnitId, new LevelPlayBannerAdConfig { DisplayOnLoad = false, Position = LevelPlayBannerPosition.TopCenter });
+
+        //    _bannerAd.LoadAd();
+
+           // Initialize Rewarded
+           _rewardedAd = new LevelPlayRewardedAd(rewardedAdUnitId);
+           _rewardedAd.OnAdDisplayed += RewardedVideoOnAdOpenedEvent;
+           _rewardedAd.OnAdClosed += RewardedVideoOnAdClosedEvent;
+           _rewardedAd.OnAdLoaded += RewardedVideoOnAdAvailable;
+           _rewardedAd.OnAdLoadFailed += RewardedVideoOnAdUnavailable;
+           _rewardedAd.OnAdDisplayFailed += RewardedVideoOnAdShowFailedEvent;
+           _rewardedAd.OnAdRewarded += RewardedVideoOnAdRewardedEvent;
+           _rewardedAd.OnAdClicked += RewardedVideoOnAdClickedEvent;
+           _rewardedAd.LoadAd();
         }
 
         private void SdkInitializationFailedEvent(LevelPlayInitError error)
@@ -84,12 +90,15 @@ namespace AdsServices
 
         public async Task<bool> ShowRewardedAdAsync()
         {
+            _rewardedAdCompletionSource = new TaskCompletionSource<bool>();
+
             #if UNITY_EDITOR
             await Task.Delay(2000);
-            return true;
+            _rewardedAdCompletionSource.TrySetResult(true);
+            #else
+            _rewardedAd?.ShowAd();
             #endif
-            _rewardedAdCompletionSource = new TaskCompletionSource<bool>();
-            IronSource.Agent.showRewardedVideo();
+
             return await _rewardedAdCompletionSource.Task;
         }
 
@@ -108,17 +117,12 @@ namespace AdsServices
             return _bannerAd != null;
         }
 
-        void OnApplicationPause(bool isPaused)
-        {
-            IronSource.Agent.onApplicationPause(isPaused);
-        }
-
         public async Task<bool> ShowRewardedAdForRevive()
         {
             _rewardedAdCompletionSource = new TaskCompletionSource<bool>();
             
             Debug.Log("Showing rewarded ad for revive");
-            IronSource.Agent.showRewardedVideo("revive_screen");
+            _rewardedAd?.ShowAd("revive_screen");
             
             try 
             {
@@ -131,34 +135,40 @@ namespace AdsServices
             }
         }
 
-        private void RewardedVideoOnAdOpenedEvent(IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdOpenedEvent(LevelPlayAdInfo adInfo)
         {
         }
 
-        private void RewardedVideoOnAdClosedEvent(IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdClosedEvent(LevelPlayAdInfo adInfo)
+        {
+            // Reload ad after closing
+            _rewardedAd?.LoadAd();
+        }
+
+        private void RewardedVideoOnAdAvailable(LevelPlayAdInfo adInfo)
         {
         }
 
-        private void RewardedVideoOnAdAvailable(IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdUnavailable(LevelPlayAdError error)
         {
         }
 
-        private void RewardedVideoOnAdUnavailable()
-        {
-        }
 
-        private void RewardedVideoOnAdShowFailedEvent(IronSourceError error, IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdShowFailedEvent(LevelPlayAdInfo adInfo, LevelPlayAdError error)
+
         {
             Debug.LogError($"Rewarded video ad show failed: {error}");
             _rewardedAdCompletionSource?.TrySetResult(false);
+            // Reload ad after failure
+            _rewardedAd?.LoadAd();
         }
 
-        private void RewardedVideoOnAdRewardedEvent(IronSourcePlacement placement, IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdRewardedEvent(LevelPlayAdInfo adInfo, LevelPlayReward reward)
         {
             _rewardedAdCompletionSource?.TrySetResult(true);
         }
 
-        private void RewardedVideoOnAdClickedEvent(IronSourcePlacement placement, IronSourceAdInfo adInfo)
+        private void RewardedVideoOnAdClickedEvent(LevelPlayAdInfo adInfo)
         {
         }
 
@@ -166,8 +176,9 @@ namespace AdsServices
         {
             #if UNITY_EDITOR
             return true;
+            #else
+            return _rewardedAd != null && _rewardedAd.IsAdReady();
             #endif
-            return IronSource.Agent.isRewardedVideoAvailable();
         }
     }
 }

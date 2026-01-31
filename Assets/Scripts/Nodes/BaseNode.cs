@@ -107,7 +107,15 @@ public abstract class BaseNode : MonoBehaviour
     public bool IsCaptured 
     { 
         get => isCaptured;
-        set => isCaptured = value;
+        set 
+        { 
+            isCaptured = value;
+            // Despawn helper spirits when node is captured
+            if (isCaptured)
+            {
+                DespawnHelperSpirits();
+            }
+        }
     }
     
     // Delivery properties

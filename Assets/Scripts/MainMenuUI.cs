@@ -121,6 +121,47 @@ public class MainMenuUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (!isVisible) return;
+
+        bool inputDetected = false;
+        Vector2 inputPos = Vector2.zero;
+        int pointerId = -1;
+
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == TouchPhase.Began)
+            {
+                inputDetected = true;
+                inputPos = touch.position;
+                pointerId = touch.fingerId;
+            }
+        }
+        else if (Input.GetMouseButtonDown(0))
+        {
+            inputDetected = true;
+            inputPos = Input.mousePosition;
+            pointerId = -1;
+        }
+
+        if (inputDetected)
+        {
+            // Check if pointer is over any UI element
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(pointerId))
+            {
+                return;
+            }
+
+            // Check if touched in the top half of the screen ("second top half" interpretation)
+            if (inputPos.y > Screen.height * 0.5f)
+            {
+                OnStartButtonClick();
+            }
+        }
+    }
+
 
     private void OnGameInitialized()
     {

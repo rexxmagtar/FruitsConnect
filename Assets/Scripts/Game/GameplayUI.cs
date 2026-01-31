@@ -301,6 +301,9 @@ public class GameplayUI : MonoBehaviour
     /// </summary>
     private void OnLevelReset()
     {
+        // Show the UI when level is reset (e.g., after restart)
+        Show();
+        
         // Update energy display after reset
         UpdateEnergyDisplay();
 

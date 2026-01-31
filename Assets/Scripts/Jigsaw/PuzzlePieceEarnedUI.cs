@@ -37,6 +37,11 @@ namespace JigsawSystem
         private bool isWaitingForClick = false;
         private List<string> pendingPieceIds = new List<string>();
 
+        /// <summary>
+        /// Check if the puzzle piece earned UI is currently visible
+        /// </summary>
+        public bool IsVisible => panel != null && panel.activeSelf;
+
         private void Awake()
         {
             if (_instance == null)

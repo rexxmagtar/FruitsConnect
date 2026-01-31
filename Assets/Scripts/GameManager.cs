@@ -109,8 +109,8 @@ public class GameManager : MonoBehaviour
             // 2. GDPR/COPPA Compliance - Required before any data collection
             await InitializeCompliance();
             
-            // 3. Authentication - Required for user-specific data
-            await InitializeAuthentication();
+            // // 3. Authentication - Required for user-specific data
+            // await InitializeAuthentication();
             
             // 4. Save Progress - Load or create user progress
             await InitializeSaveProgress();

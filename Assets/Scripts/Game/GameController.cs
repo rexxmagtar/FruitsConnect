@@ -12,6 +12,7 @@ public class GameController : MonoBehaviour
     [SerializeField] private ConnectionManager connectionManager;
     [SerializeField] private GameplayUI gameplayUI;
     [SerializeField] private LevelCompleteUI levelCompleteUI;
+    [SerializeField] private LevelFailedUI levelFailedUI;
     
     [Header("Gameplay")]
     [SerializeField] private bool gameplayEnabled = false;
@@ -171,6 +172,11 @@ public class GameController : MonoBehaviour
         // Subscribe to level complete UI events
         LevelCompleteUI.OnContinueButtonPressed += OnContinueToNextLevel;
         LevelCompleteUI.OnReturnToMenuButtonPressed += OnReturnToMainMenu;
+
+        // Subscribe to level failed UI events
+        LevelFailedUI.OnRetryButtonPressed += RestartLevel;
+        LevelFailedUI.OnReturnToMenuButtonPressed += OnReturnToMainMenu;
+        LevelFailedUI.OnSkipLevelAdCompleted += OnSkipLevelAdCompleted;
     }
     
     private void OnDisable()
@@ -178,6 +184,11 @@ public class GameController : MonoBehaviour
         // Unsubscribe from level complete UI events
         LevelCompleteUI.OnContinueButtonPressed -= OnContinueToNextLevel;
         LevelCompleteUI.OnReturnToMenuButtonPressed -= OnReturnToMainMenu;
+
+        // Unsubscribe from level failed UI events
+        LevelFailedUI.OnRetryButtonPressed -= RestartLevel;
+        LevelFailedUI.OnReturnToMenuButtonPressed -= OnReturnToMainMenu;
+        LevelFailedUI.OnSkipLevelAdCompleted -= OnSkipLevelAdCompleted;
     }
     
     /// <summary>
@@ -413,7 +424,7 @@ public class GameController : MonoBehaviour
     /// </summary>
     public bool CheckWinCondition()
     {
-        if (currentLevel == null) return false;
+        if (currentLevel == null || !gameplayEnabled) return false;
         
         List<ConsumerNode> consumers = currentLevel.GetConsumerNodes();
         
@@ -430,6 +441,8 @@ public class GameController : MonoBehaviour
             if (!IsConsumerConnectedToProducer(consumer))
             {
                 // At least one consumer is not connected
+                // Still check fail condition before returning
+                CheckFailCondition();
                 return false;
             }
             
@@ -437,6 +450,8 @@ public class GameController : MonoBehaviour
             if (!consumer.IsFullyDelivered)
             {
                 // At least one consumer is not activated yet
+                // Still check fail condition before returning
+                CheckFailCondition();
                 return false;
             }
         }
@@ -445,6 +460,104 @@ public class GameController : MonoBehaviour
         Debug.Log("WIN! All consumers connected to producers and fully activated");
         OnLevelComplete();
         return true;
+    }
+
+    /// <summary>
+    /// Check if all producers are captured by monsters
+    /// </summary>
+    public bool CheckFailCondition()
+    {
+        if (currentLevel == null || !gameplayEnabled) return false;
+
+        List<BaseNode> allNodes = currentLevel.GetAllNodes();
+        int producerCount = 0;
+        int capturedProducerCount = 0;
+
+        foreach (BaseNode node in allNodes)
+        {
+            if (node is ProducerNode)
+            {
+                producerCount++;
+                if (node.IsCaptured)
+                {
+                    capturedProducerCount++;
+                }
+            }
+        }
+
+        if (producerCount > 0 && capturedProducerCount == producerCount)
+        {
+            Debug.Log("FAIL! All producers captured by monsters");
+            OnLevelFailed();
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Called when level is failed
+    /// </summary>
+    private void OnLevelFailed()
+    {
+        gameplayEnabled = false;
+
+        // Stop spawning monsters
+        MonsterAiManager monsterManager = MonsterAiManager.Instance;
+        if (monsterManager != null)
+        {
+            monsterManager.StopSpawning();
+            
+            // Trigger falling down animation on all active monsters (same as when they capture a node)
+            foreach (Monster monster in monsterManager.ActiveMonsters)
+            {
+                if (monster != null && !monster.IsDead && !monster.IsGoalCompleted)
+                {
+                    MonsterAiController aiController = monster.GetComponent<MonsterAiController>();
+                    if (aiController != null)
+                    {
+                        aiController.TriggerFallingDown();
+                    }
+                }
+            }
+        }
+
+        if (levelFailedUI != null)
+        {
+            int reward = currentLevelConfig != null ? currentLevelConfig.CoinReward : 0;
+            levelFailedUI.Show(reward);
+        }
+        else
+        {
+            Debug.LogWarning("LevelFailedUI not found in scene!");
+        }
+
+        // Hide gameplay UI
+        if (gameplayUI != null)
+        {
+            gameplayUI.Hide();
+        }
+    }
+
+    private void OnSkipLevelAdCompleted()
+    {
+        // Mark level as completed and return to main menu
+        if (currentLevelConfig != null)
+        {
+            // Award 30% reward (already animated in UI, but we need to add it to the player's balance)
+            // Wait, the UI already does the animation, but does it add the coins?
+            // Actually, LevelCompleteUI calls GameManager.Instance.AddCoins.
+            // LevelFailedUI doesn't add coins yet. I should add them here.
+            
+            int reward = (int)(currentLevelConfig.CoinReward * 0.3f);
+            GameManager.Instance.AddCoins(reward);
+
+            // Complete level (increments CurrentLevel)
+            GameManager.Instance.CompleteLevel();
+            
+            // Return to main menu
+            OnReturnToMainMenu();
+        }
     }
     
     /// <summary>

@@ -160,9 +160,10 @@ public class Boss : MonoBehaviour
             hitEffectPool = BossHitEffectPool.Instance;
         }
         
-        // Update health bar
+        // Show and update health bar
         if (healthBar != null)
         {
+            healthBar.Show();
             healthBar.UpdateDisplay();
         }
         

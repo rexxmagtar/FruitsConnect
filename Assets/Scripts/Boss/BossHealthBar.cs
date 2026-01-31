@@ -73,6 +73,9 @@ public class BossHealthBar : MonoBehaviour
         }
         
         UpdateDisplay();
+        
+        // Hide healthbar initially - it will be shown when boss fight starts
+        Hide();
     }
     
     /// <summary>
@@ -148,6 +151,21 @@ public class BossHealthBar : MonoBehaviour
         if (currentHealth <= 0)
         {
             Hide();
+        }
+    }
+    
+    /// <summary>
+    /// Show the healthbar
+    /// </summary>
+    public void Show()
+    {
+        if (canvas != null)
+        {
+            canvas.enabled = true;
+        }
+        else if (gameObject != null)
+        {
+            gameObject.SetActive(true);
         }
     }
     

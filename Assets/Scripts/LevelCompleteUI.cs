@@ -6,6 +6,7 @@ using TMPro;
 using JigsawSystem;
 using DataRepository;
 using DG.Tweening;
+using AdsServices;
 
 public class LevelCompleteUI : MonoBehaviour
 {
@@ -25,6 +26,17 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossMultiplierText;
     [SerializeField] private GameObject bossBountyLocker;
     [SerializeField] private RectTransform bossRewardIconTransform;
+    
+    [Header("Double Rewards Button")]
+    [SerializeField] private Button doubleRewardsButton;
+    [SerializeField] private GameObject doubleRewardsLoadingContainer;
+    [SerializeField] private GameObject doubleRewardsClickContainer;
+    [SerializeField] private RectTransform doubleRewardsLoadingIcon;
+    [SerializeField] private RectTransform doubleRewardsAdIconContainer;
+    [SerializeField] private float doubleRewardsRotationSpeed = 180f;
+    [SerializeField] private float doubleRewardsPulseScale = 1.15f;
+    [SerializeField] private float doubleRewardsPulseDuration = 0.25f;
+    [SerializeField] private float doubleRewardsPauseDuration = 1.5f;
     
     [Header("Animation Settings")]
     [SerializeField] private float fadeInDuration = 0.5f;
@@ -94,6 +106,13 @@ public class LevelCompleteUI : MonoBehaviour
     // Fruit Progress State
     private float currentProgressPercent = 0f;
     
+    // Double Rewards State
+    private bool hasRewardsBeenDoubled = false;
+    private bool isShowingAd = false;
+    private Coroutine doubleRewardsPulseCoroutine;
+    private int originalCoinsEarned = 0;
+    private int originalBossTotalReward = 0;
+    
     private void Awake()
     {
         // Get or add canvas group for fade effects
@@ -123,6 +142,23 @@ public class LevelCompleteUI : MonoBehaviour
         if (returnToMenuButton != null)
         {
             returnToMenuButton.onClick.AddListener(OnReturnToMenuButtonClick);
+        }
+        
+        // Setup double rewards button
+        if (doubleRewardsButton != null)
+        {
+            doubleRewardsButton.onClick.AddListener(OnDoubleRewardsButtonClick);
+            
+            // Ensure button is active but hidden using CanvasGroup
+            CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+            if (doubleRewardsCanvasGroup == null)
+            {
+                doubleRewardsCanvasGroup = doubleRewardsButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            // Hide button but keep it active for autolayout
+            doubleRewardsCanvasGroup.alpha = 0f;
+            doubleRewardsCanvasGroup.interactable = false;
+            doubleRewardsCanvasGroup.blocksRaycasts = false;
         }
 
         // Try to find bossRewardIconTransform if not assigned
@@ -166,6 +202,12 @@ public class LevelCompleteUI : MonoBehaviour
         this.isBossDefeated = bossDefeated;
         this.earnedPuzzlePieces = puzzlePieces;
         this.bossTotalReward = isBossDefeated ? (int)(bossBaseReward * bossMultiplier) : 0;
+        
+        // Store original rewards for doubling
+        this.originalCoinsEarned = coinsEarned;
+        this.originalBossTotalReward = this.bossTotalReward;
+        this.hasRewardsBeenDoubled = false;
+        this.isShowingAd = false;
         
         gameObject.SetActive(true);
 
@@ -365,6 +407,19 @@ public class LevelCompleteUI : MonoBehaviour
         if (bossRewardContainer != null) bossRewardContainer.SetActive(isBossLevel);
         if (bossBountyLocker != null) bossBountyLocker.SetActive(isBossLevel && !isBossDefeated);
         
+        // Hide double rewards button initially using alpha (button stays active for autolayout)
+        if (doubleRewardsButton != null)
+        {
+            CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+            if (doubleRewardsCanvasGroup == null)
+            {
+                doubleRewardsCanvasGroup = doubleRewardsButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            doubleRewardsCanvasGroup.alpha = 0f;
+            doubleRewardsCanvasGroup.interactable = false;
+            doubleRewardsCanvasGroup.blocksRaycasts = false;
+        }
+        
         // Initialize fruit progress immediately (before any animations)
         InitializeFruitProgress();
 
@@ -388,9 +443,6 @@ public class LevelCompleteUI : MonoBehaviour
             celebrationEffect.Play();
         }
 
-        // Spawn UI confetti
-        StartCoroutine(SpawnConfettiParticlesRoutine());
-        
         // Fade in
         float elapsedTime = 0f;
         while (elapsedTime < fadeInDuration)
@@ -401,6 +453,9 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         canvasGroup.alpha = 1f;
+
+        // Spawn UI confetti and wait for it to finish spawning before money animations
+        yield return StartCoroutine(SpawnConfettiParticlesRoutine());
 
         // Sequence: Regular Reward
         if (coinsEarned > 0)
@@ -470,6 +525,15 @@ public class LevelCompleteUI : MonoBehaviour
         if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
         {
             JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
+            
+            // Wait for puzzle piece window to close before showing buttons
+            if (JigsawSystem.PuzzlePieceEarnedUI.Instance != null)
+            {
+                while (JigsawSystem.PuzzlePieceEarnedUI.Instance.IsVisible)
+                {
+                    yield return null;
+                }
+            }
         }
 
         // Show spirit unlock UI if level 5 was just completed
@@ -481,14 +545,18 @@ public class LevelCompleteUI : MonoBehaviour
             }
         }
 
-        // All animations complete, fade in menu button (images and texts simultaneously)
+        // All reward animations complete - show double rewards button first
+        InitializeDoubleRewardsButton();
+        
+        // Wait 2 seconds before showing continue button
+        yield return new WaitForSeconds(2f);
+        
+        // Now fade in menu button (images and texts simultaneously)
         StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
         StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
         
         // Wait for fade-in to complete
         yield return new WaitForSeconds(buttonFadeInDuration);
-
-        
 
         // Enable button
         isAnimating = false;
@@ -1137,5 +1205,264 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Ensure final scale is correct
         progressContainer.localScale = originalScale;
+    }
+    
+    /// <summary>
+    /// Initialize double rewards button state and animations
+    /// </summary>
+    private void InitializeDoubleRewardsButton()
+    {
+        if (doubleRewardsButton == null) return;
+        
+        // Show the button using CanvasGroup (button is already active)
+        CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+        if (doubleRewardsCanvasGroup == null)
+        {
+            doubleRewardsCanvasGroup = doubleRewardsButton.gameObject.AddComponent<CanvasGroup>();
+        }
+        doubleRewardsCanvasGroup.alpha = 1f;
+        doubleRewardsCanvasGroup.interactable = true;
+        doubleRewardsCanvasGroup.blocksRaycasts = true;
+        
+        UpdateDoubleRewardsButtonState();
+        StartDoubleRewardsPulseAnimation();
+    }
+    
+    /// <summary>
+    /// Update double rewards button state based on ad readiness
+    /// </summary>
+    private void UpdateDoubleRewardsButtonState()
+    {
+        if (hasRewardsBeenDoubled)
+        {
+            // Hide button if rewards already doubled using alpha (button stays active for autolayout)
+            if (doubleRewardsButton != null)
+            {
+                CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+                if (doubleRewardsCanvasGroup == null)
+                {
+                    doubleRewardsCanvasGroup = doubleRewardsButton.gameObject.AddComponent<CanvasGroup>();
+                }
+                doubleRewardsCanvasGroup.alpha = 0f;
+                doubleRewardsCanvasGroup.interactable = false;
+                doubleRewardsCanvasGroup.blocksRaycasts = false;
+            }
+            return;
+        }
+        
+        bool isReady = AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdReady();
+        
+        if (doubleRewardsLoadingContainer != null) 
+            doubleRewardsLoadingContainer.SetActive(!isReady);
+        if (doubleRewardsClickContainer != null) 
+            doubleRewardsClickContainer.SetActive(isReady);
+        
+        // Update button and CanvasGroup interactability
+        if (doubleRewardsButton != null)
+        {
+            doubleRewardsButton.interactable = isReady;
+            
+            // Also update CanvasGroup interactable to allow button clicks
+            CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+            if (doubleRewardsCanvasGroup != null)
+            {
+                doubleRewardsCanvasGroup.interactable = isReady;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Start pulse animation for double rewards button
+    /// </summary>
+    private void StartDoubleRewardsPulseAnimation()
+    {
+        StopDoubleRewardsPulseAnimation();
+        if (doubleRewardsButton != null && !hasRewardsBeenDoubled)
+        {
+            doubleRewardsPulseCoroutine = StartCoroutine(DoubleRewardsPulseSequenceRoutine());
+        }
+    }
+    
+    /// <summary>
+    /// Stop pulse animation for double rewards button
+    /// </summary>
+    private void StopDoubleRewardsPulseAnimation()
+    {
+        if (doubleRewardsPulseCoroutine != null)
+        {
+            StopCoroutine(doubleRewardsPulseCoroutine);
+            doubleRewardsPulseCoroutine = null;
+        }
+        if (doubleRewardsButton != null)
+        {
+            RectTransform buttonRect = doubleRewardsButton.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                buttonRect.DOKill();
+                buttonRect.localScale = Vector3.one;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Pulse animation sequence for double rewards button
+    /// </summary>
+    private IEnumerator DoubleRewardsPulseSequenceRoutine()
+    {
+        if (doubleRewardsButton == null) yield break;
+        
+        RectTransform buttonRect = doubleRewardsButton.GetComponent<RectTransform>();
+        if (buttonRect == null) yield break;
+        
+        while (!hasRewardsBeenDoubled && doubleRewardsButton != null && buttonRect != null)
+        {
+            // Pulse 1
+            yield return buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
+            yield return buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
+
+            // Pulse 2
+            yield return buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
+            yield return buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
+
+            // Pause
+            yield return new WaitForSeconds(doubleRewardsPauseDuration);
+        }
+    }
+    
+    /// <summary>
+    /// Update double rewards button state periodically
+    /// </summary>
+    private void Update()
+    {
+        // Rotate loading icon if visible
+        if (doubleRewardsLoadingContainer != null && doubleRewardsLoadingContainer.activeSelf)
+        {
+            if (doubleRewardsLoadingIcon != null)
+            {
+                doubleRewardsLoadingIcon.Rotate(Vector3.forward, -doubleRewardsRotationSpeed * Time.deltaTime);
+            }
+        }
+
+        // Periodically check ad readiness if not ready and not showing ad
+        if (!isShowingAd && !hasRewardsBeenDoubled)
+        {
+            UpdateDoubleRewardsButtonState();
+        }
+    }
+    
+    /// <summary>
+    /// Handle double rewards button click
+    /// </summary>
+    private async void OnDoubleRewardsButtonClick()
+    {
+        if (isShowingAd || hasRewardsBeenDoubled) return;
+        if (AdsManager.Instance == null) return;
+        
+        isShowingAd = true;
+        if (doubleRewardsButton != null) 
+            doubleRewardsButton.interactable = false;
+
+        bool success = await AdsManager.Instance.ShowRewardedAdAsync();
+        
+        if (success)
+        {
+            hasRewardsBeenDoubled = true;
+            StopDoubleRewardsPulseAnimation();
+            
+            // Hide button using alpha (button stays active for autolayout)
+            if (doubleRewardsButton != null)
+            {
+                CanvasGroup doubleRewardsCanvasGroup = doubleRewardsButton.GetComponent<CanvasGroup>();
+                if (doubleRewardsCanvasGroup == null)
+                {
+                    doubleRewardsCanvasGroup = doubleRewardsButton.gameObject.AddComponent<CanvasGroup>();
+                }
+                doubleRewardsCanvasGroup.alpha = 0f;
+                doubleRewardsCanvasGroup.interactable = false;
+                doubleRewardsCanvasGroup.blocksRaycasts = false;
+            }
+            
+            // Double the rewards
+            int doubledCoinsEarned = originalCoinsEarned * 2;
+            int doubledBossReward = originalBossTotalReward * 2;
+            
+            // Calculate additional coins to award
+            int additionalCoins = originalCoinsEarned;
+            int additionalBossReward = originalBossTotalReward;
+            
+            // Add additional coins to player's balance
+            GameManager.Instance.AddCoins(additionalCoins + additionalBossReward);
+            
+            // Start animation for doubling rewards
+            StartCoroutine(AnimateDoubleRewards(doubledCoinsEarned, doubledBossReward, additionalCoins, additionalBossReward));
+        }
+        else
+        {
+            isShowingAd = false;
+            UpdateDoubleRewardsButtonState();
+        }
+    }
+    
+    /// <summary>
+    /// Animate doubling of rewards
+    /// </summary>
+    private IEnumerator AnimateDoubleRewards(int doubledCoinsEarned, int doubledBossReward, int additionalCoins, int additionalBossReward)
+    {
+        // Get current balance (already includes original rewards + additional rewards from doubling)
+        int currentBalance = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        // Calculate balance before doubling (subtract the additional coins we just added)
+        int balanceBeforeDoubling = currentBalance - (additionalCoins + additionalBossReward);
+        
+        // Animate level reward doubling
+        if (originalCoinsEarned > 0 && coinsEarnedText != null)
+        {
+            yield return StartCoroutine(AnimateTextCount(coinsEarnedText, originalCoinsEarned, doubledCoinsEarned, 0.5f, "+"));
+            this.coinsEarned = doubledCoinsEarned;
+        }
+        
+        // Animate boss reward doubling
+        if (originalBossTotalReward > 0 && bossBaseRewardText != null)
+        {
+            yield return new WaitForSeconds(0.2f);
+            yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, originalBossTotalReward, doubledBossReward, 0.5f));
+            this.bossTotalReward = doubledBossReward;
+        }
+        
+        yield return new WaitForSeconds(0.3f);
+        
+        // Animate coins flying for level reward
+        if (additionalCoins > 0)
+        {
+            // Update total coins text to show balance before doubling
+            if (totalCoinsText != null)
+            {
+                totalCoinsText.text = balanceBeforeDoubling.ToString();
+            }
+            // Pass null for earnedText to prevent overwriting the doubled value we just set
+            yield return StartCoroutine(AnimateCoins(additionalCoins, balanceBeforeDoubling, coinIconTransform, null));
+        }
+        
+        // Animate coins flying for boss reward
+        if (additionalBossReward > 0 && bossRewardIconTransform != null)
+        {
+            yield return new WaitForSeconds(0.3f);
+            // Balance after level doubling animation
+            int balanceAfterLevel = balanceBeforeDoubling + additionalCoins;
+            // Update total coins text to show balance before boss doubling
+            if (totalCoinsText != null)
+            {
+                totalCoinsText.text = balanceAfterLevel.ToString();
+            }
+            // Pass null for earnedText to prevent overwriting the doubled value we just set
+            yield return StartCoroutine(AnimateCoins(additionalBossReward, balanceAfterLevel, bossRewardIconTransform, null));
+        }
+    }
+    
+    /// <summary>
+    /// Cleanup when disabled
+    /// </summary>
+    private void OnDisable()
+    {
+        StopDoubleRewardsPulseAnimation();
     }
 }
