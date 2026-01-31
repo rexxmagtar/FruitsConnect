@@ -21,6 +21,8 @@ public class LevelFailedUI : MonoBehaviour
     [SerializeField] private RectTransform adIconContainer;
     [SerializeField] private GameObject loadingContainer;
     [SerializeField] private RectTransform loadingIcon;
+    [SerializeField] private TextMeshProUGUI skipRewardText;
+    [SerializeField] private RectTransform skipRewardIconTransform;
     
     [Header("Animation Settings")]
     [SerializeField] private float fadeInDuration = 0.5f;
@@ -59,7 +61,10 @@ public class LevelFailedUI : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     private bool isVisible = false;
     private int coinsEarned = 0;
+    private int levelReward = 0;
+    private int skipReward = 0;
     private Coroutine pulseCoroutine;
+    private Tween pulseTween;
     private bool isShowingAd = false;
     private int displayedBalance = 0;
     
@@ -147,8 +152,16 @@ public class LevelFailedUI : MonoBehaviour
     {
         if (isVisible) return;
         
+        this.levelReward = levelReward;
         this.coinsEarned = (int)(levelReward * 0.3f);
+        this.skipReward = (int)(levelReward * 0.5f);
         gameObject.SetActive(true);
+        
+        // Update skip reward text
+        if (skipRewardText != null)
+        {
+            skipRewardText.text = "+" + skipReward.ToString();
+        }
 
         // Hide retry button initially using alpha (button stays active for autolayout)
         if (retryButton != null)
@@ -181,9 +194,27 @@ public class LevelFailedUI : MonoBehaviour
     private void StartPulseAnimation()
     {
         StopPulseAnimation();
-        if (adIconContainer != null)
+        if (adIconContainer == null) return;
+        
+        // Create a looping pulse sequence
+        Sequence pulseSequence = DOTween.Sequence();
+        pulseSequence.Append(adIconContainer.DOScale(pulseScale, pulseDuration).SetEase(Ease.OutQuad));
+        pulseSequence.Append(adIconContainer.DOScale(1f, pulseDuration).SetEase(Ease.InQuad));
+        pulseSequence.Append(adIconContainer.DOScale(pulseScale, pulseDuration).SetEase(Ease.OutQuad));
+        pulseSequence.Append(adIconContainer.DOScale(1f, pulseDuration).SetEase(Ease.InQuad));
+        pulseSequence.AppendInterval(pauseDuration);
+        pulseSequence.SetLoops(-1); // Loop infinitely
+        
+        pulseTween = pulseSequence;
+        
+        // Register with AnimatedButton if skip button has one
+        if (skipLevelButton != null)
         {
-            pulseCoroutine = StartCoroutine(PulseSequenceRoutine());
+            WindowManager.AnimatedButton animatedButton = skipLevelButton.GetComponent<WindowManager.AnimatedButton>();
+            if (animatedButton != null)
+            {
+                animatedButton.SetExternalTween(pulseSequence);
+            }
         }
     }
 
@@ -194,27 +225,27 @@ public class LevelFailedUI : MonoBehaviour
             StopCoroutine(pulseCoroutine);
             pulseCoroutine = null;
         }
+        
+        // Clear external tween from AnimatedButton if it exists
+        if (skipLevelButton != null)
+        {
+            WindowManager.AnimatedButton animatedButton = skipLevelButton.GetComponent<WindowManager.AnimatedButton>();
+            if (animatedButton != null)
+            {
+                animatedButton.ClearExternalTween();
+            }
+        }
+        
         if (adIconContainer != null)
         {
             adIconContainer.DOKill();
             adIconContainer.localScale = Vector3.one;
         }
-    }
-
-    private IEnumerator PulseSequenceRoutine()
-    {
-        while (true)
+        
+        if (pulseTween != null && pulseTween.IsActive())
         {
-            // Pulse 1
-            yield return adIconContainer.DOScale(pulseScale, pulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
-            yield return adIconContainer.DOScale(1f, pulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
-
-            // Pulse 2
-            yield return adIconContainer.DOScale(pulseScale, pulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
-            yield return adIconContainer.DOScale(1f, pulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
-
-            // Pause
-            yield return new WaitForSeconds(pauseDuration);
+            pulseTween.Kill();
+            pulseTween = null;
         }
     }
     
@@ -297,9 +328,12 @@ public class LevelFailedUI : MonoBehaviour
         text.text = prefix + end.ToString();
     }
 
-    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance)
+    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform sourceIcon = null)
     {
-        if (coinIconTransform == null || balanceIconTransform == null)
+        // Use provided source icon or default to coinIconTransform
+        RectTransform startIcon = sourceIcon != null ? sourceIcon : coinIconTransform;
+        
+        if (startIcon == null || balanceIconTransform == null)
         {
             if (totalCoinsText != null) totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
             yield break;
@@ -309,7 +343,7 @@ public class LevelFailedUI : MonoBehaviour
         int coinsPerParticle = coinsToAnimate / coinsToSpawn;
         int remainingCoins = coinsToAnimate % coinsToSpawn;
         
-        Vector3 startPos = coinIconTransform.position;
+        Vector3 startPos = startIcon.position;
         Vector3 endPos = balanceIconTransform.position;
         
         displayedBalance = currentBalance;
@@ -439,19 +473,92 @@ public class LevelFailedUI : MonoBehaviour
 
         isShowingAd = true;
         if (skipLevelButton != null) skipLevelButton.interactable = false;
+        
+        // Hide and disable retry button immediately when skip is pressed
+        HideRetryButton();
+        
+        // Stop pulse animation
+        StopPulseAnimation();
 
         bool success = await AdsManager.Instance.ShowRewardedAdAsync();
 
         if (success)
         {
-            Hide();
-            OnSkipLevelAdCompleted?.Invoke();
+            // Add skip reward to player's balance
+            if (skipReward > 0)
+            {
+                GameManager.Instance.AddCoins(skipReward);
+                
+                // Animate money flying from skip reward icon to balance
+                StartCoroutine(AnimateSkipReward());
+            }
+            else
+            {
+                // No reward, just skip
+                Hide();
+                OnSkipLevelAdCompleted?.Invoke();
+            }
         }
         else
         {
             isShowingAd = false;
             if (skipLevelButton != null) skipLevelButton.interactable = true;
+            StartPulseAnimation();
+            // Don't show retry button again if ad failed - user can try skip again
         }
+    }
+    
+    /// <summary>
+    /// Hide the retry button by fading it out
+    /// </summary>
+    private void HideRetryButton()
+    {
+        if (retryButton != null)
+        {
+            retryButton.interactable = false;
+            
+            CanvasGroup retryCanvasGroup = retryButton.GetComponent<CanvasGroup>();
+            if (retryCanvasGroup == null)
+            {
+                retryCanvasGroup = retryButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            
+            // Fade out the button
+            retryCanvasGroup.DOFade(0f, 0.3f).OnComplete(() => {
+                if (retryCanvasGroup != null)
+                {
+                    retryCanvasGroup.blocksRaycasts = false;
+                }
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Animate skip reward money flying to balance
+    /// </summary>
+    private IEnumerator AnimateSkipReward()
+    {
+        // Get current balance before adding skip reward
+        int currentBalance = ProgressSaveManager<SaveData>.Instance.GetCoins() - skipReward;
+        
+        // Update total coins text to show balance before skip reward
+        if (totalCoinsText != null)
+        {
+            totalCoinsText.text = currentBalance.ToString();
+        }
+        
+        // Use skip reward icon transform if available, otherwise use coin icon transform
+        RectTransform sourceIcon = skipRewardIconTransform != null ? skipRewardIconTransform : coinIconTransform;
+        
+        // Animate coins flying from skip reward icon to balance
+        yield return StartCoroutine(AnimateCoins(skipReward, currentBalance, sourceIcon));
+        
+        // Wait a brief moment after animation completes
+        yield return new WaitForSeconds(0.5f);
+        
+        // Now hide and skip
+        Hide();
+        OnSkipLevelAdCompleted?.Invoke();
     }
     
     /// <summary>

@@ -112,6 +112,7 @@ public class LevelCompleteUI : MonoBehaviour
     private Coroutine doubleRewardsPulseCoroutine;
     private int originalCoinsEarned = 0;
     private int originalBossTotalReward = 0;
+    private Tween doubleRewardsPulseTween;
     
     // Menu button state for hiding
     private Image[] menuButtonImages;
@@ -1380,9 +1381,27 @@ public class LevelCompleteUI : MonoBehaviour
     private void StartDoubleRewardsPulseAnimation()
     {
         StopDoubleRewardsPulseAnimation();
-        if (doubleRewardsButton != null && !hasRewardsBeenDoubled)
+        if (doubleRewardsButton == null || hasRewardsBeenDoubled) return;
+        
+        RectTransform buttonRect = doubleRewardsButton.GetComponent<RectTransform>();
+        if (buttonRect == null) return;
+        
+        // Create a looping pulse sequence
+        Sequence pulseSequence = DOTween.Sequence();
+        pulseSequence.Append(buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad));
+        pulseSequence.Append(buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad));
+        pulseSequence.Append(buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad));
+        pulseSequence.Append(buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad));
+        pulseSequence.AppendInterval(doubleRewardsPauseDuration);
+        pulseSequence.SetLoops(-1); // Loop infinitely
+        
+        doubleRewardsPulseTween = pulseSequence;
+        
+        // Register with AnimatedButton if it exists
+        WindowManager.AnimatedButton animatedButton = doubleRewardsButton.GetComponent<WindowManager.AnimatedButton>();
+        if (animatedButton != null)
         {
-            doubleRewardsPulseCoroutine = StartCoroutine(DoubleRewardsPulseSequenceRoutine());
+            animatedButton.SetExternalTween(pulseSequence);
         }
     }
     
@@ -1396,8 +1415,16 @@ public class LevelCompleteUI : MonoBehaviour
             StopCoroutine(doubleRewardsPulseCoroutine);
             doubleRewardsPulseCoroutine = null;
         }
+        
+        // Clear external tween from AnimatedButton if it exists
         if (doubleRewardsButton != null)
         {
+            WindowManager.AnimatedButton animatedButton = doubleRewardsButton.GetComponent<WindowManager.AnimatedButton>();
+            if (animatedButton != null)
+            {
+                animatedButton.ClearExternalTween();
+            }
+            
             RectTransform buttonRect = doubleRewardsButton.GetComponent<RectTransform>();
             if (buttonRect != null)
             {
@@ -1405,30 +1432,11 @@ public class LevelCompleteUI : MonoBehaviour
                 buttonRect.localScale = Vector3.one;
             }
         }
-    }
-    
-    /// <summary>
-    /// Pulse animation sequence for double rewards button
-    /// </summary>
-    private IEnumerator DoubleRewardsPulseSequenceRoutine()
-    {
-        if (doubleRewardsButton == null) yield break;
         
-        RectTransform buttonRect = doubleRewardsButton.GetComponent<RectTransform>();
-        if (buttonRect == null) yield break;
-        
-        while (!hasRewardsBeenDoubled && doubleRewardsButton != null && buttonRect != null)
+        if (doubleRewardsPulseTween != null && doubleRewardsPulseTween.IsActive())
         {
-            // Pulse 1
-            yield return buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
-            yield return buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
-
-            // Pulse 2
-            yield return buttonRect.DOScale(doubleRewardsPulseScale, doubleRewardsPulseDuration).SetEase(Ease.OutQuad).WaitForCompletion();
-            yield return buttonRect.DOScale(1f, doubleRewardsPulseDuration).SetEase(Ease.InQuad).WaitForCompletion();
-
-            // Pause
-            yield return new WaitForSeconds(doubleRewardsPauseDuration);
+            doubleRewardsPulseTween.Kill();
+            doubleRewardsPulseTween = null;
         }
     }
     

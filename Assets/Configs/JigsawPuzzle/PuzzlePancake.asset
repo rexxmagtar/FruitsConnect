@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   puzzleId: pancake
   displayName: Pancake
-  fullImage: {fileID: 21300000, guid: 6dab71727e6c7c941a50a25bffe9f421, type: 3}
+  fullImage: {fileID: 21300000, guid: c9bde387210a6c648b4a67557a01cf19, type: 3}
   fullBlurredImage: {fileID: 21300000, guid: 9e93a188e7734764d928be8573684e16, type: 3}
   completionReward: 400
   pieces:
