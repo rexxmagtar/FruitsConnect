@@ -113,6 +113,12 @@ public class LevelCompleteUI : MonoBehaviour
     private int originalCoinsEarned = 0;
     private int originalBossTotalReward = 0;
     
+    // Menu button state for hiding
+    private Image[] menuButtonImages;
+    private TextMeshProUGUI[] menuButtonTexts;
+    private float[] menuButtonImageAlphas;
+    private float[] menuButtonTextAlphas;
+    
     private void Awake()
     {
         // Get or add canvas group for fade effects
@@ -371,6 +377,103 @@ public class LevelCompleteUI : MonoBehaviour
     }
     
     /// <summary>
+    /// Hide the return to menu button by fading it out
+    /// </summary>
+    private void HideMenuButton()
+    {
+        if (returnToMenuButton != null)
+        {
+            returnToMenuButton.interactable = false;
+        }
+        
+        // Fade out images and texts
+        if (menuButtonImages != null && menuButtonImageAlphas != null)
+        {
+            StartCoroutine(FadeOutImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
+        }
+        if (menuButtonTexts != null && menuButtonTextAlphas != null)
+        {
+            StartCoroutine(FadeOutTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
+        }
+    }
+    
+    /// <summary>
+    /// Fade out all images in an array
+    /// </summary>
+    private IEnumerator FadeOutImages(Image[] images, float[] originalAlphas, float duration)
+    {
+        if (images == null || images.Length == 0 || originalAlphas == null) yield break;
+        
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
+            
+            for (int i = 0; i < images.Length && i < originalAlphas.Length; i++)
+            {
+                if (images[i] != null)
+                {
+                    Color color = images[i].color;
+                    color.a = alpha * originalAlphas[i];
+                    images[i].color = color;
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Ensure final alpha is 0
+        for (int i = 0; i < images.Length && i < originalAlphas.Length; i++)
+        {
+            if (images[i] != null)
+            {
+                Color color = images[i].color;
+                color.a = 0f;
+                images[i].color = color;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Fade out all text components in an array
+    /// </summary>
+    private IEnumerator FadeOutTexts(TextMeshProUGUI[] texts, float[] originalAlphas, float duration)
+    {
+        if (texts == null || texts.Length == 0 || originalAlphas == null) yield break;
+        
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, elapsedTime / duration);
+            
+            for (int i = 0; i < texts.Length && i < originalAlphas.Length; i++)
+            {
+                if (texts[i] != null)
+                {
+                    Color color = texts[i].color;
+                    color.a = alpha * originalAlphas[i];
+                    texts[i].color = color;
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Ensure final alpha is 0
+        for (int i = 0; i < texts.Length && i < originalAlphas.Length; i++)
+        {
+            if (texts[i] != null)
+            {
+                Color color = texts[i].color;
+                color.a = 0f;
+                texts[i].color = color;
+            }
+        }
+    }
+    
+    /// <summary>
     /// Show animation sequence
     /// </summary>
     private IEnumerator ShowAnimation()
@@ -379,12 +482,12 @@ public class LevelCompleteUI : MonoBehaviour
         isAnimating = true;
         
         // Get all images and texts from menu button only (continue button is hidden)
-        Image[] menuButtonImages = GetAllImagesFromButton(returnToMenuButton);
-        TextMeshProUGUI[] menuButtonTexts = GetAllTextsFromButton(returnToMenuButton);
+        menuButtonImages = GetAllImagesFromButton(returnToMenuButton);
+        menuButtonTexts = GetAllTextsFromButton(returnToMenuButton);
         
         // Set button to fully transparent and store original alpha values
-        float[] menuButtonImageAlphas = SetImagesAlpha(menuButtonImages, 0f);
-        float[] menuButtonTextAlphas = SetTextsAlpha(menuButtonTexts, 0f);
+        menuButtonImageAlphas = SetImagesAlpha(menuButtonImages, 0f);
+        menuButtonTextAlphas = SetTextsAlpha(menuButtonTexts, 0f);
         
         // Disable button until animations complete
         if (returnToMenuButton != null)
@@ -1382,6 +1485,9 @@ public class LevelCompleteUI : MonoBehaviour
                 doubleRewardsCanvasGroup.blocksRaycasts = false;
             }
             
+            // Hide return to menu button immediately when ad is watched
+            HideMenuButton();
+            
             // Double the rewards
             int doubledCoinsEarned = originalCoinsEarned * 2;
             int doubledBossReward = originalBossTotalReward * 2;
@@ -1393,7 +1499,7 @@ public class LevelCompleteUI : MonoBehaviour
             // Add additional coins to player's balance
             GameManager.Instance.AddCoins(additionalCoins + additionalBossReward);
             
-            // Start animation for doubling rewards
+            // Start animation for doubling rewards (will auto-continue after animation)
             StartCoroutine(AnimateDoubleRewards(doubledCoinsEarned, doubledBossReward, additionalCoins, additionalBossReward));
         }
         else
@@ -1456,6 +1562,12 @@ public class LevelCompleteUI : MonoBehaviour
             // Pass null for earnedText to prevent overwriting the doubled value we just set
             yield return StartCoroutine(AnimateCoins(additionalBossReward, balanceAfterLevel, bossRewardIconTransform, null));
         }
+        
+        // Wait a brief moment after animation completes
+        yield return new WaitForSeconds(0.5f);
+        
+        // Automatically continue after double reward animation finishes
+        OnReturnToMenuButtonClick();
     }
     
     /// <summary>
