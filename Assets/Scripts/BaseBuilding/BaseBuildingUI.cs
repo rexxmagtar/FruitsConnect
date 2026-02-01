@@ -20,6 +20,7 @@ public class BaseBuildingUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currentLevelText;
     [SerializeField] private TextMeshProUGUI nextLevelText;
     [SerializeField] private TextMeshProUGUI energyBalanceText;
+    [SerializeField] private GameObject energyBalanceContainer;
     [SerializeField] private RectTransform buildButtonCenter;
     
     [Header("World Space References")]
@@ -38,6 +39,9 @@ public class BaseBuildingUI : MonoBehaviour
     [Header("Sounds")]
     [SerializeField] private AudioClip scrollSound;
     [SerializeField] private AudioClip buttonClickSound;
+    [SerializeField] private AudioClip sphereSpawnSound;
+    [SerializeField] private AudioClip stageCompleteSound;
+    [SerializeField] private AudioClip objectCompleteSound;
 
     private const int ENERGY_PER_SPHERE = 10;
     
@@ -153,7 +157,8 @@ public class BaseBuildingUI : MonoBehaviour
         
         var targetObj = instantiatedBaseObjects[objIndex];
         var targetStage = targetObj.GetStage(stageIndex);
-        Vector3 targetPos = targetStage.transform.position;
+        
+        if (sphereSpawnSound != null) audioSource.PlayOneShot(sphereSpawnSound);
         
         int startProgress = SaveDataExtensions.GetBaseStageProgress();
         int endProgress = startProgress + priceDeducted;
@@ -167,10 +172,14 @@ public class BaseBuildingUI : MonoBehaviour
             elapsed = x;
             // Smoothly interpolate slider during flight
             progressSlider.value = Mathf.Lerp(startFill, endFill, x);
-        }, 1f, sphereFlyDuration).SetEase(Ease.InQuad);
-
-        sphere.transform.DOMove(targetPos, sphereFlyDuration).SetEase(Ease.InQuad).OnComplete(() => {
-            Destroy(sphere);
+            
+            // Track moving target
+            if (sphere != null && targetStage != null)
+            {
+                sphere.transform.position = Vector3.Lerp(startPos, targetStage.transform.position, x);
+            }
+        }, 1f, sphereFlyDuration).SetEase(Ease.InQuad).OnComplete(() => {
+            if (sphere != null) Destroy(sphere);
             if (endProgress >= totalPrice)
             {
                 OnStageBuildingProgressed(objIndex, stageIndex);
@@ -196,8 +205,12 @@ public class BaseBuildingUI : MonoBehaviour
         
         instantiatedBaseObjects[objIndex].UpdateVisuals(stageIndex + 1, 0f);
         
+        if (stageCompleteSound != null) audioSource.PlayOneShot(stageCompleteSound);
+        
         if (stageIndex == 9) // Object completed
         {
+            if (objectCompleteSound != null) audioSource.PlayOneShot(objectCompleteSound);
+            
             if (objIndex + 1 < instantiatedBaseObjects.Count)
             {
                 ScrollBases(1, true);
@@ -213,6 +226,12 @@ public class BaseBuildingUI : MonoBehaviour
         currentLevelText.text = totalLevel.ToString();
         nextLevelText.text = (totalLevel + 1).ToString();
         energyBalanceText.text = SaveDataExtensions.GetTotalEnergySpheres().ToString();
+
+        // Hide energy balance if level < 15
+        if (energyBalanceContainer != null)
+        {
+            energyBalanceContainer.SetActive(SaveDataExtensions.GetCurrentLevelNumber() > 15);
+        }
         
         int objIndex = totalLevel / 10;
         int stageIndex = totalLevel % 10;

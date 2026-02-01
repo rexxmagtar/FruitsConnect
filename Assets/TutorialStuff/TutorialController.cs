@@ -40,6 +40,7 @@ namespace Managers
         private const string PUZZLE_TUTORIAL_KEY = "Tutorial_Puzzle_Completed";
         private const string SKIN_TUTORIAL_KEY = "Tutorial_Skin_Completed";
         private const string UPGRADE_TUTORIAL_KEY = "Tutorial_Upgrade_Completed";
+        private const string BASE_BUILDING_TUTORIAL_KEY = "Tutorial_BaseBuilding_Completed";
 
         private void Awake()
         {
@@ -105,6 +106,11 @@ namespace Managers
             else if (currentLevelIndex >= 3 && PlayerPrefs.GetInt(UPGRADE_TUTORIAL_KEY, 0) == 0)
             {
                 StartCoroutine(UpgradeTutorialRoutine(mainMenu));
+            }
+            // Base Building Tutorial: Level 15 completed (index >= 15)
+            else if (currentLevelIndex >= 15 && PlayerPrefs.GetInt(BASE_BUILDING_TUTORIAL_KEY, 0) == 0)
+            {
+                StartCoroutine(BaseBuildingTutorialRoutine(mainMenu));
             }
         }
 
@@ -259,6 +265,58 @@ namespace Managers
             CompleteTutorial(UPGRADE_TUTORIAL_KEY);
         }
 
+        private IEnumerator BaseBuildingTutorialRoutine(MainMenuUI mainMenu)
+        {
+            isTutorialActive = true;
+            darkOverlay.gameObject.SetActive(true);
+
+            // Step 1: Highlight Base Building Button
+            Button baseBuildingButton = GetPrivateField<Button>(mainMenu, "baseBuildingButton");
+            if (baseBuildingButton != null)
+            {
+                RectTransform baseRect = baseBuildingButton.GetComponent<RectTransform>();
+                UpdateLightZone(baseRect);
+                ShowFingerPointer(baseRect);
+
+                // Wait for Base Building UI to open
+                BaseBuildingUI baseBuildingUI = GetPrivateField<BaseBuildingUI>(mainMenu, "baseBuildingUI");
+                while (baseBuildingUI != null && !baseBuildingUI.gameObject.activeInHierarchy)
+                {
+                    yield return null;
+                }
+
+                if (baseBuildingUI != null)
+                {
+                    // Step 2: Highlight Build Button
+                    HideFingerPointer();
+                    lightRect.gameObject.SetActive(false);
+                    yield return new WaitForSeconds(0.2f);
+
+                    Button buildButton = GetPrivateField<Button>(baseBuildingUI, "buildButton");
+                    if (buildButton != null)
+                    {
+                        RectTransform buildRect = buildButton.GetComponent<RectTransform>();
+                        UpdateLightZone(buildRect);
+                        ShowFingerPointer(buildRect);
+
+                        // Wait for user to start building
+                        bool startedBuilding = false;
+                        while (!startedBuilding && baseBuildingUI.gameObject.activeInHierarchy)
+                        {
+                            UpdateLightZone(buildRect);
+                            if (GetPrivateField<bool>(baseBuildingUI, "isHoldingBuild"))
+                            {
+                                startedBuilding = true;
+                            }
+                            yield return null;
+                        }
+                    }
+                }
+            }
+
+            CompleteTutorial(BASE_BUILDING_TUTORIAL_KEY);
+        }
+
         private void UpdateLightZone(RectTransform targetRect)
         {
             if (lightRect == null || darkOverlayMaterial == null) return;
@@ -341,6 +399,7 @@ namespace Managers
             PlayerPrefs.DeleteKey(PUZZLE_TUTORIAL_KEY);
             PlayerPrefs.DeleteKey(SKIN_TUTORIAL_KEY);
             PlayerPrefs.DeleteKey(UPGRADE_TUTORIAL_KEY);
+            PlayerPrefs.DeleteKey(BASE_BUILDING_TUTORIAL_KEY);
             PlayerPrefs.Save();
             Debug.Log("Tutorials reset");
         }

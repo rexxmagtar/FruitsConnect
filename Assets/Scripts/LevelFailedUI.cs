@@ -18,6 +18,7 @@ public class LevelFailedUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI energySpheresEarnedText;
     [SerializeField] private TextMeshProUGUI totalCoinsText;
     [SerializeField] private TextMeshProUGUI totalEnergySpheresText;
+    [SerializeField] private GameObject energyBalanceContainer;
     [SerializeField] private RectTransform coinIconTransform;
     [SerializeField] private RectTransform energySphereIconTransform;
     [SerializeField] private RectTransform balanceIconTransform;
@@ -169,6 +170,19 @@ public class LevelFailedUI : MonoBehaviour
         this.energySpheresEarned = (int)(levelEnergyReward * 0.3f);
         this.skipReward = (int)(levelReward * 0.5f);
         this.skipEnergyReward = (int)(levelEnergyReward * 0.5f);
+
+        // Hide energy UI if level < 15
+        int currentLevel = SaveDataExtensions.GetCurrentLevelNumber();
+        bool isEnergyUnlocked = currentLevel > 15;
+        
+        if (energySpheresEarnedText != null) energySpheresEarnedText.gameObject.SetActive(isEnergyUnlocked);
+        if (energySphereIconTransform != null) energySphereIconTransform.gameObject.SetActive(isEnergyUnlocked);
+        
+        if (skipEnergyRewardText != null) skipEnergyRewardText.gameObject.SetActive(isEnergyUnlocked);
+        if (skipEnergyRewardIconTransform != null) skipEnergyRewardIconTransform.gameObject.SetActive(isEnergyUnlocked);
+        
+        if (energyBalanceContainer != null) energyBalanceContainer.SetActive(isEnergyUnlocked);
+
         gameObject.SetActive(true);
         
         // Update skip reward text

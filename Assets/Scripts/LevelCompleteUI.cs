@@ -19,6 +19,7 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI energySpheresEarnedText;
     [SerializeField] private TextMeshProUGUI totalCoinsText;
     [SerializeField] private TextMeshProUGUI totalEnergySpheresText;
+    [SerializeField] private GameObject energyBalanceContainer;
     [SerializeField] private RectTransform coinIconTransform;
     [SerializeField] private RectTransform energySphereIconTransform;
     [SerializeField] private RectTransform balanceIconTransform;
@@ -228,6 +229,16 @@ public class LevelCompleteUI : MonoBehaviour
         this.originalBossTotalEnergyReward = this.bossTotalEnergyReward;
         this.hasRewardsBeenDoubled = false;
         this.isShowingAd = false;
+
+        // Hide energy UI if level < 15
+        bool isEnergyUnlocked = nextLevelNumber > 15;
+        if (energySpheresEarnedText != null) energySpheresEarnedText.gameObject.SetActive(isEnergyUnlocked);
+        if (energySphereIconTransform != null) energySphereIconTransform.gameObject.SetActive(isEnergyUnlocked);
+        
+        if (bossEnergyRewardText != null) bossEnergyRewardText.gameObject.SetActive(isEnergyUnlocked && isBossLevel);
+        if (bossEnergyRewardIconTransform != null) bossEnergyRewardIconTransform.gameObject.SetActive(isEnergyUnlocked && isBossLevel);
+        
+        if (energyBalanceContainer != null) energyBalanceContainer.SetActive(isEnergyUnlocked);
         
         gameObject.SetActive(true);
 
