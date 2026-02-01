@@ -767,7 +767,7 @@ public class GameController : MonoBehaviour
                 if (levelCompleteUI != null)
                 {
                     // Pass coinsEarned + finalMonsterBounty as the base reward to show in UI
-                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, energySpheresEarned, nextLevel, bossBaseReward, config.BossEnergySphereReward, multiplier, bossDefeated, puzzlePieces);
+                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, config.IsBossFight, energySpheresEarned, nextLevel, bossBaseReward, bossEnergyReward, multiplier, bossDefeated, puzzlePieces);
                 }
                 else
                 {
