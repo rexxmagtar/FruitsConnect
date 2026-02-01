@@ -15,14 +15,20 @@ public class LevelFailedUI : MonoBehaviour
     [SerializeField] private Button skipLevelButton;
     [SerializeField] private Button returnToMenuButton;
     [SerializeField] private TextMeshProUGUI coinsEarnedText;
+    [SerializeField] private TextMeshProUGUI energySpheresEarnedText;
     [SerializeField] private TextMeshProUGUI totalCoinsText;
+    [SerializeField] private TextMeshProUGUI totalEnergySpheresText;
     [SerializeField] private RectTransform coinIconTransform;
+    [SerializeField] private RectTransform energySphereIconTransform;
     [SerializeField] private RectTransform balanceIconTransform;
+    [SerializeField] private RectTransform energyBalanceIconTransform;
     [SerializeField] private RectTransform adIconContainer;
     [SerializeField] private GameObject loadingContainer;
     [SerializeField] private RectTransform loadingIcon;
     [SerializeField] private TextMeshProUGUI skipRewardText;
+    [SerializeField] private TextMeshProUGUI skipEnergyRewardText;
     [SerializeField] private RectTransform skipRewardIconTransform;
+    [SerializeField] private RectTransform skipEnergyRewardIconTransform;
     
     [Header("Animation Settings")]
     [SerializeField] private float fadeInDuration = 0.5f;
@@ -61,12 +67,16 @@ public class LevelFailedUI : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     private bool isVisible = false;
     private int coinsEarned = 0;
+    private int energySpheresEarned = 0;
     private int levelReward = 0;
+    private int levelEnergyReward = 0;
     private int skipReward = 0;
+    private int skipEnergyReward = 0;
     private Coroutine pulseCoroutine;
     private Tween pulseTween;
     private bool isShowingAd = false;
     private int displayedBalance = 0;
+    private int displayedEnergyBalance = 0;
     
     private void Awake()
     {
@@ -148,19 +158,26 @@ public class LevelFailedUI : MonoBehaviour
     /// <summary>
     /// Show the level failed UI
     /// </summary>
-    public void Show(int levelReward = 0)
+    public void Show(int levelReward = 0, int levelEnergyReward = 0)
     {
         if (isVisible) return;
         
         this.levelReward = levelReward;
+        this.levelEnergyReward = levelEnergyReward;
         this.coinsEarned = (int)(levelReward * 0.3f);
+        this.energySpheresEarned = (int)(levelEnergyReward * 0.3f);
         this.skipReward = (int)(levelReward * 0.5f);
+        this.skipEnergyReward = (int)(levelEnergyReward * 0.5f);
         gameObject.SetActive(true);
         
         // Update skip reward text
         if (skipRewardText != null)
         {
             skipRewardText.text = "+" + skipReward.ToString();
+        }
+        if (skipEnergyRewardText != null)
+        {
+            skipEnergyRewardText.text = "+" + skipEnergyReward.ToString();
         }
 
         // Hide retry button initially using alpha (button stays active for autolayout)
@@ -260,11 +277,16 @@ public class LevelFailedUI : MonoBehaviour
         canvasGroup.alpha = 0f;
         
         if (coinsEarnedText != null) coinsEarnedText.text = "+0";
+        if (energySpheresEarnedText != null) energySpheresEarnedText.text = "+0";
 
-        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        int finalBalanceTotal = SaveDataExtensions.GetTotalCoins();
         int initialBalance = finalBalanceTotal - coinsEarned;
 
+        int finalEnergyBalanceTotal = SaveDataExtensions.GetTotalEnergySpheres();
+        int initialEnergyBalance = finalEnergyBalanceTotal - energySpheresEarned;
+
         if (totalCoinsText != null) totalCoinsText.text = initialBalance.ToString();
+        if (totalEnergySpheresText != null) totalEnergySpheresText.text = initialEnergyBalance.ToString();
 
         // Play fail sound
         if (failSound != null && audioSource != null)
@@ -288,7 +310,14 @@ public class LevelFailedUI : MonoBehaviour
         {
             yield return StartCoroutine(AnimateTextCount(coinsEarnedText, 0, coinsEarned, 0.5f, "+"));
             yield return new WaitForSeconds(0.3f);
-            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance));
+            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, balanceIconTransform, totalCoinsText));
+        }
+
+        if (energySpheresEarned > 0)
+        {
+            yield return StartCoroutine(AnimateTextCount(energySpheresEarnedText, 0, energySpheresEarned, 0.5f, "+"));
+            yield return new WaitForSeconds(0.3f);
+            yield return StartCoroutine(AnimateCoins(energySpheresEarned, initialEnergyBalance, energySphereIconTransform, energyBalanceIconTransform, totalEnergySpheresText));
         }
 
         // Show retry button after delay using CanvasGroup
@@ -328,14 +357,11 @@ public class LevelFailedUI : MonoBehaviour
         text.text = prefix + end.ToString();
     }
 
-    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform sourceIcon = null)
+    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform sourceIcon, RectTransform targetIcon, TextMeshProUGUI balanceText)
     {
-        // Use provided source icon or default to coinIconTransform
-        RectTransform startIcon = sourceIcon != null ? sourceIcon : coinIconTransform;
-        
-        if (startIcon == null || balanceIconTransform == null)
+        if (sourceIcon == null || targetIcon == null)
         {
-            if (totalCoinsText != null) totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+            if (balanceText != null) balanceText.text = (currentBalance + coinsToAnimate).ToString();
             yield break;
         }
 
@@ -343,10 +369,10 @@ public class LevelFailedUI : MonoBehaviour
         int coinsPerParticle = coinsToAnimate / coinsToSpawn;
         int remainingCoins = coinsToAnimate % coinsToSpawn;
         
-        Vector3 startPos = startIcon.position;
-        Vector3 endPos = balanceIconTransform.position;
+        Vector3 startPos = sourceIcon.position;
+        Vector3 endPos = targetIcon.position;
         
-        displayedBalance = currentBalance;
+        int localDisplayedBalance = currentBalance;
         List<GameObject> activeCoins = new List<GameObject>();
         
         for (int i = 0; i < coinsToSpawn; i++)
@@ -375,7 +401,10 @@ public class LevelFailedUI : MonoBehaviour
             coinParticle.transform.position = startPos;
             activeCoins.Add(coinParticle);
             
-            StartCoroutine(AnimateCoinParticle(coinParticle, startPos, endPos, coinsForThisParticle));
+            StartCoroutine(AnimateCoinParticle(coinParticle, startPos, endPos, coinsForThisParticle, balanceText, (v) => {
+                localDisplayedBalance += v;
+                return localDisplayedBalance;
+            }));
             
             if (i < coinsToSpawn - 1)
             {
@@ -389,13 +418,13 @@ public class LevelFailedUI : MonoBehaviour
             yield return null;
         }
         
-        if (totalCoinsText != null)
+        if (balanceText != null)
         {
-            totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+            balanceText.text = (currentBalance + coinsToAnimate).ToString();
         }
     }
 
-    private IEnumerator AnimateCoinParticle(GameObject coinParticle, Vector3 startPos, Vector3 endPos, int coinValue)
+    private IEnumerator AnimateCoinParticle(GameObject coinParticle, Vector3 startPos, Vector3 endPos, int coinValue, TextMeshProUGUI balanceText, System.Func<int, int> updateBalance)
     {
         float elapsed = 0f;
         while (elapsed < coinAnimationDuration && coinParticle != null)
@@ -406,9 +435,9 @@ public class LevelFailedUI : MonoBehaviour
             
             if (Vector3.Distance(coinParticle.transform.position, endPos) <= coinReachThreshold)
             {
-                displayedBalance += coinValue;
+                int newBalance = updateBalance(coinValue);
                 if (coinCollectSound != null && audioSource != null) audioSource.PlayOneShot(coinCollectSound);
-                if (totalCoinsText != null) totalCoinsText.text = displayedBalance.ToString();
+                if (balanceText != null) balanceText.text = newBalance.ToString();
                 Destroy(coinParticle);
                 yield break;
             }
@@ -417,9 +446,9 @@ public class LevelFailedUI : MonoBehaviour
         
         if (coinParticle != null)
         {
-            displayedBalance += coinValue;
+            int newBalance = updateBalance(coinValue);
             if (coinCollectSound != null && audioSource != null) audioSource.PlayOneShot(coinCollectSound);
-            if (totalCoinsText != null) totalCoinsText.text = displayedBalance.ToString();
+            if (balanceText != null) balanceText.text = newBalance.ToString();
             Destroy(coinParticle);
         }
     }
@@ -551,7 +580,7 @@ public class LevelFailedUI : MonoBehaviour
         RectTransform sourceIcon = skipRewardIconTransform != null ? skipRewardIconTransform : coinIconTransform;
         
         // Animate coins flying from skip reward icon to balance
-        yield return StartCoroutine(AnimateCoins(skipReward, currentBalance, sourceIcon));
+        yield return StartCoroutine(AnimateCoins(skipReward, currentBalance, sourceIcon, balanceIconTransform, totalCoinsText));
         
         // Wait a brief moment after animation completes
         yield return new WaitForSeconds(0.5f);

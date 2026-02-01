@@ -16,9 +16,13 @@ public class LevelCompleteUI : MonoBehaviour
     [SerializeField] private Button returnToMenuButton;
     [SerializeField] private TextMeshProUGUI continueButtonText; // Deprecated - kept for backward compatibility but hidden
     [SerializeField] private TextMeshProUGUI coinsEarnedText;
+    [SerializeField] private TextMeshProUGUI energySpheresEarnedText;
     [SerializeField] private TextMeshProUGUI totalCoinsText;
+    [SerializeField] private TextMeshProUGUI totalEnergySpheresText;
     [SerializeField] private RectTransform coinIconTransform;
+    [SerializeField] private RectTransform energySphereIconTransform;
     [SerializeField] private RectTransform balanceIconTransform;
+    [SerializeField] private RectTransform energyBalanceIconTransform;
     
     [Header("Boss Reward References")]
     [SerializeField] private GameObject bossRewardContainer;
@@ -91,17 +95,20 @@ public class LevelCompleteUI : MonoBehaviour
      [SerializeField]private AudioSource audioSource;
     private bool isVisible = false;
     private int coinsEarned = 0;
+    private int energySpheresEarned = 0;
     private int coinsCollectedInAnimation = 0;
-    private int displayedBalance = 0;
+    private int energySpheresCollectedInAnimation = 0;
     private int nextLevelNumber = 1;
     private bool isAnimating = false;
     private System.Collections.Generic.List<string> earnedPuzzlePieces;
     
     // Boss Reward State
     private int bossBaseReward = 0;
+    private int bossEnergyReward = 0;
     private float bossMultiplier = 1f;
     private bool isBossDefeated = false;
     private int bossTotalReward = 0;
+    private int bossTotalEnergyReward = 0;
     
     // Fruit Progress State
     private float currentProgressPercent = 0f;
@@ -111,14 +118,10 @@ public class LevelCompleteUI : MonoBehaviour
     private bool isShowingAd = false;
     private Coroutine doubleRewardsPulseCoroutine;
     private int originalCoinsEarned = 0;
+    private int originalEnergySpheresEarned = 0;
     private int originalBossTotalReward = 0;
+    private int originalBossTotalEnergyReward = 0;
     private Tween doubleRewardsPulseTween;
-    
-    // Menu button state for hiding
-    private Image[] menuButtonImages;
-    private TextMeshProUGUI[] menuButtonTexts;
-    private float[] menuButtonImageAlphas;
-    private float[] menuButtonTextAlphas;
     
     private void Awake()
     {
@@ -198,21 +201,26 @@ public class LevelCompleteUI : MonoBehaviour
     /// <summary>
     /// Show the level complete UI
     /// </summary>
-    public void Show(int coinsEarned = 0, int nextLevel = 1, int bossBaseReward = 0, float bossMultiplier = 1f, bool bossDefeated = false, System.Collections.Generic.List<string> puzzlePieces = null)
+    public void Show(int coinsEarned = 0, int energySpheresEarned = 0, int nextLevel = 1, int bossBaseReward = 0, int bossEnergyReward = 0, float bossMultiplier = 1f, bool bossDefeated = false, System.Collections.Generic.List<string> puzzlePieces = null)
     {
         if (isVisible) return;
         
         this.coinsEarned = coinsEarned;
+        this.energySpheresEarned = energySpheresEarned;
         this.nextLevelNumber = nextLevel;
         this.bossBaseReward = bossBaseReward;
+        this.bossEnergyReward = bossEnergyReward;
         this.bossMultiplier = bossMultiplier;
         this.isBossDefeated = bossDefeated;
         this.earnedPuzzlePieces = puzzlePieces;
         this.bossTotalReward = isBossDefeated ? (int)(bossBaseReward * bossMultiplier) : 0;
+        this.bossTotalEnergyReward = isBossDefeated ? (int)(bossEnergyReward * bossMultiplier) : 0;
         
         // Store original rewards for doubling
         this.originalCoinsEarned = coinsEarned;
+        this.originalEnergySpheresEarned = energySpheresEarned;
         this.originalBossTotalReward = this.bossTotalReward;
+        this.originalBossTotalEnergyReward = this.bossTotalEnergyReward;
         this.hasRewardsBeenDoubled = false;
         this.isShowingAd = false;
         
@@ -385,16 +393,20 @@ public class LevelCompleteUI : MonoBehaviour
         if (returnToMenuButton != null)
         {
             returnToMenuButton.interactable = false;
-        }
-        
-        // Fade out images and texts
-        if (menuButtonImages != null && menuButtonImageAlphas != null)
-        {
-            StartCoroutine(FadeOutImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
-        }
-        if (menuButtonTexts != null && menuButtonTextAlphas != null)
-        {
-            StartCoroutine(FadeOutTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
+            
+            CanvasGroup btnGroup = returnToMenuButton.GetComponent<CanvasGroup>();
+            if (btnGroup == null)
+            {
+                btnGroup = returnToMenuButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            
+            // Fade out the button
+            btnGroup.DOFade(0f, buttonFadeInDuration).OnComplete(() => {
+                if (btnGroup != null)
+                {
+                    btnGroup.blocksRaycasts = false;
+                }
+            });
         }
     }
     
@@ -482,22 +494,24 @@ public class LevelCompleteUI : MonoBehaviour
         isVisible = true;
         isAnimating = true;
         
-        // Get all images and texts from menu button only (continue button is hidden)
-        menuButtonImages = GetAllImagesFromButton(returnToMenuButton);
-        menuButtonTexts = GetAllTextsFromButton(returnToMenuButton);
-        
-        // Set button to fully transparent and store original alpha values
-        menuButtonImageAlphas = SetImagesAlpha(menuButtonImages, 0f);
-        menuButtonTextAlphas = SetTextsAlpha(menuButtonTexts, 0f);
-        
-        // Disable button until animations complete
+        // Hide menu button initially using CanvasGroup (like LevelFailedUI does)
         if (returnToMenuButton != null)
         {
             returnToMenuButton.interactable = false;
+            
+            CanvasGroup btnGroup = returnToMenuButton.GetComponent<CanvasGroup>();
+            if (btnGroup == null)
+            {
+                btnGroup = returnToMenuButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            btnGroup.alpha = 0f;
+            btnGroup.interactable = false;
+            btnGroup.blocksRaycasts = false;
         }
 
         // Initialize texts to zero
         if (coinsEarnedText != null) coinsEarnedText.text = "+0";
+        if (energySpheresEarnedText != null) energySpheresEarnedText.text = "+0";
         if (bossBaseRewardText != null) bossBaseRewardText.text = "0";
         if (bossMultiplierText != null) 
         {
@@ -507,7 +521,7 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         // Setup boss container and locker
-        bool isBossLevel = bossBaseReward > 0;
+        bool isBossLevel = bossBaseReward > 0 || bossEnergyReward > 0;
         if (bossRewardContainer != null) bossRewardContainer.SetActive(isBossLevel);
         if (bossBountyLocker != null) bossBountyLocker.SetActive(isBossLevel && !isBossDefeated);
         
@@ -527,10 +541,14 @@ public class LevelCompleteUI : MonoBehaviour
         // Initialize fruit progress immediately (before any animations)
         InitializeFruitProgress();
 
-        int finalBalanceTotal = ProgressSaveManager<SaveData>.Instance.GetCoins();
+        int finalBalanceTotal = SaveDataExtensions.GetTotalCoins();
         int initialBalance = finalBalanceTotal - (coinsEarned + bossTotalReward);
 
-        totalCoinsText.text = initialBalance.ToString();
+        int finalEnergyBalanceTotal = SaveDataExtensions.GetTotalEnergySpheres();
+        int initialEnergyBalance = finalEnergyBalanceTotal - (energySpheresEarned + bossTotalEnergyReward);
+
+        if (totalCoinsText != null) totalCoinsText.text = initialBalance.ToString();
+        if (totalEnergySpheresText != null) totalEnergySpheresText.text = initialEnergyBalance.ToString();
         
         // Reset state
         canvasGroup.alpha = 0f;
@@ -566,6 +584,10 @@ public class LevelCompleteUI : MonoBehaviour
         {
             yield return StartCoroutine(AnimateTextCount(coinsEarnedText, 0, coinsEarned, 0.5f, "+"));
         }
+        if (energySpheresEarned > 0)
+        {
+            yield return StartCoroutine(AnimateTextCount(energySpheresEarnedText, 0, energySpheresEarned, 0.5f, "+"));
+        }
 
         
         
@@ -576,8 +598,15 @@ public class LevelCompleteUI : MonoBehaviour
         if (coinsEarned > 0)
         {
             yield return new WaitForSeconds(0.3f);
-            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, coinsEarnedText));
+            yield return StartCoroutine(AnimateCoins(coinsEarned, initialBalance, coinIconTransform, balanceIconTransform, totalCoinsText, coinsEarnedText));
             totalCollectedSoFar += coinsEarned;
+        }
+
+        // Basic energy fly
+        if (energySpheresEarned > 0)
+        {
+            yield return new WaitForSeconds(0.3f);
+            yield return StartCoroutine(AnimateCoins(energySpheresEarned, initialEnergyBalance, energySphereIconTransform, energyBalanceIconTransform, totalEnergySpheresText, energySpheresEarnedText));
         }
 
         // Sequence: Boss Reward
@@ -614,7 +643,7 @@ public class LevelCompleteUI : MonoBehaviour
         if (isBossLevel && bossTotalReward > 0)
         {
             yield return new WaitForSeconds(0.5f); // Wait a bit more between animations
-            yield return StartCoroutine(AnimateCoins(bossTotalReward, initialBalance + totalCollectedSoFar, bossRewardIconTransform, bossBaseRewardText));
+            yield return StartCoroutine(AnimateCoins(bossTotalReward, initialBalance + totalCollectedSoFar, bossRewardIconTransform, balanceIconTransform, totalCoinsText, bossBaseRewardText));
         }
         
         
@@ -651,19 +680,37 @@ public class LevelCompleteUI : MonoBehaviour
 
         // All reward animations complete - show double rewards button first
         InitializeDoubleRewardsButton();
+        isAnimating = false;
         
         // Wait 2 seconds before showing continue button
         yield return new WaitForSeconds(2f);
         
-        // Now fade in menu button (images and texts simultaneously)
-        StartCoroutine(FadeInImages(menuButtonImages, menuButtonImageAlphas, buttonFadeInDuration));
-        StartCoroutine(FadeInTexts(menuButtonTexts, menuButtonTextAlphas, buttonFadeInDuration));
+        // Now fade in menu button using CanvasGroup (like LevelFailedUI does)
+        if (returnToMenuButton != null)
+        {
+            CanvasGroup btnGroup = returnToMenuButton.GetComponent<CanvasGroup>();
+            if (btnGroup == null)
+            {
+                btnGroup = returnToMenuButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            
+            // Set initial state
+            btnGroup.alpha = 0f;
+            btnGroup.blocksRaycasts = true;
+            
+            // Fade in the button
+            btnGroup.DOFade(1f, buttonFadeInDuration).OnComplete(() => {
+                if (btnGroup != null)
+                {
+                    btnGroup.interactable = true;
+                }
+            });
+        }
         
         // Wait for fade-in to complete
         yield return new WaitForSeconds(buttonFadeInDuration);
 
         // Enable button
-        isAnimating = false;
         if (returnToMenuButton != null)
         {
             returnToMenuButton.interactable = true;
@@ -948,32 +995,29 @@ public class LevelCompleteUI : MonoBehaviour
     /// <summary>
     /// Animate coins flying from earned position to balance position
     /// </summary>
-    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform startIcon = null, TextMeshProUGUI earnedText = null)
+    private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance, RectTransform sourceIcon, RectTransform targetIcon, TextMeshProUGUI balanceText, TextMeshProUGUI earnedText = null)
     {
         // Display coins earned text
         if (earnedText != null)
         {
-            string prefix = (earnedText == coinsEarnedText) ? "+" : "";
+            string prefix = "+";
             earnedText.text = prefix + coinsToAnimate.ToString();
         }
         
         // Display current balance before addition
-        if (totalCoinsText != null)
+        if (balanceText != null)
         {
-            totalCoinsText.text = currentBalance.ToString();
+            balanceText.text = currentBalance.ToString();
         }
         
-        // Use default icon if none provided
-        RectTransform sourceIcon = startIcon != null ? startIcon : coinIconTransform;
-
         // Check if we have required references
-        if (sourceIcon == null || balanceIconTransform == null)
+        if (sourceIcon == null || targetIcon == null)
         {
             Debug.LogWarning("[LevelCompleteUI] Coin icon or balance icon transform not assigned. Skipping coin animation.");
             // Still update the balance text
-            if (totalCoinsText != null)
+            if (balanceText != null)
             {
-                totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+                balanceText.text = (currentBalance + coinsToAnimate).ToString();
             }
             yield break;
         }
@@ -985,11 +1029,10 @@ public class LevelCompleteUI : MonoBehaviour
         
         // Get world positions
         Vector3 startPos = sourceIcon.position;
-        Vector3 endPos = balanceIconTransform.position;
+        Vector3 endPos = targetIcon.position;
         
         // Initialize animation state
-        coinsCollectedInAnimation = 0;
-        displayedBalance = currentBalance;
+        int localDisplayedBalance = currentBalance;
         
         // List to track active coin particles
         System.Collections.Generic.List<GameObject> activeCoins = new System.Collections.Generic.List<GameObject>();
@@ -1025,7 +1068,10 @@ public class LevelCompleteUI : MonoBehaviour
             activeCoins.Add(coinParticle);
             
             // Start coroutine to animate this coin particle
-            StartCoroutine(AnimateCoinParticle(coinParticle, startPos, endPos, coinsForThisParticle));
+            StartCoroutine(AnimateCoinParticle(coinParticle, startPos, endPos, coinsForThisParticle, balanceText, (v) => {
+                localDisplayedBalance += v;
+                return localDisplayedBalance;
+            }));
             
             // Wait before spawning next coin
             if (i < coinsToSpawn - 1)
@@ -1042,16 +1088,16 @@ public class LevelCompleteUI : MonoBehaviour
         }
         
         // Ensure final balance is correct
-        if (totalCoinsText != null)
+        if (balanceText != null)
         {
-            totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+            balanceText.text = (currentBalance + coinsToAnimate).ToString();
         }
     }
     
     /// <summary>
     /// Animate a single coin particle flying to balance position
     /// </summary>
-    private IEnumerator AnimateCoinParticle(GameObject coinParticle, Vector3 startPos, Vector3 endPos, int coinValue)
+    private IEnumerator AnimateCoinParticle(GameObject coinParticle, Vector3 startPos, Vector3 endPos, int coinValue, TextMeshProUGUI balanceText, System.Func<int, int> updateBalance)
     {
         float elapsed = 0f;
         bool hasReached = false;
@@ -1068,9 +1114,11 @@ public class LevelCompleteUI : MonoBehaviour
             if (!hasReached && Vector3.Distance(coinParticle.transform.position, endPos) <= coinReachThreshold)
             {
                 hasReached = true;
-                coinsCollectedInAnimation += coinValue;
-                displayedBalance = displayedBalance + coinValue;
+                int newBalance = updateBalance(coinValue);
                 
+                if (balanceText == totalCoinsText) coinsCollectedInAnimation += coinValue;
+                else if (balanceText == totalEnergySpheresText) energySpheresCollectedInAnimation += coinValue;
+
                 // Play collect sound
                 if (coinCollectSound != null && audioSource != null)
                 {
@@ -1078,9 +1126,9 @@ public class LevelCompleteUI : MonoBehaviour
                 }
                 
                 // Update balance text
-                if (totalCoinsText != null)
+                if (balanceText != null)
                 {
-                    totalCoinsText.text = displayedBalance.ToString();
+                    balanceText.text = newBalance.ToString();
                 }
                 
                 // Destroy coin particle
@@ -1094,9 +1142,11 @@ public class LevelCompleteUI : MonoBehaviour
         // If coin didn't reach (shouldn't happen), destroy it anyway
         if (coinParticle != null)
         {
-            coinsCollectedInAnimation += coinValue;
-            displayedBalance = displayedBalance + coinValue;
+            int newBalance = updateBalance(coinValue);
             
+            if (balanceText == totalCoinsText) coinsCollectedInAnimation += coinValue;
+            else if (balanceText == totalEnergySpheresText) energySpheresCollectedInAnimation += coinValue;
+
             // Play collect sound
             if (coinCollectSound != null && audioSource != null)
             {
@@ -1104,9 +1154,9 @@ public class LevelCompleteUI : MonoBehaviour
             }
             
             // Update balance text
-            if (totalCoinsText != null)
+            if (balanceText != null)
             {
-                totalCoinsText.text = displayedBalance.ToString();
+                balanceText.text = newBalance.ToString();
             }
             
             Destroy(coinParticle);
@@ -1553,7 +1603,7 @@ public class LevelCompleteUI : MonoBehaviour
                 totalCoinsText.text = balanceBeforeDoubling.ToString();
             }
             // Pass null for earnedText to prevent overwriting the doubled value we just set
-            yield return StartCoroutine(AnimateCoins(additionalCoins, balanceBeforeDoubling, coinIconTransform, null));
+            yield return StartCoroutine(AnimateCoins(additionalCoins, balanceBeforeDoubling, coinIconTransform, balanceIconTransform, totalCoinsText, null));
         }
         
         // Animate coins flying for boss reward
@@ -1568,7 +1618,7 @@ public class LevelCompleteUI : MonoBehaviour
                 totalCoinsText.text = balanceAfterLevel.ToString();
             }
             // Pass null for earnedText to prevent overwriting the doubled value we just set
-            yield return StartCoroutine(AnimateCoins(additionalBossReward, balanceAfterLevel, bossRewardIconTransform, null));
+            yield return StartCoroutine(AnimateCoins(additionalBossReward, balanceAfterLevel, bossRewardIconTransform, balanceIconTransform, totalCoinsText, null));
         }
         
         // Wait a brief moment after animation completes

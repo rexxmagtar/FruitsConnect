@@ -13,10 +13,14 @@ namespace JigsawSystem
         [SerializeField] private GameObject panel;
         [SerializeField] private Image fullImage;
         [SerializeField] private TextMeshProUGUI rewardText;
+        [SerializeField] private Image rewardIconImage;
         [SerializeField] private RectTransform rewardIcon;
-        [SerializeField] private TextMeshProUGUI totalCoinsText;
+        [SerializeField] private TextMeshProUGUI totalBalanceText;
         [SerializeField] private RectTransform balanceIconTransform;
+        [SerializeField] private Sprite coinIconSprite;
+        [SerializeField] private Sprite energySphereIconSprite;
         [SerializeField] private GameObject coinPrefab;
+        [SerializeField] private GameObject energySpherePrefab;
         [SerializeField] private CanvasGroup canvasGroup;
 
         [Header("Animation Settings")]
@@ -42,7 +46,7 @@ namespace JigsawSystem
         [SerializeField] private AudioSource audioSource;
 
         private JigsawPuzzleData currentPuzzle;
-        private int coinsCollectedInAnimation = 0;
+        private int collectedInAnimation = 0;
         private int displayedBalance = 0;
 
         public void Show(JigsawPuzzleData data)
@@ -51,12 +55,28 @@ namespace JigsawSystem
             fullImage.sprite = data.fullImage;
             rewardText.text = "+" + data.completionReward.ToString();
             
-            // Set initial balance display
-            int currentBalance = ProgressSaveManager<SaveData>.Instance.GetCoins();
-            int initialBalance = currentBalance - data.completionReward;
-            if (totalCoinsText != null)
+            // Set reward icon
+            if (rewardIconImage != null)
             {
-                totalCoinsText.text = initialBalance.ToString();
+                rewardIconImage.sprite = data.rewardType == PuzzleRewardType.Coins ? coinIconSprite : energySphereIconSprite;
+            }
+
+            // Set initial balance display
+            int initialBalance = 0;
+            if (data.rewardType == PuzzleRewardType.Coins)
+            {
+                int currentBalance = SaveDataHelper.TotalCoins;
+                initialBalance = currentBalance - data.completionReward;
+            }
+            else
+            {
+                int currentBalance = SaveDataHelper.TotalEnergySpheres;
+                initialBalance = currentBalance - data.completionReward;
+            }
+
+            if (totalBalanceText != null)
+            {
+                totalBalanceText.text = initialBalance.ToString();
             }
             displayedBalance = initialBalance;
             
@@ -88,8 +108,9 @@ namespace JigsawSystem
             
             yield return new WaitForSeconds(0.5f);
 
-            // Coin animation
-            yield return StartCoroutine(AnimateCoins(currentPuzzle.completionReward, displayedBalance));
+            // Coin/Energy animation
+            GameObject prefabToUse = currentPuzzle.rewardType == PuzzleRewardType.Coins ? coinPrefab : energySpherePrefab;
+            yield return StartCoroutine(AnimateRewards(currentPuzzle.completionReward, displayedBalance, prefabToUse));
 
             yield return new WaitForSeconds(1.0f);
             
@@ -102,7 +123,7 @@ namespace JigsawSystem
             panel.SetActive(false);
         }
 
-        private IEnumerator AnimateCoins(int coinsToAnimate, int currentBalance)
+        private IEnumerator AnimateRewards(int amountToAnimate, int currentBalance, GameObject prefab)
         {
             // Use default icon if none provided
             RectTransform sourceIcon = rewardIcon;
@@ -111,111 +132,102 @@ namespace JigsawSystem
             // Check if we have required references
             if (sourceIcon == null || targetIcon == null)
             {
-                Debug.LogWarning("[PuzzleSolveUiPopup] Reward icon or balance icon transform not assigned. Skipping coin animation.");
+                Debug.LogWarning("[PuzzleSolveUiPopup] Reward icon or balance icon transform not assigned. Skipping animation.");
                 // Still update the balance text
-                if (totalCoinsText != null)
+                if (totalBalanceText != null)
                 {
-                    totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+                    totalBalanceText.text = (currentBalance + amountToAnimate).ToString();
                 }
                 yield break;
             }
             
-            // Calculate number of coins to spawn
-            int coinsToSpawn = Mathf.Min(coinCount, coinsToAnimate);
-            int coinsPerParticle = coinsToAnimate / coinsToSpawn;
-            int remainingCoins = coinsToAnimate % coinsToSpawn;
+            // Calculate number of particles to spawn
+            int particlesToSpawn = Mathf.Min(coinCount, amountToAnimate);
+            int valuePerParticle = amountToAnimate / particlesToSpawn;
+            int remainingValue = amountToAnimate % particlesToSpawn;
             
             // Get world positions
             Vector3 startPos = sourceIcon.position;
             Vector3 endPos = targetIcon.position;
             
             // Initialize animation state
-            coinsCollectedInAnimation = 0;
+            collectedInAnimation = 0;
             displayedBalance = currentBalance;
             
-            // List to track active coin particles
-            System.Collections.Generic.List<GameObject> activeCoins = new System.Collections.Generic.List<GameObject>();
+            // List to track active particles
+            System.Collections.Generic.List<GameObject> activeParticles = new System.Collections.Generic.List<GameObject>();
             
-            // Spawn coins with intervals
-            for (int i = 0; i < coinsToSpawn; i++)
+            // Spawn particles with intervals
+            for (int i = 0; i < particlesToSpawn; i++)
             {
-                int coinsForThisParticle = coinsPerParticle + (i < remainingCoins ? 1 : 0);
+                int valueForThisParticle = valuePerParticle + (i < remainingValue ? 1 : 0);
                 
-                // Create coin particle
-                GameObject coinParticle = null;
-                if (coinPrefab != null)
+                // Create particle
+                GameObject particle = null;
+                if (prefab != null)
                 {
-                    coinParticle = Instantiate(coinPrefab, transform);
+                    particle = Instantiate(prefab, transform);
                 }
                 else
                 {
                     // Create a simple sprite if no prefab is assigned
-                    coinParticle = new GameObject("CoinParticle");
-                    coinParticle.transform.SetParent(transform);
-                    Image image = coinParticle.AddComponent<Image>();
+                    particle = new GameObject("RewardParticle");
+                    particle.transform.SetParent(transform);
+                    Image image = particle.AddComponent<Image>();
                     image.color = Color.yellow;
-                    RectTransform rectTransform = coinParticle.GetComponent<RectTransform>();
+                    RectTransform rectTransform = particle.GetComponent<RectTransform>();
                     rectTransform.sizeDelta = coinParticleSize;
                 }
 
                 // Ensure particle doesn't affect layout
-                LayoutElement layoutElement = coinParticle.GetComponent<LayoutElement>();
-                if (layoutElement == null) layoutElement = coinParticle.AddComponent<LayoutElement>();
+                LayoutElement layoutElement = particle.GetComponent<LayoutElement>();
+                if (layoutElement == null) layoutElement = particle.AddComponent<LayoutElement>();
                 layoutElement.ignoreLayout = true;
                 
-                coinParticle.transform.position = startPos;
-                activeCoins.Add(coinParticle);
+                particle.transform.position = startPos;
+                activeParticles.Add(particle);
                 
-                // Start coroutine to animate this coin particle
-                StartCoroutine(AnimateCoinParticle(coinParticle, startPos, endPos, coinsForThisParticle));
+                // Start coroutine to animate this particle
+                StartCoroutine(AnimateParticle(particle, startPos, endPos, valueForThisParticle));
                 
-                // Wait before spawning next coin
-                if (i < coinsToSpawn - 1)
+                // Wait before spawning next particle
+                if (i < particlesToSpawn - 1)
                 {
                     yield return new WaitForSeconds(coinSpawnInterval);
                 }
             }
             
-            // Wait for all coins to be collected
-            while (activeCoins.Count > 0)
+            // Wait for all particles to be collected
+            while (activeParticles.Count > 0)
             {
-                activeCoins.RemoveAll(coin => coin == null);
+                activeParticles.RemoveAll(p => p == null);
                 yield return null;
             }
             
             // Ensure final balance is correct
-            if (totalCoinsText != null)
+            if (totalBalanceText != null)
             {
-                totalCoinsText.text = (currentBalance + coinsToAnimate).ToString();
+                totalBalanceText.text = (currentBalance + amountToAnimate).ToString();
             }
         }
 
-        private IEnumerator AnimateCoinParticle(GameObject coinParticle, Vector3 startPos, Vector3 endPos, int coinValue)
+        private IEnumerator AnimateParticle(GameObject particle, Vector3 startPos, Vector3 endPos, int value)
         {
             float elapsed = 0f;
             bool hasReached = false;
             
-            // Optional: add a small random arc like in the original implementation
-            Vector3 midPos = (startPos + endPos) / 2f + (Vector3)Random.insideUnitCircle * 100f;
-
-            while (elapsed < coinAnimationDuration && coinParticle != null)
+            while (elapsed < coinAnimationDuration && particle != null)
             {
                 elapsed += Time.deltaTime;
                 float t = elapsed / coinAnimationDuration;
                 
-                // Move coin toward balance position with a slight curve if desired
-                // For simplicity and "same logic", let's use Lerp or a simple curve
-                // LevelCompleteUI uses Lerp: coinParticle.transform.position = Vector3.Lerp(startPos, endPos, t);
+                particle.transform.position = Vector3.Lerp(startPos, endPos, t);
                 
-                // Let's use a simple Lerp to match LevelCompleteUI exactly
-                coinParticle.transform.position = Vector3.Lerp(startPos, endPos, t);
-                
-                // Check if coin has reached balance position
-                if (!hasReached && Vector3.Distance(coinParticle.transform.position, endPos) <= coinReachThreshold)
+                // Check if particle has reached target position
+                if (!hasReached && Vector3.Distance(particle.transform.position, endPos) <= coinReachThreshold)
                 {
                     hasReached = true;
-                    coinsCollectedInAnimation += coinValue;
-                    displayedBalance = displayedBalance + coinValue;
+                    displayedBalance = displayedBalance + value;
                     
                     // Play collect sound
                     if (audioSource != null && coinSound != null)
@@ -224,36 +236,34 @@ namespace JigsawSystem
                     }
                     
                     // Update balance text
-                    if (totalCoinsText != null)
+                    if (totalBalanceText != null)
                     {
-                        totalCoinsText.text = displayedBalance.ToString();
+                        totalBalanceText.text = displayedBalance.ToString();
                     }
                     
-                    // Destroy coin particle
-                    Destroy(coinParticle);
+                    // Destroy particle
+                    Destroy(particle);
                     yield break;
                 }
                 
                 yield return null;
             }
             
-            // If coin didn't reach (shouldn't happen), destroy it anyway
-            if (coinParticle != null)
+            if (particle != null)
             {
-                coinsCollectedInAnimation += coinValue;
-                displayedBalance = displayedBalance + coinValue;
+                displayedBalance = displayedBalance + value;
                 
                 if (audioSource != null && coinSound != null)
                 {
                     audioSource.PlayOneShot(coinSound);
                 }
                 
-                if (totalCoinsText != null)
+                if (totalBalanceText != null)
                 {
-                    totalCoinsText.text = displayedBalance.ToString();
+                    totalBalanceText.text = displayedBalance.ToString();
                 }
                 
-                Destroy(coinParticle);
+                Destroy(particle);
             }
         }
 

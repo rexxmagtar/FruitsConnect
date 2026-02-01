@@ -144,7 +144,14 @@ namespace JigsawSystem
                 var puzzleData = config.GetPuzzle(puzzleId);
                 if (puzzleData != null)
                 {
-                    ProgressSaveManager<SaveData>.Instance.AddCoins(puzzleData.completionReward);
+                    if (puzzleData.rewardType == PuzzleRewardType.Coins)
+                    {
+                        saveData.TotalCoins += puzzleData.completionReward;
+                    }
+                    else
+                    {
+                        saveData.TotalEnergySpheres += puzzleData.completionReward;
+                    }
                 }
                 
                 ProgressSaveManager<SaveData>.Instance.SaveGameData();

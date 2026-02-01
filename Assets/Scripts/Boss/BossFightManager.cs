@@ -42,6 +42,7 @@ public class BossFightManager : MonoBehaviour
     
     // Reward State
     private int bossBaseReward;
+    private int bossEnergyReward;
     private float bossTimeMultiplier;
     private bool bossDefeated;
     
@@ -639,12 +640,13 @@ public class BossFightManager : MonoBehaviour
         if (currentLevelConfig != null)
         {
             bossBaseReward = currentLevelConfig.BossGoldReward;
+            bossEnergyReward = currentLevelConfig.BossEnergySphereReward;
             // Linear interpolation between x1 (time out) and x3 (instant kill)
             float multiplier = 1f + 2f * Mathf.Clamp01(timeRemaining / timeLimit);
             // Round to 2 decimal places
             bossTimeMultiplier = Mathf.Round(multiplier * 100f) / 100f;
             
-            Debug.Log($"Boss defeated (HP 0)! Timer stopped. Base Reward: {bossBaseReward}, Multiplier: {bossTimeMultiplier:F2}");
+            Debug.Log($"Boss defeated (HP 0)! Timer stopped. Base Reward: {bossBaseReward}, Energy Reward: {bossEnergyReward}, Multiplier: {bossTimeMultiplier:F2}");
         }
     }
     
@@ -676,6 +678,7 @@ public class BossFightManager : MonoBehaviour
         if (currentLevelConfig != null)
         {
             bossBaseReward = currentLevelConfig.BossGoldReward;
+            bossEnergyReward = currentLevelConfig.BossEnergySphereReward;
             bossTimeMultiplier = 1f;
         }
         
@@ -721,7 +724,7 @@ public class BossFightManager : MonoBehaviour
         GameController gameController = GameController.Instance;
         if (gameController != null)
         {
-            gameController.ShowLevelCompleteScreen(bossBaseReward, bossTimeMultiplier, bossDefeated);
+            gameController.ShowLevelCompleteScreen(bossBaseReward, bossEnergyReward, bossTimeMultiplier, bossDefeated);
         }
         
         // Reset state

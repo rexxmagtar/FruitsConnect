@@ -987,6 +987,18 @@ PrefabInstance:
       propertyPath: ShapeModule.m_SkinnedMeshRenderer
       value: 
       objectReference: {fileID: 5967167426802030764}
+    - target: {fileID: 8324274440917960474, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8324274440917960474, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8324274440917960474, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
+      propertyPath: InitialModule.startColor.maxColor.r
+      value: 0.8648424
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 361874984402578057, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}

@@ -525,7 +525,8 @@ public class GameController : MonoBehaviour
         if (levelFailedUI != null)
         {
             int reward = currentLevelConfig != null ? currentLevelConfig.CoinReward : 0;
-            levelFailedUI.Show(reward);
+            int energyReward = currentLevelConfig != null ? currentLevelConfig.EnergySphereReward : 0;
+            levelFailedUI.Show(reward, energyReward);
         }
         else
         {
@@ -550,7 +551,9 @@ public class GameController : MonoBehaviour
             // LevelFailedUI doesn't add coins yet. I should add them here.
             
             int reward = (int)(currentLevelConfig.CoinReward * 0.3f);
+            int energyReward = (int)(currentLevelConfig.EnergySphereReward * 0.3f);
             GameManager.Instance.AddCoins(reward);
+            GameManager.Instance.AddEnergySpheres(energyReward);
 
             // Complete level (increments CurrentLevel)
             GameManager.Instance.CompleteLevel();
@@ -702,20 +705,20 @@ public class GameController : MonoBehaviour
             {
                 Debug.LogError("GameController: BossFightManager not found! Cannot start boss fight.");
                 // Fall back to normal level complete
-                ShowLevelCompleteScreen();
+                ShowLevelCompleteScreen(0, 0);
             }
         }
         else
         {
             // Normal level complete flow
-            ShowLevelCompleteScreen();
+            ShowLevelCompleteScreen(0, 0);
         }
     }
     
     /// <summary>
     /// Show level complete screen (called after boss fight or for normal levels)
     /// </summary>
-    public void ShowLevelCompleteScreen(int bossBaseReward = 0, float multiplier = 1f, bool bossDefeated = false)
+    public void ShowLevelCompleteScreen(int bossBaseReward = 0, int bossEnergyReward = 0, float multiplier = 1f, bool bossDefeated = false)
     {
         int coinsEarned = 0;
         int nextLevel = 1;
@@ -728,13 +731,19 @@ public class GameController : MonoBehaviour
             if (config != null)
             {
                 coinsEarned = config.CoinReward;
+                int energySpheresEarned = config.EnergySphereReward;
                 
                 // Calculate boss final reward
                 int bossFinalReward = bossDefeated ? (int)(bossBaseReward * multiplier) : 0;
+                int bossFinalEnergyReward = bossDefeated ? (int)(config.BossEnergySphereReward * multiplier) : 0;
                 
                 // Award all coins (regular level + boss bounty + monster bounty)
                 int totalCoinsAwarded = coinsEarned + bossFinalReward + monsterCoinsEarned;
                 GameManager.Instance.AddCoins(totalCoinsAwarded);
+
+                // Award energy spheres
+                int totalEnergyAwarded = energySpheresEarned + bossFinalEnergyReward;
+                GameManager.Instance.AddEnergySpheres(totalEnergyAwarded);
                 
                 // Complete level (increments CurrentLevel)
                 GameManager.Instance.CompleteLevel();
@@ -758,7 +767,7 @@ public class GameController : MonoBehaviour
                 if (levelCompleteUI != null)
                 {
                     // Pass coinsEarned + finalMonsterBounty as the base reward to show in UI
-                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, nextLevel, bossBaseReward, multiplier, bossDefeated, puzzlePieces);
+                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, energySpheresEarned, nextLevel, bossBaseReward, config.BossEnergySphereReward, multiplier, bossDefeated, puzzlePieces);
                 }
                 else
                 {
@@ -773,7 +782,7 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void OnLevelCompleteFallback()
     {
-        ShowLevelCompleteScreen();
+        ShowLevelCompleteScreen(0, 0);
     }
     
     /// <summary>

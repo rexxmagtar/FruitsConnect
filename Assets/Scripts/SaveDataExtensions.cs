@@ -48,6 +48,14 @@ public static class SaveDataExtensions
     {
         return GetSaveData().TotalCoins;
     }
+
+    /// <summary>
+    /// Get total energy spheres
+    /// </summary>
+    public static int GetTotalEnergySpheres()
+    {
+        return GetSaveData().TotalEnergySpheres;
+    }
     
     /// <summary>
     /// Set total coins
@@ -56,6 +64,16 @@ public static class SaveDataExtensions
     {
         var saveData = GetSaveData();
         saveData.TotalCoins = coins;
+        Save();
+    }
+
+    /// <summary>
+    /// Set total energy spheres
+    /// </summary>
+    public static void SetTotalEnergySpheres(int spheres)
+    {
+        var saveData = GetSaveData();
+        saveData.TotalEnergySpheres = spheres;
         Save();
     }
     
@@ -71,6 +89,20 @@ public static class SaveDataExtensions
         Save();
         
         Debug.Log($"[SaveData] Added {amount} coins. Total: {saveData.TotalCoins}");
+    }
+
+    /// <summary>
+    /// Add energy spheres to total
+    /// </summary>
+    public static void AddEnergySpheres(int amount)
+    {
+        if (amount <= 0) return;
+
+        var saveData = GetSaveData();
+        saveData.TotalEnergySpheres += amount;
+        Save();
+
+        Debug.Log($"[SaveData] Added {amount} energy spheres. Total: {saveData.TotalEnergySpheres}");
     }
     
     /// <summary>
@@ -94,6 +126,28 @@ public static class SaveDataExtensions
         Debug.Log($"[SaveData] Removed {amount} coins. Total: {saveData.TotalCoins}");
         return true;
     }
+
+    /// <summary>
+    /// Remove energy spheres from total
+    /// </summary>
+    public static bool RemoveEnergySpheres(int amount)
+    {
+        if (amount <= 0) return false;
+
+        var saveData = GetSaveData();
+
+        if (saveData.TotalEnergySpheres < amount)
+        {
+            Debug.LogWarning($"[SaveData] Not enough energy spheres. Have: {saveData.TotalEnergySpheres}, Need: {amount}");
+            return false;
+        }
+
+        saveData.TotalEnergySpheres -= amount;
+        Save();
+
+        Debug.Log($"[SaveData] Removed {amount} energy spheres. Total: {saveData.TotalEnergySpheres}");
+        return true;
+    }
     
     /// <summary>
     /// Complete current level and move to next
@@ -105,6 +159,42 @@ public static class SaveDataExtensions
         Save();
         
         Debug.Log($"[SaveData] Level completed! Now on level {saveData.CurrentLevel + 1}");
+    }
+
+    /// <summary>
+    /// Get base level
+    /// </summary>
+    public static int GetBaseLevel()
+    {
+        return GetSaveData().BaseLevel;
+    }
+
+    /// <summary>
+    /// Set base level
+    /// </summary>
+    public static void SetBaseLevel(int level)
+    {
+        var saveData = GetSaveData();
+        saveData.BaseLevel = level;
+        Save();
+    }
+
+    /// <summary>
+    /// Get progress within the current base stage (energy spent)
+    /// </summary>
+    public static int GetBaseStageProgress()
+    {
+        return GetSaveData().BaseStageProgress;
+    }
+
+    /// <summary>
+    /// Set progress within the current base stage
+    /// </summary>
+    public static void SetBaseStageProgress(int progress)
+    {
+        var saveData = GetSaveData();
+        saveData.BaseStageProgress = progress;
+        Save();
     }
     
     /// <summary>
@@ -166,12 +256,19 @@ public static class SaveDataHelper
     public static int CurrentLevel => SaveDataExtensions.GetCurrentLevel();
     public static int CurrentLevelNumber => SaveDataExtensions.GetCurrentLevelNumber();
     public static int TotalCoins => SaveDataExtensions.GetTotalCoins();
+    public static int TotalEnergySpheres => SaveDataExtensions.GetTotalEnergySpheres();
+    public static int BaseLevel => SaveDataExtensions.GetBaseLevel();
+    public static int BaseStageProgress => SaveDataExtensions.GetBaseStageProgress();
     public static bool AdsEnabled => SaveDataExtensions.IsAdEnabled();
     
     public static void Save() => SaveDataExtensions.Save();
     public static void AddCoins(int amount) => SaveDataExtensions.AddCoins(amount);
+    public static void AddEnergySpheres(int amount) => SaveDataExtensions.AddEnergySpheres(amount);
     public static bool RemoveCoins(int amount) => SaveDataExtensions.RemoveCoins(amount);
+    public static bool RemoveEnergySpheres(int amount) => SaveDataExtensions.RemoveEnergySpheres(amount);
     public static void CompleteLevel() => SaveDataExtensions.CompleteCurrentLevel();
     public static bool HasCoins(int amount) => SaveDataExtensions.HasEnoughCoins(amount);
+    public static void SetBaseLevel(int level) => SaveDataExtensions.SetBaseLevel(level);
+    public static void SetBaseStageProgress(int progress) => SaveDataExtensions.SetBaseStageProgress(progress);
 }
 

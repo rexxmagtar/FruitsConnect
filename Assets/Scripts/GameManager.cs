@@ -11,6 +11,9 @@ public class SaveData
 {
     public int CurrentLevel { get; set; }
     public int TotalCoins { get; set; }
+    public int TotalEnergySpheres { get; set; }
+    public int BaseLevel { get; set; }
+    public int BaseStageProgress { get; set; }
     public bool IsAdEnabled { get; set; }
     
     // Connection Speed Upgrade
@@ -409,6 +412,22 @@ public class GameManager : MonoBehaviour
         progressManager.SaveGameData();
         
         LogDebug($"Modified coins by {amount}. Total: {saveData.TotalCoins}");
+    }
+
+    /// <summary>
+    /// Add or remove energy spheres from player's total
+    /// </summary>
+    public void AddEnergySpheres(int amount)
+    {
+        if (amount == 0) return;
+
+        var progressManager = ProgressSaveManager<SaveData>.Instance;
+        var saveData = progressManager.GetGameData();
+
+        saveData.TotalEnergySpheres += amount;
+        progressManager.SaveGameData();
+
+        LogDebug($"Modified energy spheres by {amount}. Total: {saveData.TotalEnergySpheres}");
     }
     
     /// <summary>

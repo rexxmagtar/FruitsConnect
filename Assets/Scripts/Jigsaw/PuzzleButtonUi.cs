@@ -11,6 +11,9 @@ namespace JigsawSystem
         [SerializeField] private GameObject lockedOverlay;
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private TextMeshProUGUI rewardText;
+        [SerializeField] private Image rewardIcon;
+        [SerializeField] private Sprite coinIconSprite;
+        [SerializeField] private Sprite energySphereIconSprite;
         [SerializeField] private GameObject solvedCheckbox;
         [SerializeField] private Button button;
 
@@ -36,6 +39,10 @@ namespace JigsawSystem
             }
 
             if (rewardText != null) rewardText.text = data.completionReward.ToString();
+            if (rewardIcon != null)
+            {
+                rewardIcon.sprite = data.rewardType == PuzzleRewardType.Coins ? coinIconSprite : energySphereIconSprite;
+            }
 
             Refresh();
 

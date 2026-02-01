@@ -17,8 +17,10 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private Button shopButton;
     [SerializeField] private Button jigsawButton;
     [SerializeField] private Button skinSelectButton;
+    [SerializeField] private Button baseBuildingButton;
     [SerializeField] private GameObject jigsawLocker;
     [SerializeField] private GameObject skinSelectLocker;
+    [SerializeField] private GameObject baseBuildingLocker;
     [SerializeField] private TextMeshProUGUI startButtonText;
     [SerializeField] private TextMeshProUGUI levelNumberText;
     [SerializeField] private TextMeshProUGUI balanceText;
@@ -51,6 +53,7 @@ public class MainMenuUI : MonoBehaviour
     [SerializeField] private SettingsUI settingsUI;
     [SerializeField] private JigsawPuzzleSelectScreen jigsawSelectScreen;
     [SerializeField] private HitParticlesSelectUI hitParticlesSelectUI;
+    [SerializeField] private BaseBuildingUI baseBuildingUI;
     // Events
     public static event System.Action OnStartButtonPressed;
     
@@ -97,6 +100,11 @@ public class MainMenuUI : MonoBehaviour
             skinSelectButton.onClick.AddListener(OnSkinSelectButtonClick);
         }
         
+        if (baseBuildingButton != null)
+        {
+            baseBuildingButton.onClick.AddListener(OnBaseBuildingButtonClick);
+        }
+        
 
 
     }
@@ -116,6 +124,10 @@ public class MainMenuUI : MonoBehaviour
         if (hitParticlesSelectUI != null)
         {
             hitParticlesSelectUI.OnClosed += Refresh;
+        }
+        if (baseBuildingUI != null)
+        {
+            baseBuildingUI.OnClosed += Show;
         }
 
         gameObject.SetActive(false);
@@ -404,6 +416,20 @@ public class MainMenuUI : MonoBehaviour
         {
             hitParticlesSelectUI.gameObject.SetActive(true);
             hitParticlesSelectUI.RefreshUI();
+        }
+    }
+
+    private void OnBaseBuildingButtonClick()
+    {
+        if (buttonClickSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+
+        if (baseBuildingUI != null)
+        {
+            Hide();
+            baseBuildingUI.Show();
         }
     }
     
@@ -702,8 +728,21 @@ public class MainMenuUI : MonoBehaviour
             skinSelectLocker.SetActive(skinSelectLocked);
         }
         SetButtonContentVisibility(skinSelectButton, !skinSelectLocked, skinSelectLocker);
+
+        // 4. Base Building: Locked until level 15 completed (started level 16)
+        // Level 16 is index 15.
+        bool baseBuildingLocked = currentLevelIndex < 15;
+        if (baseBuildingButton != null)
+        {
+            baseBuildingButton.interactable = !baseBuildingLocked;
+        }
+        if (baseBuildingLocker != null)
+        {
+            baseBuildingLocker.SetActive(baseBuildingLocked);
+        }
+        SetButtonContentVisibility(baseBuildingButton, !baseBuildingLocked, baseBuildingLocker);
         
-        Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, JigsawLocked={jigsawLocked}, SkinLocked={skinSelectLocked}");
+        Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, JigsawLocked={jigsawLocked}, SkinLocked={skinSelectLocked}, BaseBuildingLocked={baseBuildingLocked}");
     }
     
     /// <summary>
@@ -818,6 +857,10 @@ public class MainMenuUI : MonoBehaviour
         if (hitParticlesSelectUI != null)
         {
             hitParticlesSelectUI.OnClosed -= Refresh;
+        }
+        if (baseBuildingUI != null)
+        {
+            baseBuildingUI.OnClosed -= Show;
         }
     }
 }

@@ -2,6 +2,12 @@ using UnityEngine;
 
 namespace JigsawSystem
 {
+    public enum PuzzleRewardType
+    {
+        Coins,
+        EnergySpheres
+    }
+
     [CreateAssetMenu(fileName = "JigsawPuzzleData", menuName = "Fruit Connect/Jigsaw/Puzzle Data")]
     public class JigsawPuzzleData : ScriptableObject
     {
@@ -11,6 +17,7 @@ namespace JigsawSystem
         public Sprite fullImage;
         public Sprite fullBlurredImage;
         public int completionReward = 100;
+        public PuzzleRewardType rewardType = PuzzleRewardType.Coins;
 
         [Header("Pieces (3x3 - 9 pieces total)")]
         [Tooltip("Order: Row 0 (top) [0,1,2], Row 1 [3,4,5], Row 2 [6,7,8]")]

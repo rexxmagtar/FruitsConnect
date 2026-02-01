@@ -9,6 +9,7 @@ public class LevelConfig : ScriptableObject
     
     [Header("Rewards")]
     [SerializeField] private int coinReward = 10;
+    [SerializeField] private int energySphereReward = 5;
     [SerializeField] private int monsterBounty = 5;
     
     [Header("Info")]
@@ -27,6 +28,9 @@ public class LevelConfig : ScriptableObject
     
     [Tooltip("Gold reward for defeating the boss (only awarded if boss is killed in time)")]
     [SerializeField] private int bossGoldReward = 50;
+
+    [Tooltip("Energy spheres reward for defeating the boss")]
+    [SerializeField] private int bossEnergySphereReward = 20;
     
     [Tooltip("Time limit in seconds to defeat the boss")]
     [SerializeField] private float bossFightTimeLimit = 30f;
@@ -44,12 +48,14 @@ public class LevelConfig : ScriptableObject
     
     public GameObject LevelPrefab => levelPrefab;
     public int CoinReward => coinReward;
+    public int EnergySphereReward => energySphereReward;
     public int MonsterBounty => monsterBounty;
     public string LevelName => levelName;
     public int StartingEnergy => startingEnergy;
     public GameObject ConnectionAnimationPrefab => connectionAnimationPrefab;
     public bool IsBossFight => isBossFight;
     public int BossGoldReward => bossGoldReward;
+    public int BossEnergySphereReward => bossEnergySphereReward;
     public float BossFightTimeLimit => bossFightTimeLimit;
     public System.Collections.Generic.List<string> PuzzlePieceRewards => puzzlePieceRewards;
     
