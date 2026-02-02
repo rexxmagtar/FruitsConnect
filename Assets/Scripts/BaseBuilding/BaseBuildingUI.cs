@@ -21,6 +21,9 @@ public class BaseBuildingUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI nextLevelText;
     [SerializeField] private TextMeshProUGUI energyBalanceText;
     [SerializeField] private GameObject energyBalanceContainer;
+    [SerializeField] private Image energySphereIcon;
+    [SerializeField] private Sprite normalSphereSprite;
+    [SerializeField] private Sprite graySphereSprite;
     [SerializeField] private RectTransform buildButtonCenter;
     
     [Header("World Space References")]
@@ -32,6 +35,8 @@ public class BaseBuildingUI : MonoBehaviour
     [Header("Animation Settings")]
     [SerializeField] private GameObject energySpherePrefab;
     [SerializeField] private float sphereFlyDuration = 1f;
+    [SerializeField] private float arcHeight = 3f;
+    [SerializeField] private float arcSideOffset = 2f;
     [SerializeField] private float buildInterval = 0.2f;
     [SerializeField] private float scrollDuration = 0.5f;
     [SerializeField] private float scrollDistance = 10f;
@@ -43,12 +48,14 @@ public class BaseBuildingUI : MonoBehaviour
     [SerializeField] private AudioClip stageCompleteSound;
     [SerializeField] private AudioClip objectCompleteSound;
 
-    private const int ENERGY_PER_SPHERE = 10;
+    private const int ENERGY_PER_SPHERE = 1;
     
     private int currentObjectIndex = 0;
     private bool isHoldingBuild = false;
     private float lastBuildTime = 0f;
     private List<BaseObject> instantiatedBaseObjects = new List<BaseObject>();
+    private Queue<GameObject> spherePool = new Queue<GameObject>();
+    private float currentSideOffset;
     private AudioSource audioSource;
     private Camera mainCamera;
     private Vector3 initialContainerPosition;
@@ -86,8 +93,42 @@ public class BaseBuildingUI : MonoBehaviour
 
     private void Start()
     {
+        InitializePool();
         InitializeBases();
         UpdateUI();
+    }
+
+    private void InitializePool()
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            GameObject sphere = Instantiate(energySpherePrefab, transform);
+            sphere.SetActive(false);
+            spherePool.Enqueue(sphere);
+        }
+    }
+
+    private GameObject GetSphereFromPool()
+    {
+        if (spherePool.Count > 0)
+        {
+            GameObject sphere = spherePool.Dequeue();
+            sphere.SetActive(true);
+            return sphere;
+        }
+        else
+        {
+            // Fallback if pool is empty
+            GameObject sphere = Instantiate(energySpherePrefab, transform);
+            return sphere;
+        }
+    }
+
+    private void ReturnSphereToPool(GameObject sphere)
+    {
+        sphere.SetActive(false);
+        sphere.transform.SetParent(transform);
+        spherePool.Enqueue(sphere);
     }
 
     private void InitializeBases()
@@ -104,10 +145,25 @@ public class BaseBuildingUI : MonoBehaviour
             var baseObj = objGo.GetComponent<BaseObject>();
             instantiatedBaseObjects.Add(baseObj);
             
+            // Provide camera reference for world-space UI billboarding
+            baseObj.SetCamera(baseViewCamera);
+            
             // Set initial visual state
             int objLevel = (i < currentObjectIndex) ? 10 : (i == currentObjectIndex ? (totalLevel % 10) : 0);
-            float progress = (i == currentObjectIndex) ? (float)SaveDataExtensions.GetBaseStageProgress() / baseConfig.baseObjects[i].stagePrices[totalLevel % 10] : 0f;
+            int stagePrice = baseConfig.baseObjects[i].stagePrices[objLevel < 10 ? objLevel : 9];
+            int currentStageProgress = (i == currentObjectIndex) ? SaveDataExtensions.GetBaseStageProgress() : 0;
+            float progress = (float)currentStageProgress / stagePrice;
+            
             baseObj.UpdateVisuals(objLevel, progress, true); // Use immediate=true for initialization
+            
+            if (i == currentObjectIndex && objLevel < 10)
+            {
+                var stage = baseObj.GetStage(objLevel);
+                if (stage != null)
+                {
+                    stage.UpdatePriceText(stagePrice - currentStageProgress);
+                }
+            }
         }
         
         // Position container so current object is at center relative to its initial position
@@ -140,20 +196,56 @@ public class BaseBuildingUI : MonoBehaviour
         
         if (currentProgress >= totalPrice) return;
 
-        int toDeduct = Mathf.Min(ENERGY_PER_SPHERE, totalPrice - currentProgress);
+        int available = SaveDataExtensions.GetTotalEnergySpheres();
+        if (available <= 0) return;
+
+        // Spend at most ENERGY_PER_SPHERE at a time to ensure spheres spawn one by one
+        int toDeduct = Mathf.Min(ENERGY_PER_SPHERE, available);
+        toDeduct = Mathf.Min(toDeduct, totalPrice - currentProgress);
         
         if (SaveDataExtensions.RemoveEnergySpheres(toDeduct))
         {
+            UpdateBalanceUI(); // Update balance text immediately as soon as we spend
             AnimateEnergySphere(objIndex, stageIndex, toDeduct, totalPrice);
         }
     }
 
+    private void UpdateBalanceUI()
+    {
+        int totalEnergy = SaveDataExtensions.GetTotalEnergySpheres();
+        energyBalanceText.text = totalEnergy.ToString();
+        
+        if (energySphereIcon != null)
+        {
+            energySphereIcon.sprite = totalEnergy > 0 ? normalSphereSprite : graySphereSprite;
+        }
+
+        buildButton.interactable = totalEnergy > 0;
+    }
+
     private void AnimateEnergySphere(int objIndex, int stageIndex, int priceDeducted, int totalPrice)
     {
-        GameObject sphere = Instantiate(energySpherePrefab);
+        int sphereCount = priceDeducted;
+        List<GameObject> spheres = new List<GameObject>();
+        List<Vector3> startPositions = new List<Vector3>();
         
-        Vector3 startPos = baseViewCamera.ScreenToWorldPoint(new Vector3(buildButtonCenter.position.x, buildButtonCenter.position.y, baseViewCamera.nearClipPlane + 2f));
-        sphere.transform.position = startPos;
+        Vector3 baseStartPos = baseViewCamera.ScreenToWorldPoint(new Vector3(buildButtonCenter.position.x, buildButtonCenter.position.y, baseViewCamera.nearClipPlane + 2f));
+        
+        for (int i = 0; i < sphereCount; i++)
+        {
+            GameObject sphere = GetSphereFromPool();
+            Vector3 spawnPos = baseStartPos;
+            
+            // Minimal jitter just for overlapping, but they will follow the same arc
+            if (sphereCount > 1)
+            {
+                spawnPos += new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f));
+            }
+            
+            sphere.transform.position = spawnPos;
+            spheres.Add(sphere);
+            startPositions.Add(spawnPos);
+        }
         
         var targetObj = instantiatedBaseObjects[objIndex];
         var targetStage = targetObj.GetStage(stageIndex);
@@ -174,12 +266,34 @@ public class BaseBuildingUI : MonoBehaviour
             progressSlider.value = Mathf.Lerp(startFill, endFill, x);
             
             // Track moving target
-            if (sphere != null && targetStage != null)
+            if (targetStage != null)
             {
-                sphere.transform.position = Vector3.Lerp(startPos, targetStage.transform.position, x);
+                for (int i = 0; i < spheres.Count; i++)
+                {
+                    if (spheres[i] != null)
+                    {
+                        // Calculate base linear position
+                        Vector3 linearPos = Vector3.Lerp(startPositions[i], targetStage.transform.position, x);
+                        
+                        // Calculate direction and perpendicular for side offset
+                        Vector3 direction = (targetStage.transform.position - startPositions[i]).normalized;
+                        Vector3 sideDir = Vector3.Cross(direction, Vector3.up).normalized;
+                        
+                        // Add arc height (up) and side offset (perpendicular) based on a sine curve
+                        float curveFactor = Mathf.Sin(x * Mathf.PI);
+                        float heightOffset = arcHeight * curveFactor;
+                        float sideOffset = currentSideOffset * curveFactor;
+                        
+                        spheres[i].transform.position = linearPos + (Vector3.up * heightOffset) + (sideDir * sideOffset);
+                    }
+                }
             }
         }, 1f, sphereFlyDuration).SetEase(Ease.InQuad).OnComplete(() => {
-            if (sphere != null) Destroy(sphere);
+            foreach (var sphere in spheres)
+            {
+                if (sphere != null) ReturnSphereToPool(sphere);
+            }
+            
             if (endProgress >= totalPrice)
             {
                 OnStageBuildingProgressed(objIndex, stageIndex);
@@ -190,11 +304,7 @@ public class BaseBuildingUI : MonoBehaviour
         
         // Update visual progress on the 3D object
         targetObj.UpdateVisuals(stageIndex, endFill);
-        
-        int currentBalance = SaveDataExtensions.GetTotalEnergySpheres() + priceDeducted;
-        DOTween.To(() => currentBalance, x => {
-            energyBalanceText.text = x.ToString();
-        }, SaveDataExtensions.GetTotalEnergySpheres(), sphereFlyDuration);
+        targetStage.UpdatePriceText(totalPrice - endProgress);
     }
 
     private void OnStageBuildingProgressed(int objIndex, int stageIndex)
@@ -204,6 +314,17 @@ public class BaseBuildingUI : MonoBehaviour
         SaveDataExtensions.SetBaseStageProgress(0); // Reset progress for next stage
         
         instantiatedBaseObjects[objIndex].UpdateVisuals(stageIndex + 1, 0f);
+        
+        // Update price text for the next stage if it exists
+        if (stageIndex + 1 < 10)
+        {
+            var nextStage = instantiatedBaseObjects[objIndex].GetStage(stageIndex + 1);
+            if (nextStage != null)
+            {
+                int nextStagePrice = baseConfig.baseObjects[objIndex].stagePrices[stageIndex + 1];
+                nextStage.UpdatePriceText(nextStagePrice);
+            }
+        }
         
         if (stageCompleteSound != null) audioSource.PlayOneShot(stageCompleteSound);
         
@@ -223,14 +344,16 @@ public class BaseBuildingUI : MonoBehaviour
     private void UpdateUI()
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
+        
         currentLevelText.text = totalLevel.ToString();
         nextLevelText.text = (totalLevel + 1).ToString();
-        energyBalanceText.text = SaveDataExtensions.GetTotalEnergySpheres().ToString();
+        
+        UpdateBalanceUI();
 
-        // Hide energy balance if level < 15
+        // Hide energy balance if level < 12
         if (energyBalanceContainer != null)
         {
-            energyBalanceContainer.SetActive(SaveDataExtensions.GetCurrentLevelNumber() > 15);
+            energyBalanceContainer.SetActive(SaveDataExtensions.GetCurrentLevelNumber() > 12);
         }
         
         int objIndex = totalLevel / 10;
@@ -245,6 +368,7 @@ public class BaseBuildingUI : MonoBehaviour
         else
         {
             progressSlider.value = 1f;
+            buildButton.interactable = false; // All bases completed
         }
         
         leftArrowButton.interactable = currentObjectIndex > 0;
@@ -294,6 +418,7 @@ public class BaseBuildingUI : MonoBehaviour
         gameObject.SetActive(true);
         if (mainCamera != null) mainCamera.gameObject.SetActive(false);
         baseViewCamera.gameObject.SetActive(true);
+        currentSideOffset = arcSideOffset;
         UpdateUI();
     }
 }

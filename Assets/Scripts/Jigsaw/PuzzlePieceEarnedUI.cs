@@ -77,6 +77,10 @@ namespace JigsawSystem
         private IEnumerator ShowSequence()
         {
             panel.SetActive(true);
+            
+            // Wait for end of frame to ensure UI layout (RectTransforms) are fully updated
+            // This prevents particles from spawning at (0,0) on the first show
+            yield return new WaitForEndOfFrame();
 
             while (pendingPieceIds.Count > 0)
             {

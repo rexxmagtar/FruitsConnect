@@ -99,7 +99,7 @@ namespace UI
             
             var allParticles = HitParticlesManager.Instance.GetAllParticles();
             var saveData = ProgressSaveManager<SaveData>.Instance.GetGameData();
-            int currentLevel = saveData.CurrentLevel;
+            int baseLevel = saveData.BaseLevel;
 
           
 
@@ -112,7 +112,7 @@ namespace UI
                     if (container != null)
                     {
                         var btn = Instantiate(buttonPrefab, container);
-                        bool isAccessible = stageIndex == 0 || currentLevel >= stageIndex * 15;
+                        bool isAccessible = stageIndex == 0 || baseLevel >= stageIndex * 5;
                         btn.Initialize(particle, this, isAccessible);
                         _buttons.Add(btn);
                     }
@@ -120,10 +120,10 @@ namespace UI
             }
 
               // Update stage lockers visibility
-            // Stage 0: default, Stage 1: level 15, Stage 2: level 30...
+            // Stage 0: default, Stage 1: base level 5, Stage 2: base level 10...
             for (int i = 0; i < stageLockers.Count; i++)
             {
-                bool isStageAccessible = i == 0 || currentLevel >= i * 15;
+                bool isStageAccessible = i == 0 || baseLevel >= i * 5;
                 if (stageLockers[i] != null){
                     stageLockers[i].SetActive(!isStageAccessible);
                     stageLockers[i].transform.SetAsLastSibling();

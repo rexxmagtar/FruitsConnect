@@ -107,8 +107,8 @@ namespace Managers
             {
                 StartCoroutine(UpgradeTutorialRoutine(mainMenu));
             }
-            // Base Building Tutorial: Level 15 completed (index >= 15)
-            else if (currentLevelIndex >= 15 && PlayerPrefs.GetInt(BASE_BUILDING_TUTORIAL_KEY, 0) == 0)
+            // Base Building Tutorial: Level 12 completed (index >= 12)
+            else if (currentLevelIndex >= 12 && PlayerPrefs.GetInt(BASE_BUILDING_TUTORIAL_KEY, 0) == 0)
             {
                 StartCoroutine(BaseBuildingTutorialRoutine(mainMenu));
             }

@@ -14,11 +14,16 @@ public class BaseObjectStage : MonoBehaviour
     [SerializeField] private ParticleSystem completionParticles;
     [SerializeField] private AudioClip buildSound;
     [SerializeField] private AudioClip completionSound;
+
+    [Header("Price UI")]
+    [SerializeField] private GameObject priceContainer;
+    [SerializeField] private TMPro.TextMeshProUGUI priceText;
     
     private Material stageMaterial;
     private AudioSource audioSource;
     private float currentDisplayedProgress = 0f;
     private DG.Tweening.Tween progressTween;
+    private Transform mainCameraTransform;
 
     private void Awake()
     {
@@ -27,6 +32,28 @@ public class BaseObjectStage : MonoBehaviour
         {
             audioSource = gameObject.AddComponent<AudioSource>();
         }
+
+        if (Camera.main != null)
+        {
+            mainCameraTransform = Camera.main.transform;
+        }
+    }
+
+    public void SetCamera(Camera camera)
+    {
+        if (camera != null)
+        {
+            mainCameraTransform = camera.transform;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (priceContainer != null && priceContainer.activeInHierarchy && mainCameraTransform != null)
+        {
+            // Look at the camera so the UI is always flat to the screen
+            priceContainer.transform.LookAt(priceContainer.transform.position + mainCameraTransform.forward);
+        }
     }
 
     // InitializeMaterial is no longer needed as we update in SetProgress
@@ -34,6 +61,22 @@ public class BaseObjectStage : MonoBehaviour
     private void Start()
     {
         // Removed SetProgress(0f) as it was overriding the initial state set by BaseBuildingUI
+    }
+
+    public void SetPriceUIActive(bool active)
+    {
+        if (priceContainer != null)
+        {
+            priceContainer.SetActive(active);
+        }
+    }
+
+    public void UpdatePriceText(int remainingPrice)
+    {
+        if (priceText != null)
+        {
+            priceText.text = remainingPrice.ToString();
+        }
     }
 
     /// <summary>

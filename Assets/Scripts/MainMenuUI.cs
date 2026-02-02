@@ -729,9 +729,9 @@ public class MainMenuUI : MonoBehaviour
         }
         SetButtonContentVisibility(skinSelectButton, !skinSelectLocked, skinSelectLocker);
 
-        // 4. Base Building: Locked until level 15 completed (started level 16)
-        // Level 16 is index 15.
-        bool baseBuildingLocked = currentLevelIndex < 15;
+        // 4. Base Building: Locked until level 12 completed (started level 13)
+        // Level 13 is index 12.
+        bool baseBuildingLocked = currentLevelIndex < 12;
         if (baseBuildingButton != null)
         {
             baseBuildingButton.interactable = !baseBuildingLocked;

@@ -230,8 +230,8 @@ public class LevelCompleteUI : MonoBehaviour
         this.hasRewardsBeenDoubled = false;
         this.isShowingAd = false;
 
-        // Hide energy UI if level < 15
-        bool isEnergyUnlocked = nextLevelNumber > 15;
+        // Hide energy UI if level < 12
+        bool isEnergyUnlocked = nextLevelNumber > 12;
         if (energySpheresEarnedText != null) energySpheresEarnedText.gameObject.SetActive(isEnergyUnlocked);
         if (energySphereIconTransform != null) energySphereIconTransform.gameObject.SetActive(isEnergyUnlocked);
         
