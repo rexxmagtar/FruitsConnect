@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 3879580671195757388, guid: 553c4b4c3ee6313438ceb773e471e596, type: 3}
   coinReward: 35
-  energySphereReward: 0
+  energySphereReward: 300
   monsterBounty: 2
   levelName: Level9
   startingEnergy: 5
@@ -23,8 +23,7 @@ MonoBehaviour:
   bossGoldReward: 50
   bossEnergySphereReward: 0
   bossFightTimeLimit: 30
-  puzzlePieceRewards:
-  - cake1_8
+  puzzlePieceRewards: []
   monsterPrefabs:
   - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   minSpawnInterval: 0

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using System;
 
 namespace WindowManager
 {
@@ -13,6 +14,10 @@ namespace WindowManager
         [SerializeField] private Ease animationEase = Ease.OutQuart;
         [SerializeField] private bool animateOnPress = true;
         [SerializeField] private bool animateOnRelease = true;
+        
+        // Events for hold detection
+        public event Action OnPointerDownEvent;
+        public event Action OnPointerUpEvent;
         
         private Vector3 originalScale;
         private Tween currentTween;
@@ -44,6 +49,9 @@ namespace WindowManager
         {
             base.OnPointerDown(eventData);
             
+            // Invoke pointer down event
+            OnPointerDownEvent?.Invoke();
+            
             if (animateOnPress && IsInteractable())
             {
                 // Pause external tween if it exists
@@ -59,6 +67,9 @@ namespace WindowManager
         public override void OnPointerUp(PointerEventData eventData)
         {
             base.OnPointerUp(eventData);
+            
+            // Invoke pointer up event
+            OnPointerUpEvent?.Invoke();
             
             if (animateOnRelease && IsInteractable())
             {

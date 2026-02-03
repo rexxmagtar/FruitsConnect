@@ -13,6 +13,27 @@ MonoBehaviour:
   m_Name: BaseConfig
   m_EditorClassIdentifier: 
   baseObjects:
-  - displayName: Fruitty farm
+  - displayName: Fruit city
     prefab: {fileID: 4827256819442773735, guid: 6d4a7f40cbe21af4e86514a770daa5e6, type: 3}
     stagePrices: 64000000c80000002c0100002c0100002c0100002c0100002c0100002c0100002c0100002c010000
+    stagePerks:
+    - type: 0
+      value: 2
+    - type: 0
+      value: 1
+    - type: 1
+      value: 1
+    - type: 2
+      value: 1
+    - type: 0
+      value: 1
+    - type: 0
+      value: 1
+    - type: 1
+      value: 1
+    - type: 0
+      value: 1
+    - type: 2
+      value: 1
+    - type: 2
+      value: 1

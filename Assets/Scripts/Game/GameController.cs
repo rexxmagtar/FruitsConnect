@@ -52,6 +52,17 @@ public class GameController : MonoBehaviour
     public bool IsDragging => isDragging; // Expose drag state for cut manager
     
     /// <summary>
+    /// Set visibility of the current level instance
+    /// </summary>
+    public void SetLevelVisibility(bool visible)
+    {
+        if (currentLevelInstance != null)
+        {
+            currentLevelInstance.SetActive(visible);
+        }
+    }
+    
+    /// <summary>
     /// Get current player energy
     /// </summary>
     public int GetCurrentEnergy() => currentEnergy;
@@ -526,6 +537,14 @@ public class GameController : MonoBehaviour
         {
             int reward = currentLevelConfig != null ? currentLevelConfig.CoinReward : 0;
             int energyReward = currentLevelConfig != null ? currentLevelConfig.EnergySphereReward : 0;
+
+            // Apply perks
+            float coinBonus = PerksManager.Instance.GetTotalBonus(PerkType.CoinRewardPercent);
+            float energyBonus = PerksManager.Instance.GetTotalBonus(PerkType.EnergySphereRewardPercent);
+            
+            reward = Mathf.RoundToInt(reward * (1f + coinBonus / 100f));
+            energyReward = Mathf.RoundToInt(energyReward * (1f + energyBonus / 100f));
+
             levelFailedUI.Show(reward, energyReward);
         }
         else
@@ -552,6 +571,14 @@ public class GameController : MonoBehaviour
             
             int reward = (int)(currentLevelConfig.CoinReward * 0.3f);
             int energyReward = (int)(currentLevelConfig.EnergySphereReward * 0.3f);
+
+            // Apply perks
+            float coinBonus = PerksManager.Instance.GetTotalBonus(PerkType.CoinRewardPercent);
+            float energyBonus = PerksManager.Instance.GetTotalBonus(PerkType.EnergySphereRewardPercent);
+            
+            reward = Mathf.RoundToInt(reward * (1f + coinBonus / 100f));
+            energyReward = Mathf.RoundToInt(energyReward * (1f + energyBonus / 100f));
+
             GameManager.Instance.AddCoins(reward);
             GameManager.Instance.AddEnergySpheres(energyReward);
 
@@ -737,12 +764,22 @@ public class GameController : MonoBehaviour
                 int bossFinalReward = bossDefeated ? (int)(bossBaseReward * multiplier) : 0;
                 int bossFinalEnergyReward = bossDefeated ? (int)(config.BossEnergySphereReward * multiplier) : 0;
                 
+                // Use a copy of monster bounty for UI then reset it
+                int finalMonsterBounty = monsterCoinsEarned;
+                monsterCoinsEarned = 0;
+
+            // Apply perks
+            float coinBonus = PerksManager.Instance.GetTotalBonus(PerkType.CoinRewardPercent);
+            float energyBonus = PerksManager.Instance.GetTotalBonus(PerkType.EnergySphereRewardPercent);
+                float perkMultiplier = 1f + coinBonus / 100f;
+                float energyPerkMultiplier = 1f + energyBonus / 100f;
+
                 // Award all coins (regular level + boss bounty + monster bounty)
-                int totalCoinsAwarded = coinsEarned + bossFinalReward + monsterCoinsEarned;
+                int totalCoinsAwarded = Mathf.RoundToInt((coinsEarned + bossFinalReward + finalMonsterBounty) * perkMultiplier);
                 GameManager.Instance.AddCoins(totalCoinsAwarded);
 
                 // Award energy spheres
-                int totalEnergyAwarded = energySpheresEarned + bossFinalEnergyReward;
+                int totalEnergyAwarded = Mathf.RoundToInt((energySpheresEarned + bossFinalEnergyReward) * energyPerkMultiplier);
                 GameManager.Instance.AddEnergySpheres(totalEnergyAwarded);
                 
                 // Complete level (increments CurrentLevel)
@@ -754,10 +791,6 @@ public class GameController : MonoBehaviour
                 // Get earned puzzle pieces from current level config
                 System.Collections.Generic.List<string> puzzlePieces = config.PuzzlePieceRewards;
                 
-                // Use a copy of monster bounty for UI then reset it
-                int finalMonsterBounty = monsterCoinsEarned;
-                monsterCoinsEarned = 0;
-
                 // Hide gameplay UI
                 if (gameplayUI != null)
                 {
@@ -767,7 +800,11 @@ public class GameController : MonoBehaviour
                 if (levelCompleteUI != null)
                 {
                     // Pass coinsEarned + finalMonsterBounty as the base reward to show in UI
-                    levelCompleteUI.Show(coinsEarned + finalMonsterBounty, config.IsBossFight, energySpheresEarned, nextLevel, bossBaseReward, bossEnergyReward, multiplier, bossDefeated, puzzlePieces);
+                    // Note: The UI shows the base rewards, while the actual awarded amount includes perks.
+                    // If we want the UI to show the perk-adjusted rewards, we should pass the adjusted values.
+                    // The requirement says "when we sho an dscualte wareda r we simply mutuoply them".
+                    // So I will pass the perk-adjusted values to the UI too.
+                    levelCompleteUI.Show(Mathf.RoundToInt((coinsEarned + finalMonsterBounty) * perkMultiplier), config.IsBossFight, Mathf.RoundToInt(energySpheresEarned * energyPerkMultiplier), nextLevel, Mathf.RoundToInt(bossBaseReward * perkMultiplier), Mathf.RoundToInt(bossEnergyReward * energyPerkMultiplier), multiplier, bossDefeated, puzzlePieces);
                 }
                 else
                 {

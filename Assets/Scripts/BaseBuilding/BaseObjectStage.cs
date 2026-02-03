@@ -24,6 +24,7 @@ public class BaseObjectStage : MonoBehaviour
     private float currentDisplayedProgress = 0f;
     private DG.Tweening.Tween progressTween;
     private Transform mainCameraTransform;
+    private Vector3 originalScale;
 
     private void Awake()
     {
@@ -37,6 +38,9 @@ public class BaseObjectStage : MonoBehaviour
         {
             mainCameraTransform = Camera.main.transform;
         }
+        
+        // Store original scale for animation
+        originalScale = transform.localScale;
     }
 
     public void SetCamera(Camera camera)
@@ -96,6 +100,8 @@ public class BaseObjectStage : MonoBehaviour
             stageMaterial.SetFloat(minHeightPropertyName, bounds.min.y - 0.01f);
             stageMaterial.SetFloat(maxHeightPropertyName, bounds.max.y + 0.01f);
 
+            float previousProgress = currentDisplayedProgress;
+            
             if (immediate)
             {
                 progressTween?.Kill();
@@ -109,34 +115,74 @@ public class BaseObjectStage : MonoBehaviour
                     currentDisplayedProgress = x;
                     if (stageMaterial != null) stageMaterial.SetFloat(progressPropertyName, currentDisplayedProgress);
                 }, targetProgress, duration).SetEase(Ease.OutQuad);
+                
+                // Handle completion sound and animation
+                // Only trigger when progress transitions from less than 1.0 to 1.0 during gameplay (not initialization)
+                // Only check when immediate=false to ensure it only happens when actually building, not when loading
+                // Note: Completion particles are handled separately to always play on fully built stages
+                if (targetProgress >= 1f && previousProgress < 1f)
+                {
+                    if (completionSound != null)
+                    {
+                        audioSource.PlayOneShot(completionSound);
+                    }
+                    
+                    // Play scale up and down animation when stage completes
+                    PlayCompletionScaleAnimation();
+                }
             }
         }
 
         // Handle particles during building
-        if (targetProgress > 0 && targetProgress < 1f)
+        // Start particles as soon as stage becomes current (even at 0% progress)
+        if (targetProgress >= 0 && targetProgress < 1f && gameObject.activeInHierarchy)
         {
             if (buildParticles != null && !buildParticles.isPlaying)
             {
                 buildParticles.Play();
             }
+            // Stop completion particles when building
+            if (completionParticles != null && completionParticles.isPlaying)
+            {
+                completionParticles.Stop();
+            }
         }
-        else
+        else if (targetProgress >= 1f)
         {
+            // Stop build particles when completed
             if (buildParticles != null && buildParticles.isPlaying)
             {
                 buildParticles.Stop();
             }
-        }
-
-        // Handle completion particles
-        if (targetProgress >= 1f && completionParticles != null)
-        {
-            completionParticles.Play();
-            if (completionSound != null)
+            // Always play completion particles on fully built stages
+            if (completionParticles != null && !completionParticles.isPlaying)
             {
-                audioSource.PlayOneShot(completionSound);
+                completionParticles.Play();
             }
         }
+        else
+        {
+            // Stop all particles when stage is not active
+            if (buildParticles != null && buildParticles.isPlaying)
+            {
+                buildParticles.Stop();
+            }
+            if (completionParticles != null && completionParticles.isPlaying)
+            {
+                completionParticles.Stop();
+            }
+        }
+    }
+    
+    private void PlayCompletionScaleAnimation()
+    {
+        float scaleUpAmount = 1.15f;
+        float scaleUpDuration = 0.3f;
+        float scaleDownDuration = 0.2f;
+        
+        Sequence scaleSequence = DOTween.Sequence();
+        scaleSequence.Append(transform.DOScale(originalScale * scaleUpAmount, scaleUpDuration).SetEase(Ease.OutQuad));
+        scaleSequence.Append(transform.DOScale(originalScale, scaleDownDuration).SetEase(Ease.InQuad));
     }
 
     public void PlayBuildEffect()

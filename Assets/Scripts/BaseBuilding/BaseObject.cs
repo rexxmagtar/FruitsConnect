@@ -3,17 +3,8 @@ using System.Collections.Generic;
 
 public class BaseObject : MonoBehaviour
 {
-    [Header("Settings")]
-    [SerializeField] private float rotationSpeed = 20f;
-    
     [Header("References")]
     [SerializeField] private List<BaseObjectStage> stages;
-
-    private void Update()
-    {
-        // Continuous auto-rotation for better visual performance
-        transform.Rotate(Vector3.up, rotationSpeed * Time.deltaTime);
-    }
 
     /// <summary>
     /// Set the camera for all stages to use for billboarding

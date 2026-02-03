@@ -12,7 +12,7 @@ public class MonsterDamage : UpgradableParam
     
     /// <summary>
     /// Calculate physical damage value
-    /// Formula: baseDamage * (1 + PowerValue / 1000)
+    /// Formula: baseDamage * (1 + PowerValue / 3000) * (1 + PerkBonus / 100)
     /// </summary>
     public override float CalculatePhysicalValue()
     {
@@ -22,6 +22,14 @@ public class MonsterDamage : UpgradableParam
             totalPower += HitParticlesManager.Instance.GetCurrentParticle().damagePowerValue;
         }
         float multiplier = 1f + ((float)totalPower / 3000f);
+
+        // Apply perk bonus
+        if (PerksManager.Instance != null)
+        {
+            float bonusPercent = PerksManager.Instance.GetTotalBonus(PerkType.Damage);
+            multiplier *= (1f + bonusPercent / 100f);
+        }
+
         return BASE_DAMAGE * multiplier;
     }
     
@@ -35,6 +43,15 @@ public class MonsterDamage : UpgradableParam
         {
             totalPower += HitParticlesManager.Instance.GetCurrentParticle().damagePowerValue;
         }
-        return 1f + ((float)totalPower / 3000f);
+        float multiplier = 1f + ((float)totalPower / 3000f);
+
+        // Apply perk bonus
+        if (PerksManager.Instance != null)
+        {
+            float bonusPercent = PerksManager.Instance.GetTotalBonus(PerkType.Damage);
+            multiplier *= (1f + bonusPercent / 100f);
+        }
+
+        return multiplier;
     }
 }

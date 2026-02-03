@@ -10,6 +10,7 @@ public class BaseConfig : ScriptableObject
         public string displayName;
         public GameObject prefab;
         public List<int> stagePrices; // Price for each of the 10 stages
+        public List<PerkInfo> stagePerks; // Perk for each of the 10 stages
     }
 
     public List<BaseObjectInfo> baseObjects;
