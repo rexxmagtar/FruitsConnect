@@ -25,7 +25,6 @@ MonoBehaviour:
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - cake1_8
-  - cake1_1
   monsterPrefabs:
   - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   minSpawnInterval: 0

@@ -230,8 +230,8 @@ public class LevelCompleteUI : MonoBehaviour
         this.hasRewardsBeenDoubled = false;
         this.isShowingAd = false;
 
-        // Hide energy UI if level < 12
-        bool isEnergyUnlocked = nextLevelNumber > 12;
+        // Hide energy UI if level < 8
+        bool isEnergyUnlocked = nextLevelNumber > 8;
         if (energySpheresEarnedText != null) energySpheresEarnedText.gameObject.SetActive(isEnergyUnlocked);
         if (energySphereIconTransform != null) energySphereIconTransform.gameObject.SetActive(isEnergyUnlocked);
         
@@ -528,8 +528,8 @@ public class LevelCompleteUI : MonoBehaviour
         // Initialize texts to zero
         if (coinsEarnedText != null) coinsEarnedText.text = "+0";
         if (energySpheresEarnedText != null) energySpheresEarnedText.text = "+0";
-        if (bossBaseRewardText != null) bossBaseRewardText.text = "0";
-        if (bossEnergyRewardText != null) bossEnergyRewardText.text = "0";
+        if (bossBaseRewardText != null) bossBaseRewardText.text = "+0";
+        if (bossEnergyRewardText != null) bossEnergyRewardText.text = "+0";
         if (bossMultiplierText != null) 
         {
             bossMultiplierText.text = $"Time multiplier \n x{bossMultiplier:F2}";
@@ -629,8 +629,8 @@ public class LevelCompleteUI : MonoBehaviour
         if (isBossLevel)
         {
             yield return new WaitForSeconds(0.2f);
-            if (bossBaseReward > 0) yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, 0, bossBaseReward, 0.5f));
-            if (bossEnergyReward > 0) yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, 0, bossEnergyReward, 0.5f));
+            if (bossBaseReward > 0) yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, 0, bossBaseReward, 0.5f, "+"));
+            if (bossEnergyReward > 0) yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, 0, bossEnergyReward, 0.5f, "+"));
 
             if (isBossDefeated)
             {
@@ -652,8 +652,8 @@ public class LevelCompleteUI : MonoBehaviour
 
                 yield return new WaitForSeconds(0.1f);
                 // Increase base text amount to total boss reward
-                if (bossTotalReward > 0) yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, bossBaseReward, bossTotalReward, 0.5f));
-                if (bossTotalEnergyReward > 0) yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, bossEnergyReward, bossTotalEnergyReward, 0.5f));
+                if (bossTotalReward > 0) yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, bossBaseReward, bossTotalReward, 0.5f, "+"));
+                if (bossTotalEnergyReward > 0) yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, bossEnergyReward, bossTotalEnergyReward, 0.5f, "+"));
             }
         }
 
@@ -1626,13 +1626,13 @@ public class LevelCompleteUI : MonoBehaviour
         if (originalBossTotalReward > 0 && bossBaseRewardText != null)
         {
             yield return new WaitForSeconds(0.2f);
-            yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, originalBossTotalReward, doubledBossReward, 0.5f));
+            yield return StartCoroutine(AnimateTextCount(bossBaseRewardText, originalBossTotalReward, doubledBossReward, 0.5f, "+"));
             this.bossTotalReward = doubledBossReward;
         }
         if (originalBossTotalEnergyReward > 0 && bossEnergyRewardText != null)
         {
             yield return new WaitForSeconds(0.1f);
-            yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, originalBossTotalEnergyReward, doubledBossEnergyReward, 0.5f));
+            yield return StartCoroutine(AnimateTextCount(bossEnergyRewardText, originalBossTotalEnergyReward, doubledBossEnergyReward, 0.5f, "+"));
             this.bossTotalEnergyReward = doubledBossEnergyReward;
         }
         

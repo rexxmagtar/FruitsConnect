@@ -24,7 +24,8 @@ MonoBehaviour:
   bossEnergySphereReward: 0
   bossFightTimeLimit: 30
   puzzlePieceRewards:
-  - random
+  - cake1_6
+  - cake1_7
   monsterPrefabs:
   - {fileID: 5375038928128200429, guid: 9a400184946ee7e4abbcadcca751bcb9, type: 3}
   - {fileID: 8163196463235052042, guid: d6ff9d20fc9f555489fadc022e5daa44, type: 3}

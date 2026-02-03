@@ -666,8 +666,9 @@ public class MainMenuUI : MonoBehaviour
     /// <summary>
     /// Update visibility and interactability of features based on level completion
     /// Upgrades are hidden until user has completed first few levels
-    /// Puzzle select is locked until level 6 completion
-    /// Skin select is locked until level 10 completion
+    /// Skin select is locked until level 6 completion
+    /// Base building is locked until level 8 completion
+    /// Puzzle select is locked until level 10 completion
     /// </summary>
     private void UpdateFeatureLocks()
     {
@@ -703,22 +704,9 @@ public class MainMenuUI : MonoBehaviour
             monsterDamageContainer.gameObject.SetActive(shouldShowUpgrades);
         }
 
-        // 2. Puzzle Select (Jigsaw): Locked until level 6 completed (started level 7)
-        // currentLevelIndex is 0-indexed, so Level 7 is index 6.
-        bool jigsawLocked = currentLevelIndex < 6;
-        if (jigsawButton != null)
-        {
-            jigsawButton.interactable = !jigsawLocked;
-        }
-        if (jigsawLocker != null)
-        {
-            jigsawLocker.SetActive(jigsawLocked);
-        }
-        SetButtonContentVisibility(jigsawButton, !jigsawLocked, jigsawLocker);
-
-        // 3. Skin Select: Locked until level 10 completed (started level 11)
-        // Level 11 is index 10.
-        bool skinSelectLocked = currentLevelIndex < 10;
+        // 2. Skin Select: Locked until level 6 completed (started level 7)
+        // Level 7 is index 6.
+        bool skinSelectLocked = currentLevelIndex < 6;
         if (skinSelectButton != null)
         {
             skinSelectButton.interactable = !skinSelectLocked;
@@ -726,12 +714,15 @@ public class MainMenuUI : MonoBehaviour
         if (skinSelectLocker != null)
         {
             skinSelectLocker.SetActive(skinSelectLocked);
+            // Update locker text if present
+            // var tmp = skinSelectLocker.GetComponentInChildren<TextMeshProUGUI>();
+            // if (tmp != null) tmp.text = "Level 7";
         }
         SetButtonContentVisibility(skinSelectButton, !skinSelectLocked, skinSelectLocker);
 
-        // 4. Base Building: Locked until level 12 completed (started level 13)
-        // Level 13 is index 12.
-        bool baseBuildingLocked = currentLevelIndex < 12;
+        // 3. Base Building: Locked until level 8 completed (started level 9)
+        // Level 9 is index 8.
+        bool baseBuildingLocked = currentLevelIndex < 8;
         if (baseBuildingButton != null)
         {
             baseBuildingButton.interactable = !baseBuildingLocked;
@@ -739,10 +730,29 @@ public class MainMenuUI : MonoBehaviour
         if (baseBuildingLocker != null)
         {
             baseBuildingLocker.SetActive(baseBuildingLocked);
+            // Update locker text if present
+            // var tmp = baseBuildingLocker.GetComponentInChildren<TextMeshProUGUI>();
+            // if (tmp != null) tmp.text = "Level 9";
         }
         SetButtonContentVisibility(baseBuildingButton, !baseBuildingLocked, baseBuildingLocker);
+
+        // 4. Puzzle Select (Jigsaw): Locked until level 10 completed (started level 11)
+        // currentLevelIndex is 0-indexed, so Level 11 is index 10.
+        bool jigsawLocked = currentLevelIndex < 10;
+        if (jigsawButton != null)
+        {
+            jigsawButton.interactable = !jigsawLocked;
+        }
+        if (jigsawLocker != null)
+        {
+            jigsawLocker.SetActive(jigsawLocked);
+            // Update locker text if present
+            // var tmp = jigsawLocker.GetComponentInChildren<TextMeshProUGUI>();
+            // if (tmp != null) tmp.text = "Level 11";
+        }
+        SetButtonContentVisibility(jigsawButton, !jigsawLocked, jigsawLocker);
         
-        Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, JigsawLocked={jigsawLocked}, SkinLocked={skinSelectLocked}, BaseBuildingLocked={baseBuildingLocked}");
+        Debug.Log($"UpdateFeatureLocks: CurrentLevel={currentLevelIndex}, ShowUpgrades={shouldShowUpgrades}, SkinLocked={skinSelectLocked}, BaseBuildingLocked={baseBuildingLocked}, JigsawLocked={jigsawLocked}");
     }
     
     /// <summary>

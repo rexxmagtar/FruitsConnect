@@ -92,25 +92,25 @@ namespace Managers
                 currentLevelIndex = levelsManager.GetCurrentLevelNumber() - 1;
             }
 
-            // Puzzle Tutorial: Level 6 completed (index >= 6)
-            if (currentLevelIndex >= 6 && PlayerPrefs.GetInt(PUZZLE_TUTORIAL_KEY, 0) == 0)
-            {
-                StartCoroutine(PuzzleTutorialRoutine(mainMenu));
-            }
-            // Skin Tutorial: Level 10 completed (index >= 10)
-            else if (currentLevelIndex >= 10 && PlayerPrefs.GetInt(SKIN_TUTORIAL_KEY, 0) == 0)
+            // Skin Tutorial: Level 6 completed (index >= 6)
+            if (currentLevelIndex >= 6 && PlayerPrefs.GetInt(SKIN_TUTORIAL_KEY, 0) == 0)
             {
                 StartCoroutine(SkinTutorialRoutine(mainMenu));
+            }
+            // Base Building Tutorial: Level 8 completed (index >= 8)
+            else if (currentLevelIndex >= 8 && PlayerPrefs.GetInt(BASE_BUILDING_TUTORIAL_KEY, 0) == 0)
+            {
+                StartCoroutine(BaseBuildingTutorialRoutine(mainMenu));
+            }
+            // Puzzle Tutorial: Level 10 completed (index >= 10)
+            else if (currentLevelIndex >= 10 && PlayerPrefs.GetInt(PUZZLE_TUTORIAL_KEY, 0) == 0)
+            {
+                StartCoroutine(PuzzleTutorialRoutine(mainMenu));
             }
             // Upgrade Tutorial: Level 3 completed (index >= 3)
             else if (currentLevelIndex >= 3 && PlayerPrefs.GetInt(UPGRADE_TUTORIAL_KEY, 0) == 0)
             {
                 StartCoroutine(UpgradeTutorialRoutine(mainMenu));
-            }
-            // Base Building Tutorial: Level 12 completed (index >= 12)
-            else if (currentLevelIndex >= 12 && PlayerPrefs.GetInt(BASE_BUILDING_TUTORIAL_KEY, 0) == 0)
-            {
-                StartCoroutine(BaseBuildingTutorialRoutine(mainMenu));
             }
         }
 

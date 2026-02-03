@@ -690,7 +690,7 @@ public class GameController : MonoBehaviour
         }
         
         // Wait for animation to complete (remaining time)
-        yield return new WaitForSeconds(2.5f);
+        yield return new WaitForSeconds(3.2f);
         
         // Now proceed with boss fight or level complete screen
         if (currentLevelConfig != null && currentLevelConfig.IsBossFight)

@@ -1471,7 +1471,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4275761066975213591, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_text
-      value: "Complete \nlvl 12"
+      value: "Complete \nlvl 8"
       objectReference: {fileID: 0}
     - target: {fileID: 5219327431244573833, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchorMax.y
@@ -1488,6 +1488,10 @@ PrefabInstance:
     - target: {fileID: 5219327431244573833, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626580249164676004, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_text
+      value: "Complete \nlvl 6"
       objectReference: {fileID: 0}
     - target: {fileID: 5916418050465401406, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -1632,6 +1636,10 @@ PrefabInstance:
     - target: {fileID: 8609963311174854879, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8717672264622007557, guid: d61bfb863bf961940a03be7021c0f4dc, type: 3}
+      propertyPath: m_text
+      value: "Complete \nlvl 10"
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -171,9 +171,9 @@ public class LevelFailedUI : MonoBehaviour
         this.skipReward = (int)(levelReward * 0.5f);
         this.skipEnergyReward = (int)(levelEnergyReward * 0.5f);
 
-        // Hide energy UI if level < 12
+        // Hide energy UI if level < 8
         int currentLevel = SaveDataExtensions.GetCurrentLevelNumber();
-        bool isEnergyUnlocked = currentLevel > 12;
+        bool isEnergyUnlocked = currentLevel > 8;
         
         if (energySpheresEarnedText != null) energySpheresEarnedText.gameObject.SetActive(isEnergyUnlocked);
         if (energySphereIconTransform != null) energySphereIconTransform.gameObject.SetActive(isEnergyUnlocked);

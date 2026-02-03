@@ -10180,7 +10180,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: e490db606cb8cb842b762835d768af5b, type: 2}
     - target: {fileID: 919132149155446097, guid: 955b057649e71f946b0b37d485b91ef8, type: 3}
       propertyPath: m_Name
-      value: Meshy_AI_Berry_Windmill_0201113259_texture
+      value: Mesh
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

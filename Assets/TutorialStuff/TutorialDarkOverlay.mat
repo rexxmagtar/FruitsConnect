@@ -74,10 +74,10 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _RectHeight: 170.6292
-    - _RectWidth: 643.4286
-    - _RectX: 331.07153
-    - _RectY: 674.7632
+    - _RectHeight: 234.3515
+    - _RectWidth: 217.5
+    - _RectX: 1031.3944
+    - _RectY: 1581.0314
     - _ShapeType: 1
     - _SmoothSize: 150
     - _SmoothnessTextureChannel: 0
