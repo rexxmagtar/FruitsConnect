@@ -86,6 +86,24 @@ namespace StoreServices
 
         private void OnStorePurchaseComplete(ProductInfo productInfo)
         {
+            // Fire purchase event for analytics and other systems to listen to
+            if (productInfo != null)
+            {
+                double price = 0;
+                if (double.TryParse(productInfo.Price, out double parsedPrice))
+                {
+                    price = parsedPrice;
+                }
+                
+                // Fire event - AnalyticsManager will handle tracking
+                // GameEvents.PurchaseCompleted(
+                //     productInfo.Id,
+                //     productInfo.Title ?? productInfo.Id,
+                //     price,
+                //     productInfo.PriceCurrencyCode ?? "USD"
+                // );
+            }
+            
             OnPurchaseCompleteEvent?.Invoke(productInfo);
         }
 

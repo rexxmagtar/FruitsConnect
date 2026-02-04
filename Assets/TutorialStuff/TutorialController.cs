@@ -7,6 +7,7 @@ using DG.Tweening;
 using JigsawSystem;
 using UI;
 using DataRepository;
+using AnalyticsServices;
 
 namespace Managers
 {
@@ -118,6 +119,9 @@ namespace Managers
         {
             isTutorialActive = true;
             darkOverlay.gameObject.SetActive(true);
+            
+            // Track tutorial start
+            AnalyticsService.Instance.TrackTutorialStart("Puzzle");
 
             // Step 1: Highlight Puzzle Button
             Button jigsawButton = GetPrivateField<Button>(mainMenu, "jigsawButton");
@@ -171,12 +175,18 @@ namespace Managers
             }
 
             CompleteTutorial(PUZZLE_TUTORIAL_KEY);
+            
+            // Track tutorial complete
+            AnalyticsService.Instance.TrackTutorialComplete("Puzzle");
         }
 
         private IEnumerator SkinTutorialRoutine(MainMenuUI mainMenu)
         {
             isTutorialActive = true;
             darkOverlay.gameObject.SetActive(true);
+            
+            // Track tutorial start
+            AnalyticsService.Instance.TrackTutorialStart("Skin");
 
             // Step 1: Highlight Skin Select Button
             Button skinButton = GetPrivateField<Button>(mainMenu, "skinSelectButton");
@@ -195,12 +205,18 @@ namespace Managers
             }
 
             CompleteTutorial(SKIN_TUTORIAL_KEY);
+            
+            // Track tutorial complete
+            AnalyticsService.Instance.TrackTutorialComplete("Skin");
         }
 
         private IEnumerator UpgradeTutorialRoutine(MainMenuUI mainMenu)
         {
             isTutorialActive = true;
             darkOverlay.gameObject.SetActive(true);
+            
+            // Track tutorial start
+            AnalyticsService.Instance.TrackTutorialStart("Upgrade");
 
             // Step 1: Hint Damage Upgrade Buy Button
             ProgressPurchaseContainer damageContainer = GetPrivateField<ProgressPurchaseContainer>(mainMenu, "monsterDamageContainer");
@@ -263,12 +279,18 @@ namespace Managers
             }
 
             CompleteTutorial(UPGRADE_TUTORIAL_KEY);
+            
+            // Track tutorial complete
+            AnalyticsService.Instance.TrackTutorialComplete("Upgrade");
         }
 
         private IEnumerator BaseBuildingTutorialRoutine(MainMenuUI mainMenu)
         {
             isTutorialActive = true;
             darkOverlay.gameObject.SetActive(true);
+            
+            // Track tutorial start
+            AnalyticsService.Instance.TrackTutorialStart("BaseBuilding");
 
             // Step 1: Highlight Base Building Button
             Button baseBuildingButton = GetPrivateField<Button>(mainMenu, "baseBuildingButton");
@@ -315,6 +337,9 @@ namespace Managers
             }
 
             CompleteTutorial(BASE_BUILDING_TUTORIAL_KEY);
+            
+            // Track tutorial complete
+            AnalyticsService.Instance.TrackTutorialComplete("BaseBuilding");
         }
 
         private void UpdateLightZone(RectTransform targetRect)

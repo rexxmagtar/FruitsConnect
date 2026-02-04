@@ -1,5 +1,6 @@
 <dependencies>
   <packages>
+    <package>androidx.annotation:annotation:1.7.1</package>
     <package>com.google.android.gms:play-services-ads-identifier:18.1.0</package>
     <package>com.google.android.gms:play-services-auth:16+</package>
     <package>com.google.android.gms:play-services-base:18.9.0</package>
@@ -20,6 +21,7 @@
     <package>com.unity3d.ads-mediation:unityads-adapter:5.5.0</package>
     <package>com.unity3d.ads-mediation:yandex-adapter:5.3.0</package>
     <package>com.yandex.android:mobileads:7.18.1</package>
+    <package>io.appmetrica.analytics:analytics:7.12.0</package>
   </packages>
   <files>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-analytics-unity/13.4.0/firebase-analytics-unity-13.4.0.aar</file>

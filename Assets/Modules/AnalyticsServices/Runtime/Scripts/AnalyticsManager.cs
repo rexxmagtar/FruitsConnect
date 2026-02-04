@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 using Core;
 
 
@@ -10,18 +11,64 @@ namespace AnalyticsServices
         private static AnalyticsManager _instance;
         public static AnalyticsManager Instance => _instance;
         
+        // Level time tracking
+        private DateTime levelStartTime;
+        private int currentLevelIndex = -1;
+        
+        // Registration date tracking key
+        private const string REGISTRATION_DATE_KEY = "Analytics_RegistrationDate";
+        
         private void Awake()
         {
             if (_instance == null)
             {
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
+                InitializeRegistrationDate();
                 SubscribeToEvents();
             }
             else
             {
                 Destroy(gameObject);
             }
+        }
+        
+        /// <summary>
+        /// Initialize or get registration date (first launch date)
+        /// </summary>
+        private void InitializeRegistrationDate()
+        {
+            if (!PlayerPrefs.HasKey(REGISTRATION_DATE_KEY))
+            {
+                // First launch - save current date
+                string dateString = DateTime.Now.ToString("yyyy-MM-dd");
+                PlayerPrefs.SetString(REGISTRATION_DATE_KEY, dateString);
+                PlayerPrefs.Save();
+            }
+        }
+        
+        /// <summary>
+        /// Get days since registration
+        /// </summary>
+        private int GetDaysSinceRegistration()
+        {
+            string dateString = PlayerPrefs.GetString(REGISTRATION_DATE_KEY, "");
+            
+            if (string.IsNullOrEmpty(dateString))
+            {
+                // Fallback - initialize if missing
+                InitializeRegistrationDate();
+                dateString = PlayerPrefs.GetString(REGISTRATION_DATE_KEY, "");
+            }
+            
+            if (DateTime.TryParse(dateString, out DateTime regDate))
+            {
+                TimeSpan difference = DateTime.Now - regDate;
+                return Mathf.Max(0, (int)difference.TotalDays);
+            }
+            
+            // Fallback to 0 if parsing fails
+            return 0;
         }
         
         private void SubscribeToEvents()
@@ -43,6 +90,7 @@ namespace AnalyticsServices
             // Monetization Events
             GameEvents.OnAdWatched += OnAdWatched;
             GameEvents.OnNoAdsPurchaseAttempted += OnNoAdsPurchaseAttempted;
+            GameEvents.OnPurchaseCompleted += OnPurchaseCompleted;
             
             // Error Events
             GameEvents.OnGameplayError += OnGameplayError;
@@ -67,6 +115,7 @@ namespace AnalyticsServices
             // Monetization Events
             GameEvents.OnAdWatched -= OnAdWatched;
             GameEvents.OnNoAdsPurchaseAttempted -= OnNoAdsPurchaseAttempted;
+            GameEvents.OnPurchaseCompleted -= OnPurchaseCompleted;
             
             // Error Events
             GameEvents.OnGameplayError -= OnGameplayError;
@@ -80,20 +129,53 @@ namespace AnalyticsServices
         // Event handlers
         private void OnLevelStarted(int levelIndex, string levelName)
         {
-            AnalyticsService.Instance.TrackLevelStart(levelName);
-            Debug.Log($"Analytics: Level Started - {levelName} (Index: {levelIndex})");
+            // Track level start time
+            levelStartTime = DateTime.Now;
+            currentLevelIndex = levelIndex;
+            
+            // Get level number (1-based for display)
+            int levelNumber = levelIndex + 1;
+            int daysSinceReg = GetDaysSinceRegistration();
+            
+            // Track with new method
+            AnalyticsService.Instance.TrackLevelStart(levelNumber, daysSinceReg);
+            Debug.Log($"Analytics: Level Started - {levelName} (Index: {levelIndex}, Level: {levelNumber})");
         }
         
         private void OnLevelCompleted(int levelIndex, string levelName, int score, int stars)
         {
-            AnalyticsService.Instance.TrackLevelComplete(levelName);
-            Debug.Log($"Analytics: Level Completed - {levelName} | Score: {score} | Stars: {stars}");
+            // Calculate time spent
+            int timeSpent = CalculateTimeSpent();
+            int levelNumber = levelIndex + 1;
+            int daysSinceReg = GetDaysSinceRegistration();
+            
+            // Track with new method
+            AnalyticsService.Instance.TrackLevelComplete(levelNumber, timeSpent, daysSinceReg);
+            Debug.Log($"Analytics: Level Completed - {levelName} | Level: {levelNumber} | Score: {score} | Stars: {stars} | Time: {timeSpent}s");
         }
         
         private void OnLevelFailed(int levelIndex, string levelName, string failReason)
         {
-            // AnalyticsService.Instance.TrackLevelFailed(levelName, failReason);
-            Debug.Log($"Analytics: Level Failed - {levelName} | Reason: {failReason}");
+            // Calculate time spent
+            int timeSpent = CalculateTimeSpent();
+            int levelNumber = levelIndex + 1;
+            int daysSinceReg = GetDaysSinceRegistration();
+            
+            // Track with new method
+            AnalyticsService.Instance.TrackLevelFail(levelNumber, failReason, timeSpent, daysSinceReg);
+            Debug.Log($"Analytics: Level Failed - {levelName} | Level: {levelNumber} | Reason: {failReason} | Time: {timeSpent}s");
+        }
+
+        /// <summary>
+        /// Calculate time spent on current level in seconds
+        /// </summary>
+        private int CalculateTimeSpent()
+        {
+            if (levelStartTime == default(DateTime))
+                return 0;
+            
+            TimeSpan timeSpan = DateTime.Now - levelStartTime;
+            return (int)timeSpan.TotalSeconds;
         }
         
         private void OnLevelRestarted(int levelIndex, string levelName, int attemptNumber)
@@ -159,6 +241,14 @@ namespace AnalyticsServices
             };
             
             // AnalyticsService.Instance.LogEvent("no_ads_purchase_attempted", parameters);
+        }
+        
+        private void OnPurchaseCompleted(string productId, string productName, double price, string currency)
+        {
+            // Track purchase analytics
+            int daysSinceReg = GetDaysSinceRegistration();
+            AnalyticsService.Instance.TrackPurchase(productId, productName, price, currency, daysSinceReg);
+            Debug.Log($"Analytics: Purchase Completed - {productName} ({productId}) | Price: {price} {currency}");
         }
         
         private void OnGameplayError(string errorType, string errorMessage, int levelIndex)

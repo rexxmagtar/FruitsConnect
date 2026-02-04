@@ -5,6 +5,7 @@ apply from: '../shared/keepUnitySymbols.gradle'
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 // Android Resolver Dependencies Start
+    implementation 'androidx.annotation:annotation:1.7.1' // Packages/io.appmetrica.analytics/Editor/AppMetricaDependencies.xml:5
     implementation 'com.google.android.gms:play-services-ads-identifier:18.1.0' // Assets/LevelPlay/Editor/IronSourceSDKDependencies.xml:12
     implementation 'com.google.android.gms:play-services-auth:16+' // Assets/GoogleSignIn/Editor/GoogleSignInDependencies.xml:10
     implementation 'com.google.android.gms:play-services-base:18.9.0' // Assets/Firebase/Editor/AppDependencies.xml:17
@@ -25,6 +26,7 @@ dependencies {
     implementation 'com.unity3d.ads-mediation:unityads-adapter:5.5.0' // Assets/LevelPlay/Editor/ISUnityAdsAdapterDependencies.xml:5
     implementation 'com.unity3d.ads-mediation:yandex-adapter:5.3.0' // Assets/LevelPlay/Editor/ISYandexAdapterDependencies.xml:9
     implementation 'com.yandex.android:mobileads:7.18.1' // Assets/LevelPlay/Editor/ISYandexAdapterDependencies.xml:5
+    implementation 'io.appmetrica.analytics:analytics:7.12.0' // Packages/io.appmetrica.analytics/Editor/AppMetricaDependencies.xml:4
 // Android Resolver Dependencies End
 **DEPS**}
 

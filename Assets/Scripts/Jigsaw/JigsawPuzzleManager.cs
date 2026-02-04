@@ -156,6 +156,9 @@ namespace JigsawSystem
                 
                 ProgressSaveManager<SaveData>.Instance.SaveGameData();
                 OnPuzzleSolved?.Invoke(puzzleId);
+                
+                // Track puzzle complete analytics
+                AnalyticsServices.AnalyticsService.Instance.TrackPuzzleComplete(puzzleId);
             }
         }
 

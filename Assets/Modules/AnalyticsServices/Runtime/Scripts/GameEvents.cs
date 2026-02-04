@@ -23,6 +23,7 @@ namespace Core
         // Monetization Events
         public static event Action<string, string, int> OnAdWatched;
         public static event Action<int> OnNoAdsPurchaseAttempted;
+        public static event Action<string, string, double, string> OnPurchaseCompleted; // productId, productName, price, currency
         
         // Error Events
         public static event Action<string, string, int> OnGameplayError;
@@ -79,6 +80,11 @@ namespace Core
         public static void NoAdsPurchaseAttempted(int levelIndex)
         {
             OnNoAdsPurchaseAttempted?.Invoke(levelIndex);
+        }
+        
+        public static void PurchaseCompleted(string productId, string productName, double price, string currency)
+        {
+            OnPurchaseCompleted?.Invoke(productId, productName, price, currency);
         }
         
         // Error Events

@@ -243,6 +243,47 @@ public static class SaveDataExtensions
     {
         return GetTotalCoins() >= amount;
     }
+
+    /// <summary>
+    /// Get or initialize registration date (first launch date)
+    /// </summary>
+    public static System.DateTime GetRegistrationDate()
+    {
+        const string REGISTRATION_DATE_KEY = "RegistrationDate";
+        string dateString = PlayerPrefs.GetString(REGISTRATION_DATE_KEY, "");
+        
+        if (string.IsNullOrEmpty(dateString))
+        {
+            // First launch - save current date
+            System.DateTime now = System.DateTime.Now;
+            dateString = now.ToString("yyyy-MM-dd");
+            PlayerPrefs.SetString(REGISTRATION_DATE_KEY, dateString);
+            PlayerPrefs.Save();
+            return now;
+        }
+        
+        // Parse saved date
+        if (System.DateTime.TryParse(dateString, out System.DateTime regDate))
+        {
+            return regDate;
+        }
+        
+        // Fallback to current date if parsing fails
+        System.DateTime fallback = System.DateTime.Now;
+        PlayerPrefs.SetString(REGISTRATION_DATE_KEY, fallback.ToString("yyyy-MM-dd"));
+        PlayerPrefs.Save();
+        return fallback;
+    }
+
+    /// <summary>
+    /// Get days since registration
+    /// </summary>
+    public static int GetDaysSinceRegistration()
+    {
+        System.DateTime regDate = GetRegistrationDate();
+        System.TimeSpan difference = System.DateTime.Now - regDate;
+        return Mathf.Max(0, difference.Days);
+    }
 }
 
 /// <summary>

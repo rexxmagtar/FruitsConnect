@@ -1,7 +1,9 @@
 {
     "name": "AnalyticsServices",
     "rootNamespace": "AnalyticsServices",
-    "references": [],
+    "references": [
+        "GUID:a233deefe8df840f48e0648f292d73f8"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -12,4 +14,3 @@
     "versionDefines": [],
     "noEngineReferences": false
 }
-

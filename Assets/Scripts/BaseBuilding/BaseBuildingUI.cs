@@ -469,8 +469,12 @@ public class BaseBuildingUI : MonoBehaviour
     private void OnStageBuildingProgressed(int objIndex, int stageIndex)
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
-        SaveDataExtensions.SetBaseLevel(totalLevel + 1);
+        int newLevel = totalLevel + 1;
+        SaveDataExtensions.SetBaseLevel(newLevel);
         SaveDataExtensions.SetBaseStageProgress(0); // Reset progress for next stage
+        
+        // Track base building new level analytics
+        AnalyticsServices.AnalyticsService.Instance.TrackBaseBuildingNewLevel(newLevel);
         
         instantiatedBaseObjects[objIndex].UpdateVisuals(stageIndex + 1, 0f);
         
