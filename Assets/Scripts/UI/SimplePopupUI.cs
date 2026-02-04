@@ -71,6 +71,13 @@ public class SimplePopupUI : MonoBehaviour
                 
                 // Check if we hit the info container or its children
                 bool hitInfoContainer = false;
+
+                if(infoContainer == null)
+                {
+                    hitInfoContainer = false;
+                }
+                else
+                {
                 GameObject safeContainer = infoContainer != null ? infoContainer : gameObject;
                 foreach (var result in results)
                 {
@@ -79,6 +86,7 @@ public class SimplePopupUI : MonoBehaviour
                         hitInfoContainer = true;
                         break;
                     }
+                }
                 }
                 
                 // If tap is NOT on info container, close the popup
