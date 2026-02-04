@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 3879580671195757388, guid: 553c4b4c3ee6313438ceb773e471e596, type: 3}
   coinReward: 35
-  energySphereReward: 300
+  energySphereReward: 150
   monsterBounty: 2
   levelName: Level9
   startingEnergy: 5

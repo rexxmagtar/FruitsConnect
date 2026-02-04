@@ -67,7 +67,8 @@ public class BaseBuildingUI : MonoBehaviour
     [SerializeField] private ParticleSystem stageCompleteParticles;
 
     [Header("No Energy Popup")]
-    [SerializeField] private GameObject noEnergyPopup;
+    [SerializeField] private SimplePopupUI noEnergyPopup;
+    [SerializeField] private RectTransform noEnergyInfoContainer;
     [SerializeField] private Button watchAdButton;
     [SerializeField] private Button closeNoEnergyButton;
     [SerializeField] private float popupScaleAnimationDuration = 0.3f;
@@ -79,7 +80,8 @@ public class BaseBuildingUI : MonoBehaviour
     [SerializeField] private float watchAdRotationSpeed = 180f;
 
     [Header("Reward Popup")]
-    [SerializeField] private GameObject rewardPopup;
+    [SerializeField] private SimplePopupUI rewardPopup;
+    [SerializeField] private RectTransform rewardInfoContainer;
     [SerializeField] private TextMeshProUGUI rewardAmountText;
     [SerializeField] private RectTransform rewardPopupParent;
     [SerializeField] private int energyRewardAmount = 5;
@@ -134,32 +136,29 @@ public class BaseBuildingUI : MonoBehaviour
         }
         
         // Setup SimplePopupUI components
-        if (noEnergyPopup != null)
+        noEnergyPopupUI = noEnergyPopup != null ? noEnergyPopup : null;
+        if (noEnergyPopupUI == null && noEnergyPopup != null)
         {
             noEnergyPopupUI = noEnergyPopup.GetComponent<SimplePopupUI>();
-            if (noEnergyPopupUI == null)
-            {
-                noEnergyPopupUI = noEnergyPopup.AddComponent<SimplePopupUI>();
-            }
-            // Set close button reference
+        }
+        if (noEnergyPopupUI != null)
+        {
             if (closeNoEnergyButton != null)
             {
                 noEnergyPopupUI.SetCloseButton(closeNoEnergyButton);
             }
+            noEnergyPopupUI.Close();
         }
         
-        if (rewardPopup != null)
+        rewardPopupUI = rewardPopup != null ? rewardPopup : null;
+        if (rewardPopupUI == null && rewardPopup != null)
         {
             rewardPopupUI = rewardPopup.GetComponent<SimplePopupUI>();
-            if (rewardPopupUI == null)
-            {
-                rewardPopupUI = rewardPopup.AddComponent<SimplePopupUI>();
-            }
         }
-        
-        // Initialize popups as hidden
-        if (noEnergyPopup != null) noEnergyPopup.SetActive(false);
-        if (rewardPopup != null) rewardPopup.SetActive(false);
+        if (rewardPopupUI != null)
+        {
+            rewardPopupUI.Close();
+        }
         
         // Initialize watch ad button state
         UpdateWatchAdButtonState();
@@ -340,7 +339,7 @@ public class BaseBuildingUI : MonoBehaviour
         if (available <= 0)
         {
             // Show no energy popup if not already showing
-            if (noEnergyPopup != null && !noEnergyPopup.activeSelf && !isShowingAd)
+            if (noEnergyPopupUI != null && !noEnergyPopupUI.IsVisible() && !isShowingAd)
             {
                 ShowNoEnergyPopup();
             }
@@ -673,10 +672,10 @@ public class BaseBuildingUI : MonoBehaviour
 
     private void ShowNoEnergyPopup()
     {
-        if (noEnergyPopup == null || noEnergyPopupUI == null) return;
+        if (noEnergyPopupUI == null) return;
         
         // Scale animation
-        RectTransform popupRect = noEnergyPopup.GetComponent<RectTransform>();
+        RectTransform popupRect = noEnergyPopupUI.GetComponent<RectTransform>();
         if (popupRect != null)
         {
             popupRect.localScale = Vector3.zero;
@@ -717,7 +716,7 @@ public class BaseBuildingUI : MonoBehaviour
     {
         if (noEnergyPopupUI == null) return;
         
-        RectTransform popupRect = noEnergyPopup != null ? noEnergyPopup.GetComponent<RectTransform>() : null;
+        RectTransform popupRect = noEnergyPopupUI != null ? noEnergyPopupUI.GetComponent<RectTransform>() : null;
         if (popupRect != null)
         {
             popupRect.DOScale(Vector3.zero, popupScaleAnimationDuration).SetEase(Ease.InBack)
@@ -769,7 +768,7 @@ public class BaseBuildingUI : MonoBehaviour
 
     private void ShowRewardPopup()
     {
-        if (rewardPopup == null || rewardPopupUI == null) return;
+        if (rewardPopupUI == null) return;
         
         // Update reward amount text
         if (rewardAmountText != null)
@@ -778,7 +777,7 @@ public class BaseBuildingUI : MonoBehaviour
         }
         
         // Scale animation
-        RectTransform popupRect = rewardPopup.GetComponent<RectTransform>();
+        RectTransform popupRect = rewardPopupUI.GetComponent<RectTransform>();
         if (popupRect != null)
         {
             popupRect.localScale = Vector3.zero;
@@ -787,6 +786,10 @@ public class BaseBuildingUI : MonoBehaviour
         
         // Show popup using SimplePopupUI
         rewardPopupUI.Show();
+        
+        // Ad flow finished successfully; allow another attempt after closing
+        isShowingAd = false;
+        if (watchAdButton != null) watchAdButton.interactable = true;
         
         // Spawn confetti
         StartCoroutine(SpawnConfettiParticlesRoutine());
@@ -799,7 +802,7 @@ public class BaseBuildingUI : MonoBehaviour
     {
         if (rewardPopupUI == null) return;
         
-        RectTransform popupRect = rewardPopup != null ? rewardPopup.GetComponent<RectTransform>() : null;
+        RectTransform popupRect = rewardPopupUI != null ? rewardPopupUI.GetComponent<RectTransform>() : null;
         if (popupRect != null)
         {
             popupRect.DOScale(Vector3.zero, popupScaleAnimationDuration).SetEase(Ease.InBack)
@@ -819,7 +822,7 @@ public class BaseBuildingUI : MonoBehaviour
 
     private IEnumerator SpawnConfettiParticlesRoutine()
     {
-        RectTransform parent = rewardPopupParent != null ? rewardPopupParent : (rewardPopup != null ? rewardPopup.GetComponent<RectTransform>() : null);
+        RectTransform parent = rewardPopupParent != null ? rewardPopupParent : (rewardPopupUI != null ? rewardPopupUI.GetComponent<RectTransform>() : null);
         if (parent == null) parent = (RectTransform)transform;
         
         int totalBursts = confettiCount / confettiBurstCount;

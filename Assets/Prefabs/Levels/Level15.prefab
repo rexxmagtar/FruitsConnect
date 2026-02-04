@@ -407,6 +407,7 @@ MonoBehaviour:
     - Neutral_f1f79c8f-034f-4696-bd5b-490d5d3a6ab7
   graphVisualizer: {fileID: 1892399038980947089}
   levelCompleteParticles: {fileID: 476346720026130065}
+  hintGameObjects: []
   TerrainMeshRenderer: {fileID: 1799561994400190394}
 --- !u!114 &1892399038980947089
 MonoBehaviour:

@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4072601459826205557, guid: 8630bbb0e25c2be4aa16b62e5ce14f0f, type: 3}
       propertyPath: m_Name
-      value: HitSpriteZap Variant
+      value: HitSpriteZap
       objectReference: {fileID: 0}
     - target: {fileID: 4690470216014919315, guid: 8630bbb0e25c2be4aa16b62e5ce14f0f, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'

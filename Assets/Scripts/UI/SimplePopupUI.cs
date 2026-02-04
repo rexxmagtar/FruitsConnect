@@ -11,8 +11,10 @@ public class SimplePopupUI : MonoBehaviour
     [Header("Popup References")]
     [SerializeField] private Button closeButton;
     [SerializeField] private GameObject infoContainer; // Zone that should NOT close the popup when clicked
+    [SerializeField] private float clickGuardDuration = 0.05f; // Ignore the pointer down that triggered the show
     
     private bool isVisible = false;
+    private float ignorePointerUntilTime = 0f;
 
     private void Awake()
     {
@@ -40,26 +42,25 @@ public class SimplePopupUI : MonoBehaviour
         SetupCloseButton();
     }
     
-    /// <summary>
-    /// Set the info container reference (zone that should NOT close the popup when clicked)
-    /// </summary>
-    public void SetInfoContainer(GameObject container)
-    {
-        infoContainer = container;
-    }
 
     private void Update()
     {
         if (!isVisible) return;
         
         // Handle tap to close (tap outside info container)
-        if (Input.GetMouseButtonDown(0) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
+        if (Time.unscaledTime < ignorePointerUntilTime) return;
+        
+        bool pointerDown = Input.GetMouseButtonDown(0);
+        bool touchDown = Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began;
+        
+        if (pointerDown || touchDown)
         {
             // Get pointer position
-            Vector2 pointerPos = Input.touchCount > 0 ? Input.GetTouch(0).position : (Vector2)Input.mousePosition;
+            Touch touch = touchDown ? Input.GetTouch(0) : default;
+            Vector2 pointerPos = touchDown ? touch.position : (Vector2)Input.mousePosition;
             
             // Check if tap is over UI
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (EventSystem.current != null && (touchDown ? EventSystem.current.IsPointerOverGameObject(touch.fingerId) : EventSystem.current.IsPointerOverGameObject()))
             {
                 // Check if tap is on the info container (don't close if it is)
                 PointerEventData pointerData = new PointerEventData(EventSystem.current);
@@ -70,15 +71,13 @@ public class SimplePopupUI : MonoBehaviour
                 
                 // Check if we hit the info container or its children
                 bool hitInfoContainer = false;
-                if (infoContainer != null)
+                GameObject safeContainer = infoContainer != null ? infoContainer : gameObject;
+                foreach (var result in results)
                 {
-                    foreach (var result in results)
+                    if (result.gameObject.transform.IsChildOf(safeContainer.transform) || result.gameObject == safeContainer)
                     {
-                        if (result.gameObject.transform.IsChildOf(infoContainer.transform) || result.gameObject == infoContainer)
-                        {
-                            hitInfoContainer = true;
-                            break;
-                        }
+                        hitInfoContainer = true;
+                        break;
                     }
                 }
                 
@@ -114,6 +113,7 @@ public class SimplePopupUI : MonoBehaviour
     public void Show()
     {
         isVisible = true;
+        ignorePointerUntilTime = Time.unscaledTime + clickGuardDuration;
         gameObject.SetActive(true);
     }
 

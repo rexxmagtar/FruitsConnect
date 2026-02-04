@@ -127,7 +127,7 @@ public abstract class BaseNode : MonoBehaviour
     // Helper Spirits
     protected List<GameObject> currentHelperSpirits = new List<GameObject>();
 
-    public bool IsDoubleNode => gameObject.name.Contains("_double_");
+    public bool IsDoubleNode => requiredDeliveries >10;
     
     /// <summary>
     /// Check if this node is activated and can be clicked/interacted with

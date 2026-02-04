@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levelPrefab: {fileID: 2902720438423909765, guid: e731b443454c8e74c8afbe8dea9ea98b, type: 3}
   coinReward: 40
-  energySphereReward: 300
+  energySphereReward: 200
   monsterBounty: 2
   levelName: Level15
   startingEnergy: 5
   connectionAnimationPrefab: {fileID: 536847310261410110, guid: 278f007cfdf2cd14395bb39525df674e, type: 3}
   isBossFight: 1
   bossGoldReward: 80
-  bossEnergySphereReward: 20
+  bossEnergySphereReward: 50
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - random

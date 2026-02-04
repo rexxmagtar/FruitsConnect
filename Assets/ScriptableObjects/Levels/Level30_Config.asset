@@ -21,7 +21,7 @@ MonoBehaviour:
   connectionAnimationPrefab: {fileID: 2141506787181539334, guid: 657599acedf7b3e48b27cee3f2ea2ca8, type: 3}
   isBossFight: 1
   bossGoldReward: 120
-  bossEnergySphereReward: 20
+  bossEnergySphereReward: 100
   bossFightTimeLimit: 30
   puzzlePieceRewards:
   - random
