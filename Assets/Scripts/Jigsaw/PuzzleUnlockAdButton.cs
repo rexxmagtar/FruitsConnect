@@ -133,18 +133,24 @@ namespace JigsawSystem
             
             if (success)
             {
-                // Show earned UI
-                if (PuzzlePieceEarnedUI.Instance != null)
-                {
-                    PuzzlePieceEarnedUI.Instance.Show(new List<string> { puzzleId + "_" + pieceIndex });
-                }
+                // Award the piece immediately before showing UI and refreshing
+                // This ensures the piece is saved before Refresh() reads CollectedPieces
+                string pieceId = puzzleId + "_" + pieceIndex;
+                string awardedId = JigsawPuzzleManager.Instance.AwardPiece(pieceId);
                 
-                // Refresh the solve UI
-                if (solveUI != null)
+                if (!string.IsNullOrEmpty(awardedId))
                 {
-                    // Small delay to let the Earned UI start showing before we refresh
-                    // Or just refresh right away, the Earned UI is a separate panel
-                    solveUI.RefreshFromAd();
+                    // Show earned UI (this will display the piece that was just awarded)
+                    if (PuzzlePieceEarnedUI.Instance != null)
+                    {
+                        PuzzlePieceEarnedUI.Instance.Show(new List<string> { awardedId });
+                    }
+                    
+                    // Refresh the solve UI - now the piece is already saved, so it will show correctly
+                    if (solveUI != null)
+                    {
+                        solveUI.RefreshFromAd();
+                    }
                 }
             }
             else

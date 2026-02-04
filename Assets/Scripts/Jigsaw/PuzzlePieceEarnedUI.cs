@@ -36,6 +36,7 @@ namespace JigsawSystem
 
         private bool isWaitingForClick = false;
         private List<string> pendingPieceIds = new List<string>();
+        private Dictionary<string, int> puzzleProgressCounters = new Dictionary<string, int>();
 
         /// <summary>
         /// Check if the puzzle piece earned UI is currently visible
@@ -67,6 +68,32 @@ namespace JigsawSystem
 
         public void Show(List<string> pieceIds)
         {
+            // Calculate starting progress for each puzzle before showing pieces
+            // This ensures we show incremental progress even when multiple pieces are awarded at once
+            puzzleProgressCounters.Clear();
+            foreach (string pieceId in pieceIds)
+            {
+                if (string.IsNullOrEmpty(pieceId)) continue;
+                string[] parts = pieceId.Split('_');
+                string puzzleId = parts[0];
+                
+                if (!puzzleProgressCounters.ContainsKey(puzzleId))
+                {
+                    // Get the current count, then subtract the number of pieces we're about to show for this puzzle
+                    int currentCount = JigsawPuzzleManager.Instance.GetCollectedPieceCount(puzzleId);
+                    int piecesToShow = 0;
+                    foreach (string pid in pieceIds)
+                    {
+                        if (pid.StartsWith(puzzleId + "_"))
+                        {
+                            piecesToShow++;
+                        }
+                    }
+                    // Starting count is current count minus pieces we're about to show
+                    puzzleProgressCounters[puzzleId] = currentCount - piecesToShow;
+                }
+            }
+            
             pendingPieceIds.AddRange(pieceIds);
             if (!panel.activeSelf)
             {
@@ -87,20 +114,30 @@ namespace JigsawSystem
                 string pieceId = pendingPieceIds[0];
                 pendingPieceIds.RemoveAt(0);
 
-                // Award the piece through manager
-                string awardedId = JigsawPuzzleManager.Instance.AwardPiece(pieceId);
-                if (string.IsNullOrEmpty(awardedId)) continue;
+                // Piece should already be awarded before Show() is called
+                // Just use the pieceId that was passed in
+                if (string.IsNullOrEmpty(pieceId)) continue;
 
                 // Setup UI
-                string[] parts = awardedId.Split('_');
+                string[] parts = pieceId.Split('_');
                 string puzzleId = parts[0];
                 int pieceIndex = int.Parse(parts[1]);
 
                 var puzzleData = JigsawPuzzleManager.Instance.Config.GetPuzzle(puzzleId);
                
-                    pieceImage.sprite = puzzleData.pieces[pieceIndex];
-                    int collected = JigsawPuzzleManager.Instance.GetCollectedPieceCount(puzzleId);
-                    progressText.text = $"{collected}/9";
+                pieceImage.sprite = puzzleData.pieces[pieceIndex];
+                
+                // Increment progress counter for this puzzle and display it
+                if (!puzzleProgressCounters.ContainsKey(puzzleId))
+                {
+                    // Fallback: if counter wasn't initialized (shouldn't happen normally),
+                    // initialize it to current count - 1, then increment to show correct count
+                    int currentCount = JigsawPuzzleManager.Instance.GetCollectedPieceCount(puzzleId);
+                    puzzleProgressCounters[puzzleId] = currentCount - 1;
+                }
+                puzzleProgressCounters[puzzleId]++;
+                int displayedProgress = puzzleProgressCounters[puzzleId];
+                progressText.text = $"{displayedProgress}/9";
                 
 
                 // Animate In

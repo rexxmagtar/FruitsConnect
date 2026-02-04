@@ -128,7 +128,7 @@ public static class SaveDataExtensions
     }
 
     /// <summary>
-    /// Remove energy spheres from total
+    /// Remove energy spheres from total (saves to disk immediately)
     /// </summary>
     public static bool RemoveEnergySpheres(int amount)
     {
@@ -146,6 +146,29 @@ public static class SaveDataExtensions
         Save();
 
         Debug.Log($"[SaveData] Removed {amount} energy spheres. Total: {saveData.TotalEnergySpheres}");
+        return true;
+    }
+
+    /// <summary>
+    /// Remove energy spheres from total (updates in memory only, does not save to disk)
+    /// Use this for frequent updates in building UI. Call SaveGameData() manually when needed.
+    /// </summary>
+    public static bool RemoveEnergySpheresInMemory(int amount)
+    {
+        if (amount <= 0) return false;
+
+        var saveData = GetSaveData();
+
+        if (saveData.TotalEnergySpheres < amount)
+        {
+            Debug.LogWarning($"[SaveData] Not enough energy spheres. Have: {saveData.TotalEnergySpheres}, Need: {amount}");
+            return false;
+        }
+
+        saveData.TotalEnergySpheres -= amount;
+        // Don't call Save() - data is updated in memory only
+
+        Debug.Log($"[SaveData] Removed {amount} energy spheres (in memory). Total: {saveData.TotalEnergySpheres}");
         return true;
     }
     
@@ -188,13 +211,24 @@ public static class SaveDataExtensions
     }
 
     /// <summary>
-    /// Set progress within the current base stage
+    /// Set progress within the current base stage (saves to disk immediately)
     /// </summary>
     public static void SetBaseStageProgress(int progress)
     {
         var saveData = GetSaveData();
         saveData.BaseStageProgress = progress;
         Save();
+    }
+
+    /// <summary>
+    /// Set progress within the current base stage (updates in memory only, does not save to disk)
+    /// Use this for frequent updates in building UI. Call SaveGameData() manually when needed.
+    /// </summary>
+    public static void SetBaseStageProgressInMemory(int progress)
+    {
+        var saveData = GetSaveData();
+        saveData.BaseStageProgress = progress;
+        // Don't call Save() - data is updated in memory only
     }
     
     /// <summary>

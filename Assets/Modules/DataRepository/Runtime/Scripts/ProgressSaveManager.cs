@@ -317,5 +317,20 @@ public class ProgressSaveManager<T> : MonoBehaviour where T : new()
         }
     }
 
+    private void OnApplicationQuit()
+    {
+        // Ensure data is saved to disk when application quits
+        SaveGameData();
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        // Save when application is paused (e.g., when user switches apps on mobile)
+        if (pauseStatus)
+        {
+            SaveGameData();
+        }
+    }
+
 }
 }

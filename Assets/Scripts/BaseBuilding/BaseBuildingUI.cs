@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using UnityEngine.EventSystems;
 using AdsServices;
 using WindowManager;
+using DataRepository;
 
 public class BaseBuildingUI : MonoBehaviour
 {
@@ -117,6 +118,8 @@ public class BaseBuildingUI : MonoBehaviour
     private bool isShowingAd = false;
     private SimplePopupUI noEnergyPopupUI;
     private SimplePopupUI rewardPopupUI;
+    private int energySpentSinceLastSave = 0;
+    private const int SAVE_THRESHOLD = 10; // Save after spending 10 energy spheres
 
     public event System.Action OnClosed;
 
@@ -350,8 +353,18 @@ public class BaseBuildingUI : MonoBehaviour
         int toDeduct = Mathf.Min(ENERGY_PER_SPHERE, available);
         toDeduct = Mathf.Min(toDeduct, totalPrice - currentProgress);
         
-        if (SaveDataExtensions.RemoveEnergySpheres(toDeduct))
+        // Use in-memory update (doesn't save to disk immediately)
+        if (SaveDataExtensions.RemoveEnergySpheresInMemory(toDeduct))
         {
+            energySpentSinceLastSave += toDeduct;
+            
+            // Save to disk if we've spent 10 energy spheres
+            if (energySpentSinceLastSave >= SAVE_THRESHOLD)
+            {
+                ProgressSaveManager<SaveData>.Instance.SaveGameData();
+                energySpentSinceLastSave = 0;
+            }
+            
             UpdateBalanceUI(); // Update balance text immediately as soon as we spend
             AnimateEnergySphere(objIndex, stageIndex, toDeduct, totalPrice);
         }
@@ -402,7 +415,8 @@ public class BaseBuildingUI : MonoBehaviour
         
         int startProgress = SaveDataExtensions.GetBaseStageProgress();
         int endProgress = startProgress + priceDeducted;
-        SaveDataExtensions.SetBaseStageProgress(endProgress);
+        // Use in-memory update (doesn't save to disk immediately)
+        SaveDataExtensions.SetBaseStageProgressInMemory(endProgress);
 
         float startFill = (float)startProgress / totalPrice;
         float endFill = (float)endProgress / totalPrice;
@@ -470,8 +484,10 @@ public class BaseBuildingUI : MonoBehaviour
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
         int newLevel = totalLevel + 1;
-        SaveDataExtensions.SetBaseLevel(newLevel);
-        SaveDataExtensions.SetBaseStageProgress(0); // Reset progress for next stage
+        SaveDataExtensions.SetBaseLevel(newLevel); // This saves to disk
+        SaveDataExtensions.SetBaseStageProgress(0); // This saves to disk
+        // Reset energy spent counter since we just saved
+        energySpentSinceLastSave = 0;
         
         // Track base building new level analytics
         AnalyticsServices.AnalyticsService.Instance.TrackBaseBuildingNewLevel(newLevel);
@@ -637,6 +653,13 @@ public class BaseBuildingUI : MonoBehaviour
     {
         if (buttonClickSound != null) audioSource.PlayOneShot(buttonClickSound);
         
+        // Save any pending changes to disk before exiting building UI
+        if (energySpentSinceLastSave > 0)
+        {
+            ProgressSaveManager<SaveData>.Instance.SaveGameData();
+            energySpentSinceLastSave = 0;
+        }
+        
         // Switch cameras back
         baseViewCamera.gameObject.SetActive(false);
         if (mainCamera != null) mainCamera.gameObject.SetActive(true);
@@ -659,6 +682,10 @@ public class BaseBuildingUI : MonoBehaviour
         if (mainCamera != null) mainCamera.gameObject.SetActive(false);
         baseViewCamera.gameObject.SetActive(true);
         currentSideOffset = arcSideOffset;
+        
+        // Reset energy spent counter when showing building UI
+        energySpentSinceLastSave = 0;
+        
         UpdateUI();
         
         // Hide level prefab while in building UI

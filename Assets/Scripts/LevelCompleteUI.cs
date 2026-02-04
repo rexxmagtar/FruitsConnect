@@ -682,14 +682,29 @@ public class LevelCompleteUI : MonoBehaviour
         // Show puzzle piece earned popups if any
         if (earnedPuzzlePieces != null && earnedPuzzlePieces.Count > 0)
         {
-            JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(earnedPuzzlePieces);
-            
-            // Wait for puzzle piece window to close before showing buttons
-            if (JigsawSystem.PuzzlePieceEarnedUI.Instance != null)
+            // Award all pieces before showing the UI
+            List<string> awardedPieceIds = new List<string>();
+            foreach (string pieceId in earnedPuzzlePieces)
             {
-                while (JigsawSystem.PuzzlePieceEarnedUI.Instance.IsVisible)
+                string awardedId = JigsawSystem.JigsawPuzzleManager.Instance.AwardPiece(pieceId);
+                if (!string.IsNullOrEmpty(awardedId))
                 {
-                    yield return null;
+                    awardedPieceIds.Add(awardedId);
+                }
+            }
+            
+            // Show earned UI with already-awarded pieces
+            if (awardedPieceIds.Count > 0)
+            {
+                JigsawSystem.PuzzlePieceEarnedUI.Instance.Show(awardedPieceIds);
+                
+                // Wait for puzzle piece window to close before showing buttons
+                if (JigsawSystem.PuzzlePieceEarnedUI.Instance != null)
+                {
+                    while (JigsawSystem.PuzzlePieceEarnedUI.Instance.IsVisible)
+                    {
+                        yield return null;
+                    }
                 }
             }
         }
