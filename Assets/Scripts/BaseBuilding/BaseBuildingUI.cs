@@ -238,7 +238,29 @@ public class BaseBuildingUI : MonoBehaviour
     private void InitializeBases()
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
-        currentObjectIndex = 0;
+        
+        // Cap totalLevel to maximum possible completion level (all bases finished)
+        int maxCompleteLevel = baseConfig.baseObjects.Count * 10;      // e.g. 1 base -> 10
+        if (totalLevel > maxCompleteLevel)
+        {
+            totalLevel = maxCompleteLevel;
+            SaveDataExtensions.SetBaseLevel(totalLevel);
+            SaveDataExtensions.SetBaseStageProgress(0);
+        }
+        
+        // Determine indices and completion state
+        bool isFullyCompleted = totalLevel >= maxCompleteLevel;
+        int objIndex = isFullyCompleted ? baseConfig.baseObjects.Count - 1 : totalLevel / 10;
+        int stageIndex = isFullyCompleted ? 9 : totalLevel % 10;
+        
+        if (objIndex >= baseConfig.baseObjects.Count)
+        {
+            objIndex = baseConfig.baseObjects.Count - 1;
+            stageIndex = 9;
+            isFullyCompleted = true;
+        }
+        
+        currentObjectIndex = objIndex;
         
         for (int i = 0; i < baseConfig.baseObjects.Count; i++)
         {
@@ -254,9 +276,32 @@ public class BaseBuildingUI : MonoBehaviour
             baseObj.SetCamera(baseViewCamera);
             
             // Set initial visual state
-            int objLevel = (i < currentObjectIndex) ? 10 : (i == currentObjectIndex ? (totalLevel % 10) : 0);
+            int objLevel;
+            if (i < currentObjectIndex)
+            {
+                // Previous objects are fully completed
+                objLevel = 10;
+            }
+            else if (i == currentObjectIndex)
+            {
+                // Current object's level
+                if (isFullyCompleted)
+                {
+                    objLevel = 10; // Show as fully completed
+                }
+                else
+                {
+                    objLevel = stageIndex;
+                }
+            }
+            else
+            {
+                // Future objects are not started
+                objLevel = 0;
+            }
+            
             int stagePrice = baseConfig.baseObjects[i].stagePrices[objLevel < 10 ? objLevel : 9];
-            int currentStageProgress = (i == currentObjectIndex) ? SaveDataExtensions.GetBaseStageProgress() : 0;
+            int currentStageProgress = (i == currentObjectIndex && objLevel < 10) ? SaveDataExtensions.GetBaseStageProgress() : 0;
             float progress = (float)currentStageProgress / stagePrice;
             
             baseObj.UpdateVisuals(objLevel, progress, true); // Use immediate=true for initialization
@@ -327,6 +372,19 @@ public class BaseBuildingUI : MonoBehaviour
     private void TryBuild()
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
+        
+        // Cap totalLevel to maximum possible completion level (all bases finished)
+        int maxCompleteLevel = baseConfig.baseObjects.Count * 10;
+        if (totalLevel > maxCompleteLevel)
+        {
+            totalLevel = maxCompleteLevel;
+            SaveDataExtensions.SetBaseLevel(totalLevel);
+            SaveDataExtensions.SetBaseStageProgress(0);
+        }
+        
+        // If fully completed, nothing to build
+        if (totalLevel >= maxCompleteLevel) return;
+        
         int objIndex = totalLevel / 10;
         int stageIndex = totalLevel % 10;
         
@@ -484,6 +542,14 @@ public class BaseBuildingUI : MonoBehaviour
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
         int newLevel = totalLevel + 1;
+        
+        // Cap newLevel to maximum possible completion level (all bases finished)
+        int maxCompleteLevel = baseConfig.baseObjects.Count * 10;
+        if (newLevel > maxCompleteLevel)
+        {
+            newLevel = maxCompleteLevel;
+        }
+        
         SaveDataExtensions.SetBaseLevel(newLevel); // This saves to disk
         SaveDataExtensions.SetBaseStageProgress(0); // This saves to disk
         // Reset energy spent counter since we just saved
@@ -492,31 +558,43 @@ public class BaseBuildingUI : MonoBehaviour
         // Track base building new level analytics
         AnalyticsServices.AnalyticsService.Instance.TrackBaseBuildingNewLevel(newLevel);
         
-        instantiatedBaseObjects[objIndex].UpdateVisuals(stageIndex + 1, 0f);
-        
-        // Update price text for the next stage if it exists
-        if (stageIndex + 1 < 10)
-        {
-            var nextStage = instantiatedBaseObjects[objIndex].GetStage(stageIndex + 1);
-            if (nextStage != null)
-            {
-                int nextStagePrice = baseConfig.baseObjects[objIndex].stagePrices[stageIndex + 1];
-                nextStage.UpdatePriceText(nextStagePrice);
-            }
-        }
-        
-        if (stageCompleteSound != null) audioSource.PlayOneShot(stageCompleteSound);
-        if (stageCompleteParticles != null) stageCompleteParticles.Play();
-        
         if (stageIndex == 9) // Object completed
         {
             if (objectCompleteSound != null) audioSource.PlayOneShot(objectCompleteSound);
+            
+            // Show the base as fully completed (all 10 stages built)
+            if (objIndex < instantiatedBaseObjects.Count)
+            {
+                instantiatedBaseObjects[objIndex].UpdateVisuals(10, 1f);
+            }
             
             if (objIndex + 1 < instantiatedBaseObjects.Count)
             {
                 ScrollBases(1, true);
             }
         }
+        else
+        {
+            // Update visuals for the next stage
+            int newObjIndex = newLevel / 10;
+            int newStageIndex = newLevel % 10;
+            
+            if (newObjIndex == objIndex && newStageIndex < 10 && objIndex < instantiatedBaseObjects.Count)
+            {
+                instantiatedBaseObjects[objIndex].UpdateVisuals(newStageIndex, 0f);
+                
+                // Update price text for the next stage
+                var nextStage = instantiatedBaseObjects[objIndex].GetStage(newStageIndex);
+                if (nextStage != null)
+                {
+                    int nextStagePrice = baseConfig.baseObjects[objIndex].stagePrices[newStageIndex];
+                    nextStage.UpdatePriceText(nextStagePrice);
+                }
+            }
+        }
+        
+        if (stageCompleteSound != null) audioSource.PlayOneShot(stageCompleteSound);
+        if (stageCompleteParticles != null) stageCompleteParticles.Play();
         
         UpdateUI();
     }
@@ -524,6 +602,16 @@ public class BaseBuildingUI : MonoBehaviour
     private void UpdateUI()
     {
         int totalLevel = SaveDataExtensions.GetBaseLevel();
+        
+        // Cap totalLevel to maximum possible completion level (all bases finished)
+        int maxCompleteLevel = baseConfig.baseObjects.Count * 10;
+        int maxStageLevel = maxCompleteLevel - 1;
+        if (totalLevel > maxCompleteLevel)
+        {
+            totalLevel = maxCompleteLevel;
+            SaveDataExtensions.SetBaseLevel(totalLevel);
+            SaveDataExtensions.SetBaseStageProgress(0);
+        }
         
         currentLevelText.text = totalLevel.ToString();
         nextLevelText.text = (totalLevel + 1).ToString();
@@ -539,7 +627,25 @@ public class BaseBuildingUI : MonoBehaviour
         int objIndex = totalLevel / 10;
         int stageIndex = totalLevel % 10;
         
-        if (objIndex < baseConfig.baseObjects.Count)
+        // Check if base is fully completed
+        bool isFullyCompleted = totalLevel >= maxCompleteLevel;
+        if (isFullyCompleted)
+        {
+            objIndex = baseConfig.baseObjects.Count - 1;
+            stageIndex = 9;
+        }
+        else if (objIndex >= baseConfig.baseObjects.Count)
+        {
+            objIndex = baseConfig.baseObjects.Count - 1;
+            stageIndex = 9;
+            isFullyCompleted = true;
+        }
+        
+        if (isFullyCompleted)
+        {
+            progressSlider.value = 1f;
+        }
+        else if (objIndex < baseConfig.baseObjects.Count && stageIndex < 10)
         {
             int totalPrice = baseConfig.baseObjects[objIndex].stagePrices[stageIndex];
             int currentProgress = SaveDataExtensions.GetBaseStageProgress();
@@ -548,8 +654,6 @@ public class BaseBuildingUI : MonoBehaviour
         else
         {
             progressSlider.value = 1f;
-            // Don't disable button interactability - we need events to fire for hold detection
-            // The TryBuild() method will handle checking if we can build
         }
         
         leftArrowButton.interactable = currentObjectIndex > 0;

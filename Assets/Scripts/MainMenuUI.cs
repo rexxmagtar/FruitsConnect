@@ -264,6 +264,18 @@ public class MainMenuUI : MonoBehaviour
     }
     
     /// <summary>
+    /// Hide the main menu UI immediately without fade animation
+    /// </summary>
+    public void HideImmediate()
+    {
+        if (!isVisible) return;
+        
+        isVisible = false;
+        canvasGroup.alpha = 0f;
+        gameObject.SetActive(false);
+    }
+    
+    /// <summary>
     /// Show animation sequence
     /// </summary>
     private IEnumerator ShowAnimation()
@@ -428,7 +440,7 @@ public class MainMenuUI : MonoBehaviour
 
         if (baseBuildingUI != null)
         {
-            Hide();
+            HideImmediate();
             baseBuildingUI.Show();
         }
     }

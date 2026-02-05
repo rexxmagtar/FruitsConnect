@@ -67,6 +67,8 @@ namespace AnalyticsServices
                 {
                     AppMetrica.ReportEvent(eventName);
                 }
+
+                Debug.Log($"[AppMetrica] Event: {eventName}, Parameters: {(parameters != null ? string.Join(", ", parameters) : "None")}");
             }
             catch (Exception e)
             {

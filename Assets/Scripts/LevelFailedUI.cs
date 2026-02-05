@@ -164,12 +164,16 @@ public class LevelFailedUI : MonoBehaviour
     {
         if (isVisible) return;
         
+        // Reset state flags
+        isShowingAd = false;
+        
         this.levelReward = levelReward;
         this.levelEnergyReward = levelEnergyReward;
-        this.coinsEarned = (int)(levelReward * 0.3f);
-        this.energySpheresEarned = (int)(levelEnergyReward * 0.3f);
-        this.skipReward = (int)(levelReward * 0.5f);
-        this.skipEnergyReward = (int)(levelEnergyReward * 0.5f);
+        // Calculate rewards using RoundToInt to match GameController's perk calculation method
+        this.coinsEarned = Mathf.RoundToInt(levelReward * 0.3f);
+        this.energySpheresEarned = Mathf.RoundToInt(levelEnergyReward * 0.3f);
+        this.skipReward = Mathf.RoundToInt(levelReward * 0.5f);
+        this.skipEnergyReward = Mathf.RoundToInt(levelEnergyReward * 0.5f);
 
         // Hide energy UI if level < 8
         int currentLevel = SaveDataExtensions.GetCurrentLevelNumber();
@@ -195,17 +199,24 @@ public class LevelFailedUI : MonoBehaviour
             skipEnergyRewardText.text = "+" + skipEnergyReward.ToString();
         }
 
-        // Hide retry button initially using alpha (button stays active for autolayout)
+        // Reset retry button state - ensure it's interactable and visible state is reset
         if (retryButton != null)
         {
+            retryButton.interactable = true; // Reset button interactability
             CanvasGroup retryCanvasGroup = retryButton.GetComponent<CanvasGroup>();
             if (retryCanvasGroup == null)
             {
                 retryCanvasGroup = retryButton.gameObject.AddComponent<CanvasGroup>();
             }
             retryCanvasGroup.alpha = 0f;
-            retryCanvasGroup.interactable = false;
-            retryCanvasGroup.blocksRaycasts = false;
+            retryCanvasGroup.interactable = true; // Allow CanvasGroup to control interactability
+            retryCanvasGroup.blocksRaycasts = false; // Will be enabled when button fades in
+        }
+        
+        // Reset skip button state
+        if (skipLevelButton != null)
+        {
+            skipLevelButton.interactable = true; // Reset button interactability
         }
 
         StartCoroutine(ShowAnimation());
@@ -294,11 +305,13 @@ public class LevelFailedUI : MonoBehaviour
         if (coinsEarnedText != null) coinsEarnedText.text = "+0";
         if (energySpheresEarnedText != null) energySpheresEarnedText.text = "+0";
 
-        int finalBalanceTotal = SaveDataExtensions.GetTotalCoins();
-        int initialBalance = finalBalanceTotal - coinsEarned;
+        // Get initial balance BEFORE adding rewards
+        int initialBalance = SaveDataExtensions.GetTotalCoins();
+        int initialEnergyBalance = SaveDataExtensions.GetTotalEnergySpheres();
 
-        int finalEnergyBalanceTotal = SaveDataExtensions.GetTotalEnergySpheres();
-        int initialEnergyBalance = finalEnergyBalanceTotal - energySpheresEarned;
+        // Add retry rewards to player's balance
+        if (coinsEarned > 0) GameManager.Instance.AddCoins(coinsEarned);
+        if (energySpheresEarned > 0) GameManager.Instance.AddEnergySpheres(energySpheresEarned);
 
         if (totalCoinsText != null) totalCoinsText.text = initialBalance.ToString();
         if (totalEnergySpheresText != null) totalEnergySpheresText.text = initialEnergyBalance.ToString();
@@ -474,6 +487,7 @@ public class LevelFailedUI : MonoBehaviour
     private IEnumerator HideAnimation()
     {
         isVisible = false;
+        isShowingAd = false; // Reset ad flag when hiding
         
         // Fade out
         float elapsedTime = 0f;
@@ -488,6 +502,23 @@ public class LevelFailedUI : MonoBehaviour
         
         canvasGroup.alpha = 0f;
         gameObject.SetActive(false);
+        
+        // Reset button states when hidden
+        if (retryButton != null)
+        {
+            retryButton.interactable = true;
+            CanvasGroup retryCanvasGroup = retryButton.GetComponent<CanvasGroup>();
+            if (retryCanvasGroup != null)
+            {
+                retryCanvasGroup.interactable = true;
+                retryCanvasGroup.blocksRaycasts = true;
+            }
+        }
+        
+        if (skipLevelButton != null)
+        {
+            skipLevelButton.interactable = true;
+        }
     }
     
     /// <summary>
@@ -583,7 +614,8 @@ public class LevelFailedUI : MonoBehaviour
     /// </summary>
     private IEnumerator AnimateSkipReward()
     {
-        // Get current balances before adding skip rewards
+        // Get current balances (skip rewards were already added in OnSkipLevelButtonClick)
+        // Calculate balance before skip rewards were added for animation
         int currentBalance = SaveDataExtensions.GetTotalCoins() - skipReward;
         int currentEnergyBalance = SaveDataExtensions.GetTotalEnergySpheres() - skipEnergyReward;
         

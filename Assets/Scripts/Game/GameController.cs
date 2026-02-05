@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using JigsawSystem;
+using Core;
 
 /// <summary>
 /// Main game controller - handles level loading, gameplay, and win conditions
@@ -27,6 +28,9 @@ public class GameController : MonoBehaviour
     
     // Rewards tracking during level
     private int monsterCoinsEarned = 0;
+    
+    // Level restart attempt tracking
+    private int currentLevelRestartAttempts = 0;
     
     // Singleton
     private static GameController _instance;
@@ -245,6 +249,9 @@ public class GameController : MonoBehaviour
         // Store level config reference
         currentLevelConfig = config;
         
+        // Reset restart attempts when loading a new level
+        currentLevelRestartAttempts = 0;
+        
         // Disable input
         gameplayEnabled = false;
 
@@ -277,6 +284,18 @@ public class GameController : MonoBehaviour
         
         gameplayEnabled = true;
         Debug.Log("Game started - input enabled");
+
+        // Trigger level started analytics event
+        if (currentLevelConfig != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelIndex = levelsManager.GetCurrentLevelNumber() - 1; // Convert to 0-indexed
+                string levelName = currentLevelConfig.LevelName ?? $"Level_{levelIndex + 1}";
+                GameEvents.LevelStarted(levelIndex, levelName);
+            }
+        }
 
         // Show hints when level starts
         if (currentLevel != null)
@@ -513,6 +532,19 @@ public class GameController : MonoBehaviour
     {
         gameplayEnabled = false;
 
+        // Trigger level failed analytics event
+        if (currentLevelConfig != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelIndex = levelsManager.GetCurrentLevelNumber() - 1; // Convert to 0-indexed
+                string levelName = currentLevelConfig.LevelName ?? $"Level_{levelIndex + 1}";
+                string failReason = "All producers captured";
+                GameEvents.LevelFailed(levelIndex, levelName, failReason);
+            }
+        }
+
         // Stop spawning monsters
         MonsterAiManager monsterManager = MonsterAiManager.Instance;
         if (monsterManager != null)
@@ -562,26 +594,11 @@ public class GameController : MonoBehaviour
     private void OnSkipLevelAdCompleted()
     {
         // Mark level as completed and return to main menu
+        // Note: Skip rewards (50% of perked reward) are already added by LevelFailedUI.OnSkipLevelButtonClick()
+        // so we don't need to add them again here
+        
         if (currentLevelConfig != null)
         {
-            // Award 30% reward (already animated in UI, but we need to add it to the player's balance)
-            // Wait, the UI already does the animation, but does it add the coins?
-            // Actually, LevelCompleteUI calls GameManager.Instance.AddCoins.
-            // LevelFailedUI doesn't add coins yet. I should add them here.
-            
-            int reward = (int)(currentLevelConfig.CoinReward * 0.3f);
-            int energyReward = (int)(currentLevelConfig.EnergySphereReward * 0.3f);
-
-            // Apply perks
-            float coinBonus = PerksManager.Instance.GetTotalBonus(PerkType.CoinRewardPercent);
-            float energyBonus = PerksManager.Instance.GetTotalBonus(PerkType.EnergySphereRewardPercent);
-            
-            reward = Mathf.RoundToInt(reward * (1f + coinBonus / 100f));
-            energyReward = Mathf.RoundToInt(energyReward * (1f + energyBonus / 100f));
-
-            GameManager.Instance.AddCoins(reward);
-            GameManager.Instance.AddEnergySpheres(energyReward);
-
             // Complete level (increments CurrentLevel)
             GameManager.Instance.CompleteLevel();
             
@@ -667,6 +684,20 @@ public class GameController : MonoBehaviour
     private void OnLevelComplete()
     {
         gameplayEnabled = false;
+        
+        // Trigger level completed analytics event
+        if (currentLevelConfig != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelIndex = levelsManager.GetCurrentLevelNumber() - 1; // Convert to 0-indexed
+                string levelName = currentLevelConfig.LevelName ?? $"Level_{levelIndex + 1}";
+                int score = 0; // Score system not implemented yet
+                int stars = 0; // Stars system not implemented yet
+                GameEvents.LevelCompleted(levelIndex, levelName, score, stars);
+            }
+        }
         
         // Stop spawning and kill all monsters to prevent them from capturing nodes after level completion
         MonsterAiManager monsterManager = MonsterAiManager.Instance;
@@ -922,6 +953,19 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void RestartLevel()
     {
+        // Trigger level restarted analytics event before resetting
+        if (currentLevelConfig != null)
+        {
+            LevelsManager levelsManager = LevelsManager.Instance;
+            if (levelsManager != null)
+            {
+                int levelIndex = levelsManager.GetCurrentLevelNumber() - 1; // Convert to 0-indexed
+                string levelName = currentLevelConfig.LevelName ?? $"Level_{levelIndex + 1}";
+                currentLevelRestartAttempts++;
+                GameEvents.LevelRestarted(levelIndex, levelName, currentLevelRestartAttempts);
+            }
+        }
+        
         ResetLevel();
         StartGame();
     }
