@@ -88,6 +88,8 @@ namespace ComplianceService
         }
         yearDropdown.ClearOptions();
         yearDropdown.AddOptions(years);
+        yearDropdown.value = years.Count - 1;
+        yearDropdown.RefreshShownValue();
     }
 
     public async Task<bool> CheckAndShowChildAgeDialogAsync()
