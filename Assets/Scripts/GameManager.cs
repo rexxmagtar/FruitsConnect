@@ -6,6 +6,7 @@ using ComplianceService;
 using AuthServices;
 using DataRepository;
 using AdsServices;
+using Facebook.Unity;
 
 public class SaveData
 {
@@ -172,6 +173,8 @@ public class GameManager : MonoBehaviour
                 throw new Exception("AnalyticsManager singleton not available");
             }
 
+            FB.Init();
+            FB.ActivateApp();
             await analyticsInstance.Initialize();
             
             LogDebug("Analytics initialized successfully");
