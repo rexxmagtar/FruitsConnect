@@ -173,8 +173,7 @@ public class GameManager : MonoBehaviour
                 throw new Exception("AnalyticsManager singleton not available");
             }
 
-            FB.Init();
-            FB.ActivateApp();
+            FB.Init(OnFacebookInitComplete);
             await analyticsInstance.Initialize();
             
             LogDebug("Analytics initialized successfully");
@@ -184,6 +183,13 @@ public class GameManager : MonoBehaviour
             LogError($"Failed to initialize Analytics: {ex.Message}");
             throw;
         }
+    }
+
+     private void OnFacebookInitComplete()
+    {
+        Debug.Log("Facebook initialized");
+        FB.ActivateApp();
+        // FB.LogInWithReadPermissions(callback: OnLogIn);
     }
     
     /// <summary>
