@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4cc3597b4c55e434da0c378a065edbc1
+timeCreated: 1559652707
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 168396
+  packageName: 'Environment Pack: Free Forest Sample'
+  packageVersion: 2.0.1
+  assetPath: Assets/Supercyan Free Forest Sample/Materials/Mobile/Tree/forestpack_treeStumpAndRoot_low.mat
+  uploadId: 697266

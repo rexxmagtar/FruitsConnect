@@ -211,6 +211,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -232,9 +234,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &1328371884907234724
 GameObject:
@@ -1859,6 +1863,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -1880,9 +1886,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1001 &746199478915739084
 PrefabInstance:
@@ -3325,6 +3333,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5911771151303364303}
     m_Modifications:
+    - target: {fileID: 2321263375528557668, guid: cf46f1be50dc4ed4f8f07450b549159b, type: 3}
+      propertyPath: m_Size.x
+      value: 15.2300005
+      objectReference: {fileID: 0}
+    - target: {fileID: 2321263375528557668, guid: cf46f1be50dc4ed4f8f07450b549159b, type: 3}
+      propertyPath: m_Size.y
+      value: 15.2300005
+      objectReference: {fileID: 0}
     - target: {fileID: 3425836630667247115, guid: cf46f1be50dc4ed4f8f07450b549159b, type: 3}
       propertyPath: m_Name
       value: PortalBoss

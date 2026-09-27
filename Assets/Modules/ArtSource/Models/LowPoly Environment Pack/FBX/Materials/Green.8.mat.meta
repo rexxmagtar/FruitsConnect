@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 764150623bdab274b80ca859b4f982a0
+timeCreated: 1504768174
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 99479
+  packageName: LowPoly Environment Pack
+  packageVersion: 1.0
+  assetPath: Assets/LowPoly Environment Pack/FBX/Materials/Green.8.mat
+  uploadId: 200756

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d1e49be6edacbdd4b9c0aed83e026bdd
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 157552
+  packageName: Simple Low Poly Nature Pack
+  packageVersion: 1.2
+  assetPath: Assets/SimpleLowPolyNature/Shaders/SimpleWater.shader
+  uploadId: 355026

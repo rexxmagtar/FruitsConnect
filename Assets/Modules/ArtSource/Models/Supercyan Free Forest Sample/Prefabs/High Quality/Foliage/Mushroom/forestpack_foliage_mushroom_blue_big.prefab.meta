@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4fa8a8868f2c5f44a8171b61ee837563
+timeCreated: 1559829188
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 168396
+  packageName: 'Environment Pack: Free Forest Sample'
+  packageVersion: 2.0.1
+  assetPath: Assets/Supercyan Free Forest Sample/Prefabs/High Quality/Foliage/Mushroom/forestpack_foliage_mushroom_blue_big.prefab
+  uploadId: 697266

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 866061cf38837e94294a4a2d7b190503
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 625f186215c104763be7675aa2d941aa, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297318
+  packageName: Elemental Spells Full Pack VFX
+  packageVersion: 1.0.0
+  assetPath: Assets/PixPlays/ElementalAOE/EarthAOE/Shaders/ShatteredGroundShader.shadergraph
+  uploadId: 699677

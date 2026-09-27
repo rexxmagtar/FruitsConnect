@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f972191440d5cc743ba58352aed78612
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 15600000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 168396
+  packageName: 'Environment Pack: Free Forest Sample'
+  packageVersion: 2.0.1
+  assetPath: Assets/Supercyan Free Forest Sample/Terrains/DemoTerrain.asset
+  uploadId: 697266

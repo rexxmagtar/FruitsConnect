@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fb8dd5af4560d1343802425ccee6044b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297318
+  packageName: Elemental Spells Full Pack VFX
+  packageVersion: 1.0.0
+  assetPath: Assets/PixPlays/ElementalBlastVFX/WaterBlast/Anims/WaterBlastTimeline.playable
+  uploadId: 699677

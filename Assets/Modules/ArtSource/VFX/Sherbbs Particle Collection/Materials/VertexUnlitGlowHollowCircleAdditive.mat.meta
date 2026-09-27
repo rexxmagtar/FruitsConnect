@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d8f35e059d9296144af98ab478955e3b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 170798
+  packageName: Sherbb's Particle Collection
+  packageVersion: 1.0
+  assetPath: Assets/Sherbbs Particle Collection/Materials/VertexUnlitGlowHollowCircleAdditive.mat
+  uploadId: 379554

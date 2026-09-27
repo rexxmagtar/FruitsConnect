@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: debab979e5b7b0f48a022be83349d646
+timeCreated: 1559654615
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 168396
+  packageName: 'Environment Pack: Free Forest Sample'
+  packageVersion: 2.0.1
+  assetPath: Assets/Supercyan Free Forest Sample/Materials/High Quality/SignAndBridge/forestpack_roadSignAndBridge.mat
+  uploadId: 697266

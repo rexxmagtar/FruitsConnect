@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 71e1c757687e85145b2d733f95401133
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 141496
+  packageName: Procedural fire
+  packageVersion: 1.1.0
+  assetPath: Assets/Hovl Studio/Procedural fire/Prefabs/RotatorPS2.prefab
+  uploadId: 454218

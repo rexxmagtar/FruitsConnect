@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 76d224af7b08b2e4f9e752f6a6c8beda
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 297318
+  packageName: Elemental Spells Full Pack VFX
+  packageVersion: 1.0.0
+  assetPath: Assets/PixPlays/Components/Components_BuiltIn/SharedVFXComponents/Flash/VerticalFlashMat.mat
+  uploadId: 699677

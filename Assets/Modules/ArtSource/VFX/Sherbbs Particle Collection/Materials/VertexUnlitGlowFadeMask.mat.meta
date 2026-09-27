@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 61f1ad8227d764e449a4f0d7108b1469
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 170798
+  packageName: Sherbb's Particle Collection
+  packageVersion: 1.0
+  assetPath: Assets/Sherbbs Particle Collection/Materials/VertexUnlitGlowFadeMask.mat
+  uploadId: 379554
