@@ -817,6 +817,8 @@ public class LevelCompleteUI : MonoBehaviour
         {
             audioSource.PlayOneShot(buttonClickSound);
         }
+
+        TryShowLevelCompleteInterstitial();
         
         Hide();
 
@@ -834,11 +836,27 @@ public class LevelCompleteUI : MonoBehaviour
         {
             audioSource.PlayOneShot(buttonClickSound);
         }
+
+        TryShowLevelCompleteInterstitial();
         
         Hide();
 
         // Invoke event
         OnReturnToMenuButtonPressed?.Invoke();
+    }
+
+    /// <summary>
+    /// Request interstitial when leaving level-complete (continue / return to menu).
+    /// Matches PuzzleTask / MechaSnake timing.
+    /// </summary>
+    private static void TryShowLevelCompleteInterstitial()
+    {
+        if (AdsManager.Instance == null)
+        {
+            return;
+        }
+
+        AdsManager.Instance.TryShowInterstitial();
     }
     
     /// <summary>

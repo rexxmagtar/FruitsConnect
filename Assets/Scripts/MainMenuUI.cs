@@ -87,7 +87,12 @@ public class MainMenuUI : MonoBehaviour
         
         if (shopButton != null)
         {
+#if UNITY_WEBGL
+            // Store/IAP off on WebGL Playables — hide Shop / No-Ads entry points
+            shopButton.gameObject.SetActive(false);
+#else
             shopButton.onClick.AddListener(OnShopButtonClick);
+#endif
         }
         
         if (jigsawButton != null)

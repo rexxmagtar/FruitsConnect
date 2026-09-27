@@ -3,10 +3,12 @@ using System.Threading.Tasks;
 using UnityEngine;
 using AnalyticsServices;
 using ComplianceService;
-using AuthServices;
 using DataRepository;
 using AdsServices;
+using YTGameSDK;
+#if !UNITY_WEBGL
 using Facebook.Unity;
+#endif
 
 public class SaveData
 {
@@ -39,6 +41,14 @@ public class SaveData
 
 public class GameManager : MonoBehaviour
 {
+    [Flags]
+    public enum PauseSource
+    {
+        None = 0,
+        UserInterface = 1 << 0,
+        YouTubePlayables = 1 << 1
+    }
+
     [Header("Game Manager Settings")]
     [SerializeField] private bool enableDebugLogs = true;
     
@@ -71,6 +81,17 @@ public class GameManager : MonoBehaviour
     public bool IsInitialized { get; private set; }
     public bool IsInitializing { get; private set; }
     public string LastError { get; private set; }
+    public bool IsPaused => activePauseSources != PauseSource.None;
+
+    private PauseSource activePauseSources = PauseSource.None;
+
+#if UNITY_WEBGL
+    private YTGameWrapper ytGameWrapper;
+    private bool ytCallbacksRegistered;
+    private bool ytFirstFrameReadySent;
+    private bool ytGameReadySent;
+    private GameObject playablesInputBlocker;
+#endif
     
     private void Awake()
     {
@@ -104,14 +125,22 @@ public class GameManager : MonoBehaviour
         
         IsInitializing = true;
         LogDebug("Starting game initialization...");
+
+        Application.targetFrameRate = 60;
+
+#if UNITY_WEBGL
+        await BootstrapPlayablesBridgeAsync();
+#endif
         
         try
         {
             // 1. Analytics - Initialize first for tracking
             await InitializeAnalytics();
             
-            // 2. GDPR/COPPA Compliance - Required before any data collection
+#if !UNITY_WEBGL
+            // 2. GDPR/COPPA Compliance - Required before any data collection (mobile only)
             await InitializeCompliance();
+#endif
             
             // // 3. Authentication - Required for user-specific data
             // await InitializeAuthentication();
@@ -131,8 +160,10 @@ public class GameManager : MonoBehaviour
             // 7. Hit Particles - Initialize after player progress
             await InitializeHitParticles();
 
-            // 8. Review Manager - Initialize for in-app reviews
+#if !UNITY_WEBGL
+            // 8. Review Manager - Initialize for in-app reviews (mobile only)
             InitializeReviewManager();
+#endif
 
             // ProgressSaveManager<SaveData>.Instance.SyncWithCloud();
             
@@ -144,6 +175,10 @@ public class GameManager : MonoBehaviour
             
             LogDebug("Game initialization completed successfully!");
             OnGameInitialized?.Invoke();
+
+#if UNITY_WEBGL
+            NotifyPlayablesGameReadyIfNeeded();
+#endif
         }
         catch (Exception ex)
         {
@@ -173,7 +208,9 @@ public class GameManager : MonoBehaviour
                 throw new Exception("AnalyticsManager singleton not available");
             }
 
+#if !UNITY_WEBGL
             FB.Init(OnFacebookInitComplete);
+#endif
             await analyticsInstance.Initialize();
             
             LogDebug("Analytics initialized successfully");
@@ -185,12 +222,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
+#if !UNITY_WEBGL
      private void OnFacebookInitComplete()
     {
         Debug.Log("Facebook initialized");
         FB.ActivateApp();
         // FB.LogInWithReadPermissions(callback: OnLogIn);
     }
+#endif
     
     /// <summary>
     /// Initialize GDPR/COPPA Compliance
@@ -230,41 +269,9 @@ public class GameManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Initialize Authentication
-    /// </summary>
-    private async Task InitializeAuthentication()
-    {
-        LogDebug("Initializing Authentication...");
-        OnInitializationProgress?.Invoke(0.3f);
-        
-        try
-        {
-            // Initialize Firebase Auth
-             FirebaseAuthManager.Instance.Initialize();
-            await FirebaseAuthManager.Instance.Auth();
-            
-            if (FirebaseAuthManager.Instance.IsAuthenticated)
-            {
-                LogDebug($"User authenticated: {FirebaseAuthManager.Instance.CurrentUser?.DisplayName}");
-            }
-            else
-            {
-                LogDebug("User not authenticated (anonymous or failed)");
-            }
-            
-            LogDebug("Authentication initialized successfully");
-        }
-        catch (Exception ex)
-        {
-            LogError($"Failed to initialize Authentication: {ex.Message}");
-            throw;
-        }
-    }
-    
-    /// <summary>
     /// Initialize Save Progress system
     /// </summary>
-    private Task InitializeSaveProgress()
+    private async Task InitializeSaveProgress()
     {
         LogDebug("Initializing Save Progress...");
         OnInitializationProgress?.Invoke(0.4f);
@@ -274,7 +281,8 @@ public class GameManager : MonoBehaviour
             // Initialize ProgressSaveManager
             var progressManager = ProgressSaveManager<SaveData>.Instance;
 
-            progressManager.Initialize();
+            // YT_PLYABLE WebGL uses cloud InitializeAsync; otherwise local Initialize / InitializeAsync
+            await progressManager.InitializeAsync();
             
             // Load existing save data or create new
             bool hasExistingSave = progressManager.HasData;
@@ -296,8 +304,6 @@ public class GameManager : MonoBehaviour
             LogError($"Failed to initialize Save Progress: {ex.Message}");
             throw;
         }
-        
-        return Task.CompletedTask;
     }
     
     /// <summary>
@@ -342,6 +348,7 @@ public class GameManager : MonoBehaviour
         LogDebug("Initializing Player Progress...");
         OnInitializationProgress?.Invoke(0.7f);
         PlayerProgressController.Instance.Initialize();
+        await Task.CompletedTask;
     }
     
     /// <summary>
@@ -352,6 +359,7 @@ public class GameManager : MonoBehaviour
         LogDebug("Initializing Hit Particles...");
         OnInitializationProgress?.Invoke(0.8f);
         HitParticlesManager.Instance.Initialize();
+        await Task.CompletedTask;
     }
 
     /// <summary>
@@ -406,6 +414,186 @@ public class GameManager : MonoBehaviour
     {
         Debug.LogError($"[GameManager] {message}");
     }
+
+    public void RequestPause(PauseSource source)
+    {
+        if (source == PauseSource.None)
+        {
+            return;
+        }
+
+        PauseSource previousSources = activePauseSources;
+        activePauseSources |= source;
+        ApplyUnifiedPauseState(previousSources, activePauseSources);
+    }
+
+    public void RequestResume(PauseSource source)
+    {
+        if (source == PauseSource.None)
+        {
+            return;
+        }
+
+        PauseSource previousSources = activePauseSources;
+        activePauseSources &= ~source;
+        ApplyUnifiedPauseState(previousSources, activePauseSources);
+    }
+
+    public bool IsPauseSourceActive(PauseSource source)
+    {
+        return (activePauseSources & source) != 0;
+    }
+
+    private void ApplyUnifiedPauseState(PauseSource previousSources, PauseSource currentSources)
+    {
+        bool wasPaused = previousSources != PauseSource.None;
+        bool isPausedNow = currentSources != PauseSource.None;
+
+        if (wasPaused == isPausedNow)
+        {
+            return;
+        }
+
+        Time.timeScale = isPausedNow ? 0f : 1f;
+    }
+
+#if UNITY_WEBGL
+    private async Task BootstrapPlayablesBridgeAsync()
+    {
+        ytGameWrapper = ResolveYTGameWrapper();
+        if (ytGameWrapper == null)
+        {
+            LogError("YTGameWrapper not found; Playables bridge bootstrap skipped.");
+            return;
+        }
+
+        RegisterPlayablesCallbacksIfNeeded();
+
+        // Allow loading UI to render before firstFrameReady is sent.
+        await Task.Yield();
+        NotifyPlayablesFirstFrameReadyIfNeeded();
+    }
+
+    private YTGameWrapper ResolveYTGameWrapper()
+    {
+        GameObject wrapperObject = GameObject.Find("YTGameWrapper");
+        if (wrapperObject != null && wrapperObject.TryGetComponent(out YTGameWrapper wrapperByName))
+        {
+            return wrapperByName;
+        }
+
+        return FindFirstObjectByType<YTGameWrapper>(FindObjectsInactive.Include);
+    }
+
+    private void RegisterPlayablesCallbacksIfNeeded()
+    {
+        if (ytCallbacksRegistered || ytGameWrapper == null)
+        {
+            return;
+        }
+
+        ytGameWrapper.SetOnAudioEnabledChangeCallback(OnPlayablesAudioEnabledChanged);
+        ytGameWrapper.SetOnPauseCallback(OnPlayablesPauseRequested);
+        ytGameWrapper.SetOnResumeCallback(OnPlayablesResumeRequested);
+        ytCallbacksRegistered = true;
+
+        bool isAudioEnabled = ytGameWrapper.IsYTGameAudioEnabled();
+        OnPlayablesAudioEnabledChanged(isAudioEnabled);
+        LogDebug($"YT Playables callbacks registered (audio enabled: {isAudioEnabled}).");
+    }
+
+    private void NotifyPlayablesFirstFrameReadyIfNeeded()
+    {
+        if (ytFirstFrameReadySent || ytGameWrapper == null)
+        {
+            return;
+        }
+
+        // First-frame ready is sent from YtInitFirstFrameScene via YtFirstFrameInit.
+        ytFirstFrameReadySent = true;
+        LogDebug("YT Playables firstFrameReady marked (sent from YtInit scene).");
+    }
+
+    private void NotifyPlayablesGameReadyIfNeeded()
+    {
+        if (ytGameReadySent || ytGameWrapper == null)
+        {
+            return;
+        }
+
+        ytGameWrapper.SendGameIsReady();
+        ytGameReadySent = true;
+        LogDebug("YT Playables gameReady sent.");
+    }
+
+    private void OnPlayablesAudioEnabledChanged(bool isAudioEnabled)
+    {
+        AudioSettings.Instance.SetYTAudioEnabled(isAudioEnabled);
+        LogDebug($"YT Playables audio changed: {isAudioEnabled}");
+    }
+
+    private void OnPlayablesPauseRequested()
+    {
+        RequestPause(PauseSource.YouTubePlayables);
+        SetPlayablesInputBlocked(true);
+        LogDebug("YT Playables pause callback received.");
+    }
+
+    private void OnPlayablesResumeRequested()
+    {
+        RequestResume(PauseSource.YouTubePlayables);
+        SetPlayablesInputBlocked(false);
+        LogDebug("YT Playables resume callback received.");
+    }
+
+    private void SetPlayablesInputBlocked(bool blocked)
+    {
+        if (blocked)
+        {
+            EnsurePlayablesInputBlocker();
+            if (playablesInputBlocker != null)
+            {
+                playablesInputBlocker.SetActive(true);
+            }
+            return;
+        }
+
+        if (playablesInputBlocker != null)
+        {
+            playablesInputBlocker.SetActive(false);
+        }
+    }
+
+    private void EnsurePlayablesInputBlocker()
+    {
+        if (playablesInputBlocker != null)
+        {
+            return;
+        }
+
+        playablesInputBlocker = new GameObject("PlayablesInputBlocker");
+        DontDestroyOnLoad(playablesInputBlocker);
+
+        Canvas canvas = playablesInputBlocker.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = short.MaxValue;
+
+        playablesInputBlocker.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+        GameObject blockerImageObject = new GameObject("Blocker");
+        blockerImageObject.transform.SetParent(playablesInputBlocker.transform, false);
+
+        RectTransform rectTransform = blockerImageObject.AddComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.offsetMin = Vector2.zero;
+        rectTransform.offsetMax = Vector2.zero;
+
+        UnityEngine.UI.Image image = blockerImageObject.AddComponent<UnityEngine.UI.Image>();
+        image.color = new Color(0f, 0f, 0f, 0f);
+        image.raycastTarget = true;
+    }
+#endif
     
     /// <summary>
     /// Add or remove coins from player's total

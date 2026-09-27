@@ -30,9 +30,11 @@ public class AudioSettings : MonoBehaviour
     [SerializeField] private string ambienceVolumeParameter = "AmbienceVolume";
     [SerializeField] private string effectsVolumeParameter = "EffectsVolume";
     
-    // Volume settings (on/off)
+    // Volume settings (on/off) — local player prefs; icons use these, not effective mute
     private bool isMusicEnabled = true;
     private bool isEffectsEnabled = true;
+    private bool isYouTubeGlobalAudioEnabled = true;
+    private bool useYouTubeGlobalAudioOverride;
     
     // Audio values
     private const float VOLUME_ON = 0;    // 0 dB (full volume)
@@ -52,7 +54,12 @@ public class AudioSettings : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(gameObject);
-        
+
+#if UNITY_WEBGL && !UNITY_EDITOR
+        useYouTubeGlobalAudioOverride = true;
+#else
+        useYouTubeGlobalAudioOverride = false;
+#endif
     }
 
     public void Initialize()
@@ -76,7 +83,8 @@ public class AudioSettings : MonoBehaviour
     }
     
     /// <summary>
-    /// Apply current settings to audio mixer
+    /// Apply current settings to audio mixer.
+    /// YT mute wins over local music/SFX; icons still reflect local toggle state only.
     /// </summary>
     private void ApplySettings()
     {
@@ -85,12 +93,14 @@ public class AudioSettings : MonoBehaviour
             Debug.LogWarning("[AudioSettings] Audio mixer not assigned!");
             return;
         }
+
+        bool ytAllowsAudio = !useYouTubeGlobalAudioOverride || isYouTubeGlobalAudioEnabled;
         
-        // Set ambience volume
-        audioMixer.SetFloat(ambienceVolumeParameter, isMusicEnabled ? VOLUME_ON : VOLUME_OFF);
+        // Set ambience volume — effective = YT allows AND local music on
+        audioMixer.SetFloat(ambienceVolumeParameter, (ytAllowsAudio && isMusicEnabled) ? VOLUME_ON : VOLUME_OFF);
         
-        // Set effects volume
-        audioMixer.SetFloat(effectsVolumeParameter, isEffectsEnabled ? VOLUME_ON : VOLUME_OFF);
+        // Set effects volume — effective = YT allows AND local SFX on
+        audioMixer.SetFloat(effectsVolumeParameter, (ytAllowsAudio && isEffectsEnabled) ? VOLUME_ON : VOLUME_OFF);
     }
     
     /// <summary>
@@ -100,17 +110,13 @@ public class AudioSettings : MonoBehaviour
     {
         isMusicEnabled = !isMusicEnabled;
         
-        // Apply to mixer
-        if (audioMixer != null)
-        {
-            audioMixer.SetFloat(ambienceVolumeParameter, isMusicEnabled ? VOLUME_ON : VOLUME_OFF);
-        }
+        ApplySettings();
         
         // Save to PlayerPrefs
         PlayerPrefs.SetInt("AudioSettings_MusicEnabled", isMusicEnabled ? 1 : 0);
         PlayerPrefs.Save();
         
-        // Invoke event
+        // Invoke event with local state (icons stay local)
         OnMusicToggled?.Invoke(isMusicEnabled);
         
         Debug.Log($"[AudioSettings] Music toggled: {isMusicEnabled}");
@@ -123,17 +129,13 @@ public class AudioSettings : MonoBehaviour
     {
         isEffectsEnabled = !isEffectsEnabled;
         
-        // Apply to mixer
-        if (audioMixer != null)
-        {
-            audioMixer.SetFloat(effectsVolumeParameter, isEffectsEnabled ? VOLUME_ON : VOLUME_OFF);
-        }
+        ApplySettings();
         
         // Save to PlayerPrefs
         PlayerPrefs.SetInt("AudioSettings_EffectsEnabled", isEffectsEnabled ? 1 : 0);
         PlayerPrefs.Save();
         
-        // Invoke event
+        // Invoke event with local state (icons stay local)
         OnEffectsToggled?.Invoke(isEffectsEnabled);
         
         Debug.Log($"[AudioSettings] Effects toggled: {isEffectsEnabled}");
@@ -158,7 +160,7 @@ public class AudioSettings : MonoBehaviour
     }
     
     /// <summary>
-    /// Get music enabled state
+    /// Get music enabled state (local preference — for icons)
     /// </summary>
     public bool IsMusicEnabled()
     {
@@ -166,11 +168,35 @@ public class AudioSettings : MonoBehaviour
     }
     
     /// <summary>
-    /// Get effects enabled state
+    /// Get effects enabled state (local preference — for icons)
     /// </summary>
     public bool IsEffectsEnabled()
     {
         return isEffectsEnabled;
     }
-}
 
+    /// <summary>
+    /// Set YouTube global audio enabled state (WebGL Playables only).
+    /// YT mute wins over local music/SFX without changing PlayerPrefs or icon events.
+    /// </summary>
+    public void SetYouTubeGlobalAudioEnabled(bool isEnabled)
+    {
+        if (!useYouTubeGlobalAudioOverride)
+        {
+            return;
+        }
+
+        isYouTubeGlobalAudioEnabled = isEnabled;
+        ApplySettings();
+
+        Debug.Log($"[AudioSettings] YouTube global audio changed: {isYouTubeGlobalAudioEnabled}");
+    }
+
+    /// <summary>
+    /// Compatibility alias used by Playables callbacks.
+    /// </summary>
+    public void SetYTAudioEnabled(bool isEnabled)
+    {
+        SetYouTubeGlobalAudioEnabled(isEnabled);
+    }
+}
