@@ -1,10 +1,12 @@
 {
-    "name": "GoogleSignIn",
-    "rootNamespace": "Google",
-    "references": [],
+    "name": "Google.Play.Review.Samples",
+    "references": [
+        "Google.Play.Review",
+        "Google.Play.Common",
+        "Google.Play.Core"
+    ],
     "includePlatforms": [
         "Android",
-        "iOS",
         "Editor"
     ],
     "excludePlatforms": [],

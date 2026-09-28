@@ -1,11 +1,13 @@
 using UnityEngine;
-using Google.Play.Review;
 using System.Collections;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using Google.Play.Review;
+#endif
 
 namespace Management
 {
     /// <summary>
-    /// Manages the Google Play In-App Review flow.
+    /// Manages the Google Play In-App Review flow (Android only; no-op on WebGL / other platforms).
     /// </summary>
     public class ReviewManager : MonoBehaviour
     {
@@ -27,9 +29,11 @@ namespace Management
         }
         private static ReviewManager _instance;
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         private Google.Play.Review.ReviewManager _reviewManager;
         private PlayReviewInfo _playReviewInfo;
         private Coroutine _prepareCoroutine;
+#endif
 
         private void Awake()
         {
@@ -49,11 +53,14 @@ namespace Management
         /// </summary>
         public void PrepareReview()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
             _playReviewInfo = null;
             if (_prepareCoroutine != null) StopCoroutine(_prepareCoroutine);
             _prepareCoroutine = StartCoroutine(PrepareCoroutine());
+#endif
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         private IEnumerator PrepareCoroutine()
         {
             _reviewManager = new Google.Play.Review.ReviewManager();
@@ -66,15 +73,19 @@ namespace Management
             }
             _prepareCoroutine = null;
         }
+#endif
 
         /// <summary>
         /// Shows the review if prepared and no level is running.
         /// </summary>
         public void ShowReview()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
             StartCoroutine(ShowCoroutine());
+#endif
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         private IEnumerator ShowCoroutine()
         {
             // Wait for prepare to finish if it's still running
@@ -97,5 +108,6 @@ namespace Management
                 _playReviewInfo = null;
             }
         }
+#endif
     }
 }

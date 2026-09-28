@@ -416,13 +416,16 @@ public class LevelCompleteUI : MonoBehaviour
                 btnGroup = returnToMenuButton.gameObject.AddComponent<CanvasGroup>();
             }
             
-            // Fade out the button
-            btnGroup.DOFade(0f, buttonFadeInDuration).OnComplete(() => {
-                if (btnGroup != null)
-                {
-                    btnGroup.blocksRaycasts = false;
-                }
-            });
+            // Fade out the button (kill with target so destroy/disable can't spam MissingReference)
+            btnGroup.DOKill();
+            btnGroup.DOFade(0f, buttonFadeInDuration)
+                .SetLink(btnGroup.gameObject)
+                .OnComplete(() => {
+                    if (btnGroup != null)
+                    {
+                        btnGroup.blocksRaycasts = false;
+                    }
+                });
         }
     }
     
@@ -739,12 +742,15 @@ public class LevelCompleteUI : MonoBehaviour
             btnGroup.blocksRaycasts = true;
             
             // Fade in the button
-            btnGroup.DOFade(1f, buttonFadeInDuration).OnComplete(() => {
-                if (btnGroup != null)
-                {
-                    btnGroup.interactable = true;
-                }
-            });
+            btnGroup.DOKill();
+            btnGroup.DOFade(1f, buttonFadeInDuration)
+                .SetLink(btnGroup.gameObject)
+                .OnComplete(() => {
+                    if (btnGroup != null)
+                    {
+                        btnGroup.interactable = true;
+                    }
+                });
         }
         
         // Wait for fade-in to complete
@@ -791,19 +797,26 @@ public class LevelCompleteUI : MonoBehaviour
     private IEnumerator HideAnimation()
     {
         isVisible = false;
+        KillLevelCompleteTweensAndConfetti();
         
         // Fade out
         float elapsedTime = 0f;
-        float startAlpha = canvasGroup.alpha;
+        float startAlpha = canvasGroup != null ? canvasGroup.alpha : 0f;
         
         while (elapsedTime < fadeOutDuration)
         {
             elapsedTime += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsedTime / fadeOutDuration);
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsedTime / fadeOutDuration);
+            }
             yield return null;
         }
         
-        canvasGroup.alpha = 0f;
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0f;
+        }
         gameObject.SetActive(false);
     }
     
@@ -1027,27 +1040,82 @@ public class LevelCompleteUI : MonoBehaviour
         float peakY = Random.Range(parentHeight * 0.4f, parentHeight * 0.9f);
         float endY = -100f; // Below the anchor (off screen)
 
-        // Sequence for the trajectory
-        Sequence trajectory = DOTween.Sequence();
+        // Sequence for the trajectory — SetLink auto-kills tweens when confetti is destroyed
+        Sequence trajectory = DOTween.Sequence().SetLink(confettiObj);
         
         // Horizontal movement: burst towards center
         trajectory.Join(rect.DOAnchorPosX(startX + horizontalTravel, duration).SetEase(Ease.OutQuad));
         
         // Vertical movement: burst UP, then fall DOWN
-        Sequence verticalSeq = DOTween.Sequence();
+        Sequence verticalSeq = DOTween.Sequence().SetLink(confettiObj);
         verticalSeq.Append(rect.DOAnchorPosY(peakY, duration * 0.4f).SetEase(Ease.OutQuad));
         verticalSeq.Append(rect.DOAnchorPosY(endY, duration * 0.6f).SetEase(Ease.InQuad));
         trajectory.Join(verticalSeq);
         
-        // Rotation and flipping
-        rect.DORotate(new Vector3(0, 0, Random.Range(-720f, 720f)), duration, RotateMode.FastBeyond360);
-        rect.DOScaleX(0, duration / 4).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.Linear);
+        // Rotation and flipping (finite loops — infinite yoyo kept confetti alive after UI hide)
+        rect.DORotate(new Vector3(0, 0, Random.Range(-720f, 720f)), duration, RotateMode.FastBeyond360)
+            .SetLink(confettiObj);
+        rect.DOScaleX(0, duration / 4)
+            .SetLoops(8, LoopType.Yoyo)
+            .SetEase(Ease.Linear)
+            .SetLink(confettiObj);
         
         // Fade and Cleanup
         CanvasGroup cg = confettiObj.AddComponent<CanvasGroup>();
-        cg.DOFade(0, 0.5f).SetDelay(duration - 0.5f).OnComplete(() => {
-            if (confettiObj != null) Destroy(confettiObj);
-        });
+        cg.DOFade(0, 0.5f)
+            .SetDelay(Mathf.Max(0f, duration - 0.5f))
+            .SetLink(confettiObj)
+            .OnComplete(() => {
+                if (confettiObj != null) Destroy(confettiObj);
+            });
+    }
+
+    /// <summary>
+    /// Kill DOTween targets and destroy leftover confetti so hide/disable cannot spam MissingReferenceException.
+    /// </summary>
+    private void KillLevelCompleteTweensAndConfetti()
+    {
+        StopDoubleRewardsPulseAnimation();
+
+        if (returnToMenuButton != null)
+        {
+            returnToMenuButton.DOKill();
+            CanvasGroup menuCg = returnToMenuButton.GetComponent<CanvasGroup>();
+            if (menuCg != null) menuCg.DOKill();
+        }
+
+        if (doubleRewardsButton != null)
+        {
+            doubleRewardsButton.DOKill();
+            CanvasGroup rewardsCg = doubleRewardsButton.GetComponent<CanvasGroup>();
+            if (rewardsCg != null) rewardsCg.DOKill();
+        }
+
+        if (canvasGroup != null)
+        {
+            canvasGroup.DOKill();
+        }
+
+        Transform confettiRoot = confettiParent != null ? confettiParent : transform;
+        if (confettiRoot != null)
+        {
+            confettiRoot.DOKill(true);
+            for (int i = confettiRoot.childCount - 1; i >= 0; i--)
+            {
+                Transform child = confettiRoot.GetChild(i);
+                if (child != null && child.name.StartsWith("Confetti", System.StringComparison.Ordinal))
+                {
+                    child.DOKill(true);
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+    }
+
+    private void CleanupLevelCompleteTweensAndConfetti()
+    {
+        StopAllCoroutines();
+        KillLevelCompleteTweensAndConfetti();
     }
     
     /// <summary>
@@ -1711,6 +1779,6 @@ public class LevelCompleteUI : MonoBehaviour
     /// </summary>
     private void OnDisable()
     {
-        StopDoubleRewardsPulseAnimation();
+        CleanupLevelCompleteTweensAndConfetti();
     }
 }
