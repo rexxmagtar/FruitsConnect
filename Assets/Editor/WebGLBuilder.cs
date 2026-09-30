@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
@@ -48,16 +46,40 @@ public static class WebGLBuilder
         NamedBuildTarget namedTarget = NamedBuildTarget.WebGL;
         string originalDefines = PlayerSettings.GetScriptingDefineSymbols(namedTarget);
         string activeDefines = originalDefines;
+        bool changedDefines = false;
 
-        // Template loadResources expects uncompressed Unity output, then manual .data/.wasm zips.
+        // Leave .data/.wasm uncompressed so you can zip them yourself for the YT template.
         PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
-        Debug.Log("WebGLBuilder: WebGL compression Disabled (manual .data/.wasm zip after build)");
+        Debug.Log("WebGLBuilder: WebGL compression Disabled");
+
+        // Smaller .wasm; longer link. Matches Editor "Code Optimization: Disk Size with LTO".
+        UnityEditor.WebGL.UserBuildSettings.codeOptimization =
+            UnityEditor.WebGL.WasmCodeOptimization.DiskSizeLTO;
+        Debug.Log("WebGLBuilder: Code Optimization = DiskSizeLTO");
 
         if (stripYtDefine)
         {
             activeDefines = RemoveDefine(originalDefines, YtDefine);
-            PlayerSettings.SetScriptingDefineSymbols(namedTarget, activeDefines);
+            if (!string.Equals(activeDefines, originalDefines, StringComparison.Ordinal))
+            {
+                PlayerSettings.SetScriptingDefineSymbols(namedTarget, activeDefines);
+                changedDefines = true;
+            }
             Debug.Log($"WebGLBuilder: stripped {YtDefine}. Defines: '{activeDefines}' (was '{originalDefines}')");
+        }
+        else
+        {
+            activeDefines = EnsureDefine(originalDefines, YtDefine);
+            if (!string.Equals(activeDefines, originalDefines, StringComparison.Ordinal))
+            {
+                PlayerSettings.SetScriptingDefineSymbols(namedTarget, activeDefines);
+                changedDefines = true;
+                Debug.Log($"WebGLBuilder: ensured {YtDefine}. Defines: '{activeDefines}' (was '{originalDefines}')");
+            }
+            else
+            {
+                Debug.Log($"WebGLBuilder: {YtDefine} already set. Defines: '{activeDefines}'");
+            }
         }
 
         try
@@ -73,7 +95,7 @@ public static class WebGLBuilder
                 scenes = scenes,
                 locationPathName = outputPath,
                 target = BuildTarget.WebGL,
-                options = BuildOptions.None
+                options = BuildOptions.None // Release (not Development)
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
@@ -81,7 +103,6 @@ public static class WebGLBuilder
 
             if (summary.result == BuildResult.Succeeded)
             {
-                ZipDataAndWasm(outputPath);
                 Debug.Log($"WebGLBuilder: succeeded in {summary.totalTime} → {outputPath}");
                 EditorApplication.Exit(0);
                 return;
@@ -92,57 +113,11 @@ public static class WebGLBuilder
         }
         finally
         {
-            if (stripYtDefine)
+            if (changedDefines)
             {
                 PlayerSettings.SetScriptingDefineSymbols(namedTarget, originalDefines);
                 Debug.Log($"WebGLBuilder: restored defines → '{originalDefines}'");
             }
-        }
-    }
-
-    /// <summary>
-    /// Zip uncompressed .data and .wasm for the YT template loadResources path.
-    /// Creates File.data.zip / File.wasm.zip (entry = original filename), then deletes originals.
-    /// </summary>
-    private static void ZipDataAndWasm(string buildRoot)
-    {
-        string buildFolder = Path.Combine(buildRoot, "Build");
-        if (!Directory.Exists(buildFolder))
-        {
-            Debug.LogWarning($"WebGLBuilder: Build folder not found at {buildFolder}; skip zip.");
-            return;
-        }
-
-        string[] targets = Directory.GetFiles(buildFolder)
-            .Where(path =>
-            {
-                string name = Path.GetFileName(path);
-                return name.EndsWith(".data", StringComparison.OrdinalIgnoreCase)
-                       || name.EndsWith(".wasm", StringComparison.OrdinalIgnoreCase);
-            })
-            .ToArray();
-
-        if (targets.Length == 0)
-        {
-            Debug.LogWarning($"WebGLBuilder: no uncompressed .data/.wasm found in {buildFolder}");
-            return;
-        }
-
-        foreach (string filePath in targets)
-        {
-            string zipPath = filePath + ".zip";
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-
-            using (ZipArchive archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-            {
-                archive.CreateEntryFromFile(filePath, Path.GetFileName(filePath), System.IO.Compression.CompressionLevel.Optimal);
-            }
-
-            File.Delete(filePath);
-            Debug.Log($"WebGLBuilder: zipped {Path.GetFileName(filePath)} → {Path.GetFileName(zipPath)}");
         }
     }
 
@@ -156,6 +131,20 @@ public static class WebGLBuilder
         return string.Join(";", defines
             .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
             .Where(symbol => !string.Equals(symbol.Trim(), define, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static string EnsureDefine(string defines, string define)
+    {
+        if (string.IsNullOrEmpty(defines))
+        {
+            return define;
+        }
+
+        bool alreadyPresent = defines
+            .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Any(symbol => string.Equals(symbol.Trim(), define, StringComparison.OrdinalIgnoreCase));
+
+        return alreadyPresent ? defines : $"{defines};{define}";
     }
 
     private static bool HasArg(string name)
