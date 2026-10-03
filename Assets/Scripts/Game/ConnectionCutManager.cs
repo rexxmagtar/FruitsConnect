@@ -95,8 +95,10 @@ public class ConnectionCutManager : MonoBehaviour
             UpdateTrajectoryLifecycle();
         }
 
-        // Only process cuts when gameplay is enabled
-        if (gameController == null || !gameController.GameplayEnabled)
+        // Only process cuts when gameplay is enabled and not paused
+        // (UI blocker does not stop Physics/Input mouse events)
+        bool paused = GameManager.Instance != null && GameManager.Instance.IsPaused;
+        if (gameController == null || !gameController.GameplayEnabled || paused)
         {
             if (isCutting)
             {
@@ -256,6 +258,17 @@ public class ConnectionCutManager : MonoBehaviour
         return false;
     }
     
+    /// <summary>
+    /// Cancel an in-progress cut swipe (e.g. YouTube / UI pause).
+    /// </summary>
+    public void CancelActiveCut()
+    {
+        if (isCutting)
+        {
+            EndCut();
+        }
+    }
+
     /// <summary>
     /// Start cutting - spawn particles at touch position
     /// </summary>

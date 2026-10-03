@@ -455,6 +455,20 @@ public class GameManager : MonoBehaviour
         }
 
         Time.timeScale = isPausedNow ? 0f : 1f;
+
+        // Physics OnMouse* / Input still fire at timescale 0 — cancel gameplay input on pause.
+        if (isPausedNow)
+        {
+            if (GameController.Instance != null)
+            {
+                GameController.Instance.CancelActiveDrag();
+            }
+
+            if (ConnectionCutManager.Instance != null)
+            {
+                ConnectionCutManager.Instance.CancelActiveCut();
+            }
+        }
     }
 
 #if UNITY_WEBGL

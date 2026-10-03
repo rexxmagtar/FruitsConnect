@@ -322,11 +322,42 @@ public class GameController : MonoBehaviour
     }
     
     /// <summary>
+    /// True when the player may draw/cut connections (not paused, gameplay running).
+    /// </summary>
+    public bool IsConnectionInputAllowed =>
+        gameplayEnabled && (GameManager.Instance == null || !GameManager.Instance.IsPaused);
+
+    /// <summary>
+    /// Cancel an in-progress connection drag (e.g. YouTube / UI pause).
+    /// </summary>
+    public void CancelActiveDrag()
+    {
+        if (!isDragging)
+        {
+            return;
+        }
+
+        if (connectionManager != null)
+        {
+            connectionManager.HideGhostLine();
+        }
+
+        if (dragStartNode != null)
+        {
+            dragStartNode.OnDeselect();
+        }
+
+        dragStartNode = null;
+        currentHoveredNode = null;
+        isDragging = false;
+    }
+
+    /// <summary>
     /// Handle node drag start - begin connection preview
     /// </summary>
     public void OnNodeDragStart(BaseNode node)
     {
-        if (!gameplayEnabled) return;
+        if (!IsConnectionInputAllowed) return;
         
         dragStartNode = node;
         isDragging = true;
@@ -342,7 +373,13 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void OnNodeDrag(BaseNode node)
     {
-        if (!gameplayEnabled || !isDragging || dragStartNode == null) return;
+        if (!isDragging || dragStartNode == null) return;
+
+        if (!IsConnectionInputAllowed)
+        {
+            CancelActiveDrag();
+            return;
+        }
         
         // Get mouse position in world space
         Vector3 mouseWorldPos = GetMouseWorldPosition();
@@ -368,7 +405,13 @@ public class GameController : MonoBehaviour
     /// </summary>
     public void OnNodeDragEnd(BaseNode node)
     {
-        if (!gameplayEnabled || !isDragging) return;
+        if (!isDragging) return;
+
+        if (!IsConnectionInputAllowed)
+        {
+            CancelActiveDrag();
+            return;
+        }
         
         // Hide ghost line
         connectionManager.HideGhostLine();
